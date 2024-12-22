@@ -26,12 +26,18 @@ importers:
       '@nestjs/platform-express':
         specifier: ^10.0.0
         version: 10.4.15(@nestjs/common@10.4.15(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.15)
+      '@prisma/client':
+        specifier: 6.1.0
+        version: 6.1.0(prisma@6.1.0)
       discord.js:
         specifier: ^14.16.3
         version: 14.16.3
       necord:
         specifier: ^6.8.6
         version: 6.8.6(@nestjs/common@10.4.15(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@10.4.15)(discord-api-types@0.37.100)(discord.js@14.16.3)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      pnpm:
+        specifier: ^9.15.1
+        version: 9.15.1
       reflect-metadata:
         specifier: ^0.2.0
         version: 0.2.2
@@ -611,6 +617,15 @@ packages:
   '@pkgr/core@0.1.1':
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+
+  '@prisma/client@6.1.0':
+    resolution: {integrity: sha512-AbQYc5+EJKm1Ydfq3KxwcGiy7wIbm4/QbjCKWWoNROtvy7d6a3gmAGkKjK0iUCzh+rHV8xDhD5Cge8ke/kiy5Q==}
+    engines: {node: '>=18.18'}
+    peerDependencies:
+      prisma: '*'
+    peerDependenciesMeta:
+      prisma:
+        optional: true
 
   '@prisma/debug@6.1.0':
     resolution: {integrity: sha512-0himsvcM4DGBTtvXkd2Tggv6sl2JyUYLzEGXXleFY+7Kp6rZeSS3hiTW9mwtUlXrwYbJP6pwlVNB7jYElrjWUg==}
@@ -2318,6 +2333,11 @@ packages:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
     engines: {node: '>=4'}
 
+  pnpm@9.15.1:
+    resolution: {integrity: sha512-GstWXmGT7769p3JwKVBGkVDPErzHZCYudYfnHRncmKQj3/lTblfqRMSb33kP9pToPCe+X6oj1n4MAztYO+S/zw==}
+    engines: {node: '>=18.12'}
+    hasBin: true
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -3598,6 +3618,10 @@ snapshots:
     optional: true
 
   '@pkgr/core@0.1.1': {}
+
+  '@prisma/client@6.1.0(prisma@6.1.0)':
+    optionalDependencies:
+      prisma: 6.1.0
 
   '@prisma/debug@6.1.0': {}
 
@@ -5595,6 +5619,8 @@ snapshots:
       find-up: 4.1.0
 
   pluralize@8.0.0: {}
+
+  pnpm@9.15.1: {}
 
   prelude-ls@1.2.1: {}
 

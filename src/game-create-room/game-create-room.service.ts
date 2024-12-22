@@ -373,9 +373,10 @@ export class GameCreateRoomService implements OnModuleInit {
     const game_uid = this.selectedValues.find(
       (value) => value.key === 'select_menu_game',
     )?.value;
+    const gameRank = await this.gameRankRepository.getGamesRankByID(interaction.values[0])
     const game_condition_match =
       await this.gameConditionMatchRepository.getGamesConditionMatchByGameId(
-        game_uid,
+        game_uid, Number(gameRank.number)
       );
     return interaction.reply({
       components: [

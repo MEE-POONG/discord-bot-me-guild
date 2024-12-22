@@ -4,22 +4,23 @@ import { Injectable } from '@nestjs/common';
 export type GameConditionMatchRepositoryType = {
   getGamesConditionMatchByGameId(
     gameId: string,
+    rankNumber: number,
   ): Promise<GameConditionMatchDB[]>;
   getGamesConditionMatchById(id: string): Promise<GameConditionMatchDB>;
 };
 
 @Injectable()
 export class GameConditionMatchRepository
-  implements GameConditionMatchRepositoryType
-{
-  constructor(private readonly prismaService: PrismaService) {}
+  implements GameConditionMatchRepositoryType {
+  constructor(private readonly prismaService: PrismaService) { }
 
   async getGamesConditionMatchByGameId(
     gameId: string,
+    rankNumber: number,
   ): Promise<GameConditionMatchDB[]> {
     return this.prismaService.gameConditionMatchDB.findMany({
       where: {
-        gameId,
+        gameId, rankNumber
       },
     });
   }

@@ -106,10 +106,8 @@ model GameCategoryDB {
 model GameConditionMatchDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  Json?
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  deleteBy   Json?
+  createdBy  String?
+  deleteBy   String?
   gameId     String   @db.ObjectId
   maxParty   BigInt
   rankNumber BigInt
@@ -148,7 +146,6 @@ model GameOnlineDB {
 model GameRankDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
   createdBy Json?
   deleteBy  String
   gameId    String   @db.ObjectId

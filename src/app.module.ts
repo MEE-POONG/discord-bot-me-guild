@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { NecordPaginationModule } from '@necord/pagination';
 import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
 import { AppUpdate } from './app.update';
+import { PrismaService } from './prisma.service';
 
 @Module({
   imports: [
@@ -37,6 +38,6 @@ import { AppUpdate } from './app.update';
     }),
     GameCreateRoomModule,
   ],
-  providers: [AppService, AppUpdate],
+  providers: [PrismaService, AppUpdate, AppService],
 })
 export class AppModule {}

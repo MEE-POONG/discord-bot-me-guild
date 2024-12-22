@@ -17,7 +17,7 @@ export class AppService {
 
   @On('messageCreate')
   public onMessageCreate(@Context() [message]: ContextOf<'messageCreate'>) {
-    console.log(message.content);
+    this.logger.log(message.content);
   }
 
   @SlashCommand({

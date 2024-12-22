@@ -8,14 +8,13 @@ import {
   StringSelectContext,
 } from 'necord';
 import { Context } from 'necord';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import {
   ActionRowBuilder,
   ChannelType,
   SelectMenuBuilder,
   GuildMember,
   CategoryChannel,
-  VoiceState,
   VoiceChannel,
   CacheType,
   StringSelectMenuInteraction,
@@ -26,11 +25,13 @@ import {
   DMChannel,
   NewsChannel,
 } from 'discord.js';
+import { GameTypeRepository } from 'src/game-type/game-type.repository';
+import { GameRepository } from 'src/game/game.repository';
+import { GameRankRepository } from 'src/game-rank/game-rank.repository';
+import { GameConditionMatchRepository } from 'src/game-condition-match/game-condition-match.repository';
 
-const game_genres = Array.from({ length: 1000 }, (_, i) => ({
-  label: `เกมส์ประเภท ${i + 1}`,
-  value: `game_genre_${i + 1}`,
-})).slice(0, 100);
+const CATEGORY_TITLE = 'แนวเกมส์';
+const ITEMS_PER_PAGE = 5;
 
 const game_lists = Array.from({ length: 1000 }, (_, i) => ({
   label: `เกมส์ชื่อ ${i + 1}`,
@@ -39,34 +40,61 @@ const game_lists = Array.from({ length: 1000 }, (_, i) => ({
 
 @Injectable()
 export class GameCreateRoomService implements OnModuleInit {
+  private readonly logger = new Logger(GameCreateRoomService.name);
   private selectedValues: { key: string; value: string }[] = [];
   private client: Client;
   private party_id: string;
 
   public constructor(
     private readonly paginationService: NecordPaginationService,
+    private readonly gameTypeRepository: GameTypeRepository,
+    private readonly gameRepository: GameRepository,
+    private readonly gameRankRepository: GameRankRepository,
+    private readonly gameConditionMatchRepository: GameConditionMatchRepository,
     client: Client,
   ) {
     this.client = client;
   }
 
-  public onModuleInit() {
+  public async onModuleInit() {
+    this.logger.log('GameCreateRoomService initialized');
+    const gameTypes = await this.gameTypeRepository.getGameTypesWithPagination(
+      CATEGORY_TITLE,
+      1,
+      ITEMS_PER_PAGE,
+    );
+
     return this.paginationService.register((builder) =>
       builder
         .setCustomId('game_create_room')
         .setPagesFactory(async (page) =>
-          new PageBuilder().setContent(`Page ${page}/5`).setComponents([
-            new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-              new SelectMenuBuilder()
-                .setCustomId('SELECT_MENU_GAME_CREATE_ROOM')
-                .setPlaceholder('เลือกประเภทเกมส์')
-                .setMaxValues(1)
-                .setMinValues(1)
-                .setOptions(game_genres.slice((page - 1) * 5, (page + 1) * 5)),
-            ),
-          ]),
+          new PageBuilder()
+            .setContent(
+              `หน้า ${page}/${Math.ceil(gameTypes.total / gameTypes.limit)}`,
+            )
+            .setComponents([
+              new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+                new SelectMenuBuilder()
+                  .setCustomId('SELECT_MENU_GAME_CREATE_ROOM')
+                  .setPlaceholder('เลือกประเภทเกมส์')
+                  .setMaxValues(1)
+                  .setMinValues(1)
+                  .setOptions(
+                    (
+                      await this.gameTypeRepository.getGameTypesWithPagination(
+                        CATEGORY_TITLE,
+                        page,
+                        5,
+                      )
+                    ).data.map((gameType) => ({
+                      label: gameType.title,
+                      value: gameType.id,
+                    })),
+                  ),
+              ),
+            ]),
         )
-        .setMaxPages(5),
+        .setMaxPages(Math.ceil(gameTypes.total / gameTypes.limit)),
     );
   }
 
@@ -86,22 +114,41 @@ export class GameCreateRoomService implements OnModuleInit {
     this.storeSelectedValues('user_avatar', [user.avatarURL()]);
     this.storeSelectedValues('user_created_at', [user.createdAt.toISOString()]);
 
+    const games = await this.gameRepository.getGamesByType(
+      interaction.values[0],
+      1,
+      ITEMS_PER_PAGE,
+    );
+
     this.paginationService.register((builder) =>
       builder
         .setCustomId('select_menu_game')
         .setPagesFactory(async (page) =>
-          new PageBuilder().setContent(`Page ${page}/5`).setComponents([
-            new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-              new SelectMenuBuilder()
-                .setCustomId('SELECT_MENU_GAME')
-                .setPlaceholder('เลือกเกมส์')
-                .setMaxValues(1)
-                .setMinValues(1)
-                .setOptions(game_lists.slice((page - 1) * 5, (page + 1) * 5)),
-            ),
-          ]),
+          new PageBuilder()
+            .setContent(`Page ${page}/${Math.ceil(games.total / games.limit)}`)
+            .setComponents([
+              new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+                new SelectMenuBuilder()
+                  .setCustomId('SELECT_MENU_GAME')
+                  .setPlaceholder('เลือกเกมส์')
+                  .setMaxValues(1)
+                  .setMinValues(1)
+                  .setOptions(
+                    (
+                      await this.gameRepository.getGamesByType(
+                        interaction.values[0],
+                        page,
+                        ITEMS_PER_PAGE,
+                      )
+                    ).data.map((game) => ({
+                      label: game.game_name,
+                      value: game.id,
+                    })),
+                  ),
+              ),
+            ]),
         )
-        .setMaxPages(5),
+        .setMaxPages(Math.ceil(games.total / games.limit)),
     );
     const pagination = this.paginationService.get('select_menu_game');
     const page = await pagination.build();
@@ -116,7 +163,7 @@ export class GameCreateRoomService implements OnModuleInit {
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
-            .setCustomId('SELECT_MENU_RANGE_MODE')
+            .setCustomId('SELECT_MENU_MODE')
             .setPlaceholder('มี Range หรือไม่')
             .setMaxValues(1)
             .setMinValues(1)
@@ -139,7 +186,7 @@ export class GameCreateRoomService implements OnModuleInit {
   private async createAndMoveToVoiceChannel(
     interaction: StringSelectMenuInteraction<CacheType>,
     gameName: string,
-    limit: number = 3,
+    limit: number = 0,
   ) {
     if (interaction.member instanceof GuildMember) {
       const voiceChannel = interaction.member.voice.channel;
@@ -151,10 +198,15 @@ export class GameCreateRoomService implements OnModuleInit {
         });
       }
 
+      const game_uid = this.selectedValues.find(
+        (value) => value.key === 'select_menu_game',
+      )?.value;
+      const game = await this.gameRepository.getGameById(game_uid);
+
       const channel = await interaction.guild?.channels.create({
         name: `🎮 ${gameName} - PARTY`,
         type: ChannelType.GuildVoice,
-        userLimit: limit,
+        userLimit: limit || Number(game?.partyLimit),
         parent: interaction.guild.channels.cache.get(
           process.env.DISCORD_GUILD_CHANEL_ID,
         ) as CategoryChannel,
@@ -226,25 +278,22 @@ export class GameCreateRoomService implements OnModuleInit {
     }
   }
 
-  @StringSelect('SELECT_MENU_RANGE_MODE')
-  public async onSelectMenuPlayRangedMode(
+  @StringSelect('SELECT_MENU_MODE')
+  public async onSelectMenuPlayMode(
     @Context() [interaction]: StringSelectContext,
   ) {
-    this.storeSelectedValues('select_menu_range_mode', interaction.values);
+    this.storeSelectedValues('select_menu_mode', interaction.values);
 
     const check_no_range = interaction.values[0] === 'NO_RANGE';
     if (check_no_range) {
-      const game_name = this.selectedValues.find(
+      const game_uid = this.selectedValues.find(
         (value) => value.key === 'select_menu_game',
       )?.value;
-      const game_list_name = game_lists.find(
-        (game) => game.value === game_name,
-      )?.label;
-      const people = Number(10);
-      const room_name = `${game_list_name} - ${people} คน`;
+      const game_name = await this.gameRepository.getGameById(game_uid);
+      const room_name = ` ${game_name.game_name} `;
 
-      if (game_name) {
-        return this.createAndMoveToVoiceChannel(interaction, room_name, people);
+      if (game_uid) {
+        return this.createAndMoveToVoiceChannel(interaction, room_name);
       }
     }
 
@@ -252,7 +301,7 @@ export class GameCreateRoomService implements OnModuleInit {
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
-            .setCustomId('SELECT_MENU_PLAY_RANGED_MODE')
+            .setCustomId('SELECT_MENU_PLAY_MODE')
             .setPlaceholder('เลือกรูปแบบการเล่น')
             .setMaxValues(1)
             .setMinValues(1)
@@ -272,6 +321,46 @@ export class GameCreateRoomService implements OnModuleInit {
     });
   }
 
+  @StringSelect('SELECT_MENU_PLAY_MODE')
+  public async onSelectMenuPlayRangedMode(
+    @Context() [interaction]: StringSelectContext,
+  ) {
+    this.storeSelectedValues('select_menu_play_mode', interaction.values);
+
+    const check_no_range = interaction.values[0] === 'NORMAL';
+    const game_uid = this.selectedValues.find(
+      (value) => value.key === 'select_menu_game',
+    )?.value;
+    if (check_no_range) {
+      const game_name = await this.gameRepository.getGameById(game_uid);
+      const room_name = ` ${game_name.game_name} `;
+
+      if (game_name) {
+        return this.createAndMoveToVoiceChannel(interaction, room_name);
+      }
+    }
+
+    const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
+    return interaction.reply({
+      components: [
+        new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+          new SelectMenuBuilder()
+            .setCustomId('SELECT_MENU_PLAY_RANGED_MODE')
+            .setPlaceholder('เลือกระดับการเล่น')
+            .setMaxValues(1)
+            .setMinValues(1)
+            .setOptions(
+              game_rank.map((game) => ({
+                label: game.nameRank,
+                value: game.id,
+              })),
+            ),
+        ),
+      ],
+      ephemeral: true,
+    });
+  }
+
   @StringSelect('SELECT_MENU_PLAY_RANGED_MODE')
   public async onSelectMenuManyPeoplePlay(
     @Context() [interaction]: StringSelectContext,
@@ -281,44 +370,27 @@ export class GameCreateRoomService implements OnModuleInit {
       interaction.values,
     );
 
-    const check_no_range = interaction.values[0] === 'NORMAL';
-    if (check_no_range) {
-      const game_name = this.selectedValues.find(
-        (value) => value.key === 'select_menu_game',
-      )?.value;
-      const game_list_name = game_lists.find(
-        (game) => game.value === game_name,
-      )?.label;
-      const people = Number(10);
-      const room_name = `${game_list_name} - ${people} คน`;
-
-      if (game_name) {
-        return this.createAndMoveToVoiceChannel(interaction, room_name, people);
-      }
-    }
-
+    const game_uid = this.selectedValues.find(
+      (value) => value.key === 'select_menu_game',
+    )?.value;
+    const game_condition_match =
+      await this.gameConditionMatchRepository.getGamesConditionMatchByGameId(
+        game_uid,
+      );
     return interaction.reply({
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
             .setCustomId('SELECT_MENU_PEOPLE')
-            .setPlaceholder('เลือกรำนวนผู้เล่น')
+            .setPlaceholder('เลือกจำนวนผู้เล่น')
             .setMaxValues(1)
             .setMinValues(1)
-            .setOptions([
-              {
-                label: '1',
-                value: '1',
-              },
-              {
-                label: '3',
-                value: '3',
-              },
-              {
-                label: '5',
-                value: '5',
-              },
-            ]),
+            .setOptions(
+              game_condition_match.map((game) => ({
+                label: game.maxParty.toString(),
+                value: game.id,
+              })),
+            ),
         ),
       ],
       ephemeral: true,
@@ -326,21 +398,26 @@ export class GameCreateRoomService implements OnModuleInit {
   }
 
   @StringSelect('SELECT_MENU_PEOPLE')
-  public onSelectPeople(@Context() [interaction]: StringSelectContext) {
+  public async onSelectPeople(@Context() [interaction]: StringSelectContext) {
     this.storeSelectedValues('select_menu_people', interaction.values);
 
-    const game_name = this.selectedValues.find(
+    const game_uid = this.selectedValues.find(
       (value) => value.key === 'select_menu_game',
     )?.value;
+    const game_name = await this.gameRepository.getGameById(game_uid);
+    const room_name = ` ${game_name.game_name} `;
 
-    const people = Number(interaction.values[0]);
-    const game_list_name = game_lists.find(
-      (game) => game.value === game_name,
-    )?.label;
-    const room_name = `${game_list_name} - ${people} คน`;
+    const game_condition_match =
+      await this.gameConditionMatchRepository.getGamesConditionMatchById(
+        interaction.values[0],
+      );
 
     if (game_name) {
-      return this.createAndMoveToVoiceChannel(interaction, room_name, people);
+      return this.createAndMoveToVoiceChannel(
+        interaction,
+        room_name,
+        Number(game_condition_match.maxParty),
+      );
     }
   }
 }

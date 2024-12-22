@@ -9,468 +9,444 @@ datasource db {
 
 model ActDetailDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  point       String
-  type        String
-  img         String
-  startdate   String
-  enddate     String
-  description String
-  disname     String
-  dislink     String
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
+  createdAt   DateTime @db.Date
+  createdBy   String
   deleteBy    String
+  description String
+  dislink     String
+  disname     String
+  enddate     String
+  img         String
+  point       String
+  startdate   String
+  title       String
+  type        String
+  updatedAt   DateTime @db.Date
+  updatedBy   String
+}
+
+model ActType {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy Json?
+  deleteBy  String
+  name      String
+  updatedAt DateTime @db.Date
+  updatedBy String
 }
 
 model BlogDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  img         String
-  video       String
-  description String
+  createdAt   DateTime @db.Date
+  createdBy   String
   creditlink  String
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
   deleteBy    String
+  description String
+  img         String
+  title       String
+  updatedAt   DateTime @db.Date
+  updatedBy   String
+  video       String
 }
 
 model CheckOnlineDB {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  user_id         String
-  checkIn         DateTime  @default(now())
-  checkOut        DateTime?
-  totalOnlineTime Int       @default(0)
-  createdAt       DateTime  @default(now())
-  createdBy       String?
-  updatedAt       DateTime  @updatedAt
-  updatedBy       String
-  deleteBy        String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model Comment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model CommentDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userID    String
-  content   String
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
-  updatedBy String? // Make this optional
-  deleteBy  String? // Make this optional
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
-model GameConditionMatchDB {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  maxParty    Int
-  limitNumber Int      @default(0)
-  gameId      String?  @db.ObjectId
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
-  deleteBy    String
+model CreditPoBigIntDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model CreditPointDB {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String
-  points      BigInt   @default(0)
-  totalPoints BigInt
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
-  deleteBy    String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model CustomerDB {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy  Json?
+  deleteBy   String
+  discord_id String   @unique
+  email      String   @unique
+  password   String
+  server     String   @unique
+  updatedAt  DateTime @db.Date
+  updatedBy  String
+  username   String
+}
+
+model DiscordID {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model DiscordIDDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
-  updatedBy String
+  createdAt DateTime @db.Date
+  createdBy String
   deleteBy  String
+  title     String
+  updatedAt DateTime @db.Date
+  updatedBy String
+}
+
+model GameConditionMatchDB {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy  Json?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  deleteBy   Json?
+  gameId     String   @db.ObjectId
+  maxParty   BigInt
+  rankNumber BigInt
+  updatedAt  DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  updatedBy  Json?
 }
 
 model GameEventDB {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String // ชื่อรายการแข่ง
-  description String? // รายละเอียดของรายการแข่ง
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
-  deleteBy    String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameMatchDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String
-  gameId       String   @db.ObjectId
-  rank         Boolean
-  selectRankID String?  @db.ObjectId
-  channel_id   String
-  partyLimit   Int
-  limitNumber  Int
-  status       Boolean
-  members      String[]
-  createdAt    DateTime @default(now())
-  createdBy    String?
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-  deleteBy     String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameMatchScheduleDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamAId      String   @db.ObjectId // เชื่อมกับ GameRegistrationDB
-  teamBId      String   @db.ObjectId // เชื่อมกับ GameRegistrationDB
-  eventId      String   @db.ObjectId // เชื่อมกับรายการแข่ง (GameEventDB)
-  matchTime    DateTime // เวลาแข่งขัน
-  status       String // สถานะของการแข่งขัน (เช่น pending, completed)
-  channel_id   String // ID ของช่องที่ใช้สำหรับการแข่งขัน (เช่น Discord Channel)
-  winnerTeamId String? // ทีมที่ชนะการแข่งขัน
-  createdAt    DateTime @default(now())
-  createdBy    String?
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-  deleteBy     String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameOnlineDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  logo        String?
-  game_name   String
-  partyLimit  Int
-  ranking     Boolean // มีระบบแรงค์ไม่มีระบบแรงค์
-  numberMatch Int?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @db.Date
   createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
   deleteBy    String
+  game_name   String
+  logo        String?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  numberMatch Json?
+  partyLimit  BigInt
+  ranking     Boolean
+  updatedAt   DateTime @db.Date
+  updatedBy   String
 }
 
 model GameRankDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  nameRank  String
-  imgRank   String
-  number    Int
-  gameId    String   @db.ObjectId
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
-  updatedBy String
+  createdAt DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy Json?
   deleteBy  String
+  gameId    String   @db.ObjectId
+  imgRank   String
+  nameRank  String
+  number    BigInt
+  updatedAt DateTime @db.Date
+  updatedBy String
+}
+
+model GameRankUser {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model GameRegistrationDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameRegistrationEventDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  isIndividual Boolean // true ถ้าเป็นการสมัครแบบเดี่ยว, false ถ้าเป็นการสมัครแบบปาร์ตี้
-  GameEventId  String // เชื่อมกับตารางที่เก็บข้อมูลรายการแข่ง
-  teamId       String // กรณีลงทะเบียนด้วยทีม
-  createdAt    DateTime @default(now())
-  createdBy    String?
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-  deleteBy     String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameTypeDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
   categoryId String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  createdBy  String?
-  updatedAt  DateTime @updatedAt
-  updatedBy  String
+  createdAt  DateTime @db.Date
+  createdBy  String
   deleteBy   String
+  title      String
+  updatedAt  DateTime @db.Date
+  updatedBy  String
 }
 
 model GameTypeGame {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @db.Date
+  createdBy String
+  deleteBy  String
   gameId    String   @db.ObjectId
   typeId    String   @db.ObjectId
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @db.Date
   updatedBy String
-  deleteBy  String
 }
 
 model Guild {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  guild_name   String?
-  guild_level  Int      @default(1)
-  guild_copper BigInt   @default(0)
-  guild_size   Int      @default(5)
-  guild_roleId String?
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  Logo         String
+  guild_copper BigInt
   guild_leader String
-  Logo         String   @default("")
-  backdrop     String   @default("")
-  discordlink  String   @default("")
-  createdAt    DateTime @default(now())
-  createdBy    String?
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-  deleteBy     String
+  guild_level  BigInt
+  guild_name   String
+  guild_roleId String
+  guild_size   BigInt
 }
 
 model GuildCreateReport {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId   String
-  channelId String
-  messageId String
-  guildName String
-  members   String[]
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GuildMembers {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  guildId   String   @db.ObjectId
-  userId    String
-  position  String?
-  status    String?
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
-  updatedBy String
-  deleteBy  String
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  guildId  String @db.ObjectId
+  position String
+  userId   String
+}
+
+model GuildProfileDB {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  avatar      String
+  backdrop    String
+  createdAt   DateTime @db.Date
+  createdBy   String
+  deleteBy    String
+  description String
+  discordlink String
+  guildId     String?
+  guildname   String
+  rule        String
+  updatedAt   DateTime @db.Date
+  updatedBy   String
+}
+
+model IPAddress {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model ImageList {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  modalName String
-  imageUrl  String   @unique
-  nameFile  String   @unique // Mark as unique
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
-  updatedBy String
+  createdAt DateTime @db.Date
+  createdBy String
   deleteBy  String
+  imageUrl  String   @unique
+  modalName String
+  nameFile  String   @unique
+  updatedAt DateTime @db.Date
+  updatedBy String
+}
+
+model InviteData {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  guildId String
+  userId  String
 }
 
 model InviteRequest {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  userId  String
   guildId String
+  userId  String
+}
+
+model JobQueueDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model NewsCategoryDB {
-  id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
-  createdAt  DateTime     @default(now())
-  createdBy  String?
-  updatedAt  DateTime     @updatedAt
-  updatedBy  String
-  deleteBy   String
-  NewsTypeDB NewsTypeDB[]
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy Json?
+  deleteBy  String
+  title     String
+  updatedAt DateTime @db.Date
+  updatedBy String
 }
 
 model NewsTypeDB {
-  id             String         @id @default(auto()) @map("_id") @db.ObjectId
-  title          String
-  createdAt      DateTime       @default(now())
-  createdBy      String?
-  updatedAt      DateTime       @updatedAt
-  updatedBy      String
-  deleteBy       String
-  categoryId     String         @db.ObjectId
-  newsCategoryDB NewsCategoryDB @relation(fields: [categoryId], references: [id])
-  NewsTypeNews   NewsTypeNews[]
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId String   @db.ObjectId
+  createdAt  DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy  Json?
+  deleteBy   String
+  title      String
+  updatedAt  DateTime @db.Date
+  updatedBy  String
 }
 
 model NewsTypeNews {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  newsUpdateId String       @db.ObjectId
-  typeId       String       @db.ObjectId
-  createdAt    DateTime     @default(now())
-  createdBy    String?
-  updatedAt    DateTime     @updatedAt
-  updatedBy    String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt    DateTime @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy    Json?
   deleteBy     String
-  newsTypeDB   NewsTypeDB   @relation(fields: [typeId], references: [id])
-  newsUpdateDB NewsUpdateDB @relation(fields: [newsUpdateId], references: [id])
+  newsUpdateId String   @db.ObjectId
+  typeId       String   @db.ObjectId
+  updatedAt    DateTime @db.Date
+  updatedBy    String
 }
 
 model NewsUpdateDB {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  title        String
-  img          String
-  description  String
-  creditlink   String
-  createdAt    DateTime       @default(now())
-  createdBy    String?
-  updatedAt    DateTime?      @updatedAt
-  updatedBy    String
-  deleteBy     String
-  NewsTypeNews NewsTypeNews[]
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt   DateTime  @db.Date
+  createdBy   String?
+  creditlink  String
+  deleteBy    String?
+  description String
+  img         String
+  title       String
+  updatedAt   DateTime? @db.Date
+  updatedBy   String?
 }
 
-model paymentHistory {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String
-  status       String   @default("pending")
-  reason       String?
-  title        String?
-  detail       String?
-  total        String?
-  receive      String?
-  pay          String?
-  net          String?
-  createdAt    DateTime @default(now())
-  createdBy    String?
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-  deleteBy     String
-  coin_copper  BigInt   @default(0)
-  coin_silver  BigInt   @default(0)
-  coin_gold    BigInt   @default(0)
-  coin_diamond BigInt   @default(0)
-  coin_crystal BigInt   @default(0)
+model PoBigIntHistoryDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model PointHistoryDB {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  discord_id  String
-  points      Int
-  description String
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
-  deleteBy    String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model ProfileDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model RuleDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  topic     String
-  IssueBy   Int
-  GuildID   String
-  createdAt DateTime @default(now())
-  createdBy String?
-  updatedAt DateTime @updatedAt
-  updatedBy String
-  deleteBy  String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model Server {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  /// Field referred in an index, but found no data to define the type.
+  discordId Json?  @unique
 }
 
 model ServerDB {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  serverId     String    @unique // server server ID
-  ownerId      String // Discord ID of the owner
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt    DateTime @db.Date
+  openBot      Boolean
+  ownerId      String
+  registeredAt DateTime @db.Date
+  serverId     String   @unique
   serverName   String
-  registeredAt DateTime  @default(now()) // วันที่ลงทะเบียน
-  openBot      Boolean   @default(false) // Default to false
-  startDate    DateTime? // Nullable, set only when openBot becomes true
-  createdAt    DateTime  @default(now()) // Timestamp of creation
-  updatedAt    DateTime  @updatedAt // Timestamp of last update
-}
-
-model topicDB {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  ruleId      Int
-  description String
-  createdAt   DateTime @default(now())
-  createdBy   String?
-  updatedAt   DateTime @updatedAt
-  updatedBy   String
-  deleteBy    String
+  updatedAt    DateTime @db.Date
 }
 
 model TeamDB {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamName   String // ชื่อทีม
-  represent  String // ทีมจากตัวแทนของ
-  members    String[] // รายชื่อสมาชิกในทีม (discord_id หรือ userId)
-  TeamLeader String? // ตัวแทนของทีม (optional)
-  createdAt  DateTime @default(now())
-  createdBy  String?
-  updatedAt  DateTime @updatedAt
-  updatedBy  String
-  deleteBy   String
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model UserDB {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  discord_id        String   @unique
-  username          String?
-  email             String   @unique
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  alternativeGender String?
+  birthday          DateTime? @db.Date
+  createdAt         DateTime  @db.Date
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  createdBy         Json?
+  deleteBy          String
+  discord_id        String    @unique
+  email             String    @unique
+  firstname         String?
+  gender            String?
+  lastname          String?
   nickname          String?
   password          String?
-  firstname         String
-  lastname          String
-  birthday          DateTime
-  gender            String
-  alternativeGender String
-  createdAt         DateTime @default(now())
-  createdBy         String?
-  updatedAt         DateTime @updatedAt
+  updatedAt         DateTime  @db.Date
   updatedBy         String
-  deleteBy          String
+  username          String?
 }
 
 model UserGameRank {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt  DateTime @db.Date
+  deleteBy   String
   gameId     String   @db.ObjectId
-  userId     String
   gameRankId String   @db.ObjectId
   invitation Boolean
-  createdAt  DateTime @default(now())
-  createdBy  String?
-  updatedAt  DateTime @updatedAt
+  updatedAt  DateTime @db.Date
   updatedBy  String
-  deleteBy   String
+  /// Multiple data types found: String: 85.7%, String (ObjectId): 14.3% out of 14 sampled entries
+  userId     Json
 }
 
 model Wallet {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  coin_copper  BigInt
+  coin_crystal BigInt
+  coin_diamond BigInt
+  coin_gold    BigInt
+  coin_silver  BigInt
+  createdAt    DateTime @db.Date
+  updatedAt    DateTime @db.Date
   userId       String
-  coin_copper  BigInt   @default(0)
-  coin_silver  BigInt   @default(0)
-  coin_gold    BigInt   @default(0)
-  coin_diamond BigInt   @default(0)
-  coin_crystal BigInt   @default(0)
-  createdAt    DateTime @default(now())
-  createdBy    String?
-  updatedAt    DateTime @updatedAt
-  updatedBy    String
-  deleteBy     String? // Mark as optional
 }
 
 model WebDefaultDB {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  logoSquare     String? // โลโก้ที่เป็นสี่เหลี่ยม, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
-  logoCircle     String? // โลโก้ที่เป็นวงกลม, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
-  logoWide       String? // โลโก้ที่เป็น wide, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
-  defaultImg     String?
-  defaultProfile String?
-  facebook       String?
-  instagram      String?
-  youtube        String?
-  tiktok         String?
-  gmail          String?
-  createdAt      DateTime @default(now())
-  createdBy      String?
-  updatedAt      DateTime @updatedAt
-  updatedBy      String
+  createdAt      DateTime @db.Date
+  createdBy      String
+  defaultImg     String
+  defaultProfile String
   deleteBy       String
+  facebook       String
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  gmail          Json?
+  /// Could not determine type: the field only had null or empty values in the sample set.
+  instagram      Json?
+  logoCircle     String
+  logoSquare     String
+  logoWide       String
+  tiktok         String
+  updatedAt      DateTime @db.Date
+  updatedBy      String
+  youtube        String
 }
 
-model JobQueueDB {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  guildId       String // Discord Server ID
-  userDiscordId String // Owner ID ของ Server
-  title         String // คำสั่งหรือ Action ที่ต้องทำ
-  command       String // คำสั่งหรือ Action ที่ต้องทำ
-  status        String   @default("pending") // สถานะของงาน เช่น "pending", "in_progress", "completed", "failed"
-  errorMessage  String? // ข้อผิดพลาด (ถ้ามี)
-  createdAt     DateTime @default(now()) // เวลาที่สร้างงาน
-  updatedAt     DateTime @updatedAt // เวลาที่อัปเดตล่าสุด
+model inviteData {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  guildId String
+  userId  String
+}
+
+model paymentHistory {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  coin_copper  BigInt
+  coin_crystal BigInt
+  coin_diamond BigInt
+  coin_gold    BigInt
+  coin_silver  BigInt
+  createdAt    DateTime @db.Date
+  status       String
+  title        String
+  updatedAt    DateTime @db.Date
+  updatedBy    String
+  userId       String
+}
+
+model payments {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model purchasehistories {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model topicDB {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+}
+
+model topuphistories {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 }

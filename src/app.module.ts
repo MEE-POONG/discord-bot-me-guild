@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { IntentsBitField } from 'discord.js';
 import { NecordModule } from 'necord';
 import { ConfigModule } from '@nestjs/config';
 import { NecordPaginationModule } from '@necord/pagination';
-import { GameCreateRoomModule } from './pagination/game-create-room.module';
+import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
 import { AppUpdate } from './app.update';
 
 @Module({
@@ -38,7 +37,6 @@ import { AppUpdate } from './app.update';
     }),
     GameCreateRoomModule,
   ],
-  controllers: [AppController],
   providers: [AppService, AppUpdate],
 })
 export class AppModule {}

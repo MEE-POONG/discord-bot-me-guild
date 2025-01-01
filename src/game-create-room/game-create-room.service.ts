@@ -233,7 +233,7 @@ export class GameCreateRoomService implements OnModuleInit {
             channel_text instanceof NewsChannel)
         ) {
           await channel_text.send({
-            content: `เข้าร่วมห้องเกมส์ ${channel.name}`,
+            content: `${interaction.user.username} ได้สร้างห้องเกมส์ ${channel.name}`,
             components: [
               new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder()
@@ -244,29 +244,35 @@ export class GameCreateRoomService implements OnModuleInit {
             ],
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Game: ${game.game_name}`)
-                .setThumbnail(`${IMAGE_DELIVERY_URL}/${game.logo}/wxs`)
+                .setTitle(`ห้องเกมส์ ${channel}`)
+                .setThumbnail(
+                  game_rank
+                    ? `${IMAGE_DELIVERY_URL}/${game_rank.selcetShow}/100`
+                    : `${IMAGE_DELIVERY_URL}/a7e16dc8-9047-4f0e-d397-934609548800/100`,
+                )
                 .setAuthor({
                   name: interaction.user.username,
                   iconURL: interaction.user.displayAvatarURL(),
                 })
-                .addFields({
-                  name: 'ห้อง : ',
-                  value: `${channel}`,
-                })
-                .addFields({
-                  name: 'ผู้สร้าง : ',
-                  value: `${interaction.user}`,
-                })
-                .addFields({
-                  name: 'โหมด : ',
-                  value: `${game_mode === 'RANKED' ? 'โหมดจัดอันดับ' : 'โหมดปกติ'}`,
-                })
-                .addFields({
-                  name: 'ขนาดปาร์ตี้สูงสุด : ',
-                  value: `${limit || Number(game?.partyLimit)}`,
-                })
-                .setImage(`${IMAGE_DELIVERY_URL}/${game.logo}/wxs`)
+                .setDescription(`ผู้สร้าง : ${interaction.user}`)
+                .addFields(
+                  {
+                    name: 'โหมด : ',
+                    value: `${game_rank ? `โหมดจัดอันดับ` : 'โหมดปกติ'}`,
+                    inline: true,
+                  },
+                  {
+                    name: 'แรงค์ : ',
+                    value: `${game_rank ? `แรงค์ (${game_rank.nameRank})` : '-'}`,
+                    inline: true,
+                  },
+                  {
+                    name: 'ขนาดปาร์ตี้ : ',
+                    value: `${limit || Number(game?.partyLimit)}`,
+                    inline: true,
+                  },
+                )
+                .setImage(`${IMAGE_DELIVERY_URL}/${game.logo}/100`)
                 .setColor('Red'),
             ],
           });

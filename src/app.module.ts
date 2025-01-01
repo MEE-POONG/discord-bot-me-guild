@@ -10,6 +10,7 @@ import { PrismaService } from './prisma.service';
 import { GameRankModule } from './game-rank/game-rank.module';
 import { GameTypeModule } from './game-type/game-type.module';
 import { GameModule } from './game/game.module';
+import { WelcomeModule } from './welcome/welcome.module';
 
 @Global()
 @Module({
@@ -20,6 +21,8 @@ import { GameModule } from './game/game.module';
       intents: [
         IntentsBitField.Flags.Guilds,
         IntentsBitField.Flags.GuildMessages,
+        IntentsBitField.Flags.GuildMembers,
+        IntentsBitField.Flags.GuildPresences,
         IntentsBitField.Flags.DirectMessages,
         IntentsBitField.Flags.GuildVoiceStates,
       ],
@@ -44,6 +47,7 @@ import { GameModule } from './game/game.module';
     GameRankModule,
     GameTypeModule,
     GameModule,
+    WelcomeModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

@@ -1,0 +1,49 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: string
+        uses: ASzc/change-string-case-action@v1
+        with:
+          string: ${{ github.event.repository.name }}
+
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: chunwarayut/${{ steps.string.outputs.lowercase }}:latest
+          
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - id: string
+        uses: ASzc/change-string-case-action@v1
+        with:
+          string: ${{ github.event.repository.name }}
+
+      - name: SSH Command
+        uses: D3rHase/ssh-command-action@v0.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          private_key: ${{ secrets.SSH_KEY }}
+          command: docker pull chunwarayut/${{ steps.string.outputs.lowercase }}:latest && docker stop ${{ steps.string.outputs.lowercase }} && docker rm ${{ steps.string.outputs.lowercase }} && docker run --name ${{ steps.string.outputs.lowercase }} --label io.portainer.accesscontrol.teams=discord --restart=always -d -e DATABASE_URL="${{ secrets.DATABASE_URL }}" -e DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}" -e DISCORD_DEVELOPMENT_GUILD_ID="${{ secrets.DISCORD_DEVELOPMENT_GUILD_ID }}" -e DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}" -e DISCORD_GUILD_CHANEL_ID="${{ secrets.DISCORD_GUILD_CHANEL_ID }}" -e DISCORD_GUILD_CHANEL_PARTY_ID="${{ secrets.DISCORD_GUILD_CHANEL_PARTY_ID }}" --memory=512m --memory-swap=512m --cpus=1.5 --log-opt max-size=10m --log-opt max-file=3 chunwarayut/${{ steps.string.outputs.lowercase }}:latest

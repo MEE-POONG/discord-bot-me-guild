@@ -150,6 +150,7 @@ model GameRankDB {
   deleteBy  String
   gameId    String   @db.ObjectId
   imgRank   String
+  selcetShow String
   nameRank  String
   number    BigInt
   updatedAt DateTime @db.Date

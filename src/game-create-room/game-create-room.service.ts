@@ -24,6 +24,7 @@ import {
   TextChannel,
   DMChannel,
   NewsChannel,
+  EmbedBuilder,
 } from 'discord.js';
 import { GameTypeRepository } from 'src/game-type/game-type.repository';
 import { GameRepository } from 'src/game/game.repository';
@@ -32,11 +33,7 @@ import { GameConditionMatchRepository } from 'src/game-condition-match/game-cond
 
 const CATEGORY_TITLE = 'แนวเกมส์';
 const ITEMS_PER_PAGE = 5;
-
-const game_lists = Array.from({ length: 1000 }, (_, i) => ({
-  label: `เกมส์ชื่อ ${i + 1}`,
-  value: `game_name_${i + 1}`,
-})).slice(0, 100);
+const IMAGE_DELIVERY_URL = 'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA';
 
 @Injectable()
 export class GameCreateRoomService implements OnModuleInit {
@@ -153,13 +150,13 @@ export class GameCreateRoomService implements OnModuleInit {
     const pagination = this.paginationService.get('select_menu_game');
     const page = await pagination.build();
 
-    return interaction.reply({ ...page, ephemeral: true });
+    return interaction.update({ ...page });
   }
 
   @StringSelect('SELECT_MENU_GAME')
   public async onSelectMenuGame(@Context() [interaction]: StringSelectContext) {
     this.storeSelectedValues('select_menu_game', interaction.values);
-    return interaction.reply({
+    return interaction.update({
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
@@ -179,7 +176,6 @@ export class GameCreateRoomService implements OnModuleInit {
             ]),
         ),
       ],
-      ephemeral: true,
     });
   }
 
@@ -192,19 +188,31 @@ export class GameCreateRoomService implements OnModuleInit {
       const voiceChannel = interaction.member.voice.channel;
 
       if (!voiceChannel) {
-        return interaction.reply({
+        return interaction.update({
           content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
-          ephemeral: true,
         });
       }
 
       const game_uid = this.selectedValues.find(
         (value) => value.key === 'select_menu_game',
       )?.value;
+
+      const game_rank_id = this.selectedValues.find(
+        (value) => value.key === 'select_menu_play_ranged_mode',
+      )?.value;
+
+      const game_mode = this.selectedValues.find(
+        (value) => value.key === 'select_menu_play_mode',
+      )?.value;
+
+      const game_rank = game_rank_id
+        ? await this.gameRankRepository.getGamesRankByID(game_rank_id)
+        : null;
+
       const game = await this.gameRepository.getGameById(game_uid);
 
       const channel = await interaction.guild?.channels.create({
-        name: `🎮 ${gameName} - PARTY`,
+        name: `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`,
         type: ChannelType.GuildVoice,
         userLimit: limit || Number(game?.partyLimit),
         parent: interaction.guild.channels.cache.get(
@@ -234,18 +242,49 @@ export class GameCreateRoomService implements OnModuleInit {
                   .setStyle(ButtonStyle.Primary),
               ),
             ],
+            embeds: [
+              new EmbedBuilder()
+                .setTitle(`Game: ${game.game_name}`)
+                .setThumbnail(`${IMAGE_DELIVERY_URL}/${game.logo}/wxs`)
+                .setAuthor({
+                  name: interaction.user.username,
+                  iconURL: interaction.user.displayAvatarURL(),
+                })
+                .addFields({
+                  name: 'ห้อง : ',
+                  value: `${channel}`,
+                })
+                .addFields({
+                  name: 'ผู้สร้าง : ',
+                  value: `${interaction.user}`,
+                })
+                .addFields({
+                  name: 'โหมด : ',
+                  value: `${game_mode === 'RANKED' ? 'โหมดจัดอันดับ' : 'โหมดปกติ'}`,
+                })
+                .addFields({
+                  name: 'ขนาดปาร์ตี้สูงสุด : ',
+                  value: `${limit || Number(game?.partyLimit)}`,
+                })
+                .setImage(`${IMAGE_DELIVERY_URL}/${game.logo}/wxs`)
+                .setColor('Red'),
+            ],
           });
         }
       }
 
-      return interaction.reply({
+      return interaction.update({
         content: `สร้างห้องเกมส์ ${channel.name} เรียบร้อย`,
-        ephemeral: true,
+        components: [],
+        embeds: [],
+        files: [],
       });
     } else {
-      return interaction.reply({
+      return interaction.update({
         content: 'ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้',
-        ephemeral: true,
+        components: [],
+        embeds: [],
+        files: [],
       });
     }
   }
@@ -260,20 +299,17 @@ export class GameCreateRoomService implements OnModuleInit {
 
       if (channel) {
         await interaction.member.voice.setChannel(channel);
-        return interaction.reply({
+        return interaction.update({
           content: `คุณได้เข้าร่วมห้อง ${channel.name} เรียบร้อยแล้ว`,
-          ephemeral: true,
         });
       } else {
-        return interaction.reply({
+        return interaction.update({
           content: 'ไม่พบห้องที่คุณต้องการเข้าร่วม',
-          ephemeral: true,
         });
       }
     } else {
-      return interaction.reply({
+      return interaction.update({
         content: 'ไม่สามารถย้ายสมาชิกนี้ไปยังห้องเสียงได้',
-        ephemeral: true,
       });
     }
   }
@@ -297,7 +333,7 @@ export class GameCreateRoomService implements OnModuleInit {
       }
     }
 
-    return interaction.reply({
+    return interaction.update({
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
@@ -317,7 +353,6 @@ export class GameCreateRoomService implements OnModuleInit {
             ]),
         ),
       ],
-      ephemeral: true,
     });
   }
 
@@ -341,7 +376,7 @@ export class GameCreateRoomService implements OnModuleInit {
     }
 
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
-    return interaction.reply({
+    return interaction.update({
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
@@ -357,7 +392,6 @@ export class GameCreateRoomService implements OnModuleInit {
             ),
         ),
       ],
-      ephemeral: true,
     });
   }
 
@@ -373,12 +407,15 @@ export class GameCreateRoomService implements OnModuleInit {
     const game_uid = this.selectedValues.find(
       (value) => value.key === 'select_menu_game',
     )?.value;
-    const gameRank = await this.gameRankRepository.getGamesRankByID(interaction.values[0])
+    const gameRank = await this.gameRankRepository.getGamesRankByID(
+      interaction.values[0],
+    );
     const game_condition_match =
       await this.gameConditionMatchRepository.getGamesConditionMatchByGameId(
-        game_uid, Number(gameRank.number)
+        game_uid,
+        Number(gameRank.number),
       );
-    return interaction.reply({
+    return interaction.update({
       components: [
         new ActionRowBuilder<SelectMenuBuilder>().addComponents(
           new SelectMenuBuilder()
@@ -394,7 +431,6 @@ export class GameCreateRoomService implements OnModuleInit {
             ),
         ),
       ],
-      ephemeral: true,
     });
   }
 

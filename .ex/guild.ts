@@ -1,10 +1,10 @@
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, CommandInteraction, EmbedBuilder, GuildMember, Role, StringSelectMenuBuilder, TextChannel, UserSelectMenuBuilder } from "discord.js";
 
-import { guildManage } from "@/functions/guildManage";
+import { guildManage } from "../../functions/guildManage";
 import { PrismaClient } from "@prisma/client";
-import { ClientBot } from "@/interfaces/client";
-import { userData } from "@/functions/api/userData";
-import { IReply } from "@/functions/reply/interactionReply";
+import { ClientBot } from "../../interfaces/client";
+import { userData } from "../../functions/prisma/userData";
+import { IReply } from "../../functions/reply/interactionReply";
 let prisma = new PrismaClient();
 
 module.exports = {
@@ -253,31 +253,31 @@ module.exports = {
                 if (!memberData.checkPermission()) {
                     return IReply(interaction, "คุณไม่มีสิทธ์ในการเชิญสมาชิกเข้าร่วมกิลด์", "error", true);
                 }
-
+            
                 let target = interaction.options.get("member")?.member as GuildMember;
                 if (target.roles.cache.some((r) => r.id == "1286604569744375850" || r.id == "1286604609908903946" || r.id == "1286604614417776712")) {
                     return IReply(interaction, "สมาชิกนี้มีกิลด์อยู่แล้ว", "error", true);
                 }
-
+            
                 if (target.id == interaction.user.id) {
                     return IReply(interaction, "คุณไม่สามารถเชิญตัวเองได้", "error", true);
                 }
-
+            
                 // Attempt to get the target profile
                 let targetProfile = await new userData(target.user).getProfile();
-                if (!targetProfile) return IReply(interaction, "ไม่สามารถดึงข้อมูลสมาชิกได้", "error", true);
+                if(!targetProfile) return IReply(interaction, "ไม่สามารถดึงข้อมูลสมาชิกได้", "error", true);
                 if (!targetProfile.discord_id) {
                     return IReply(interaction, "สมาชิกนี้ไม่มีข้อมูลนักผจญภัย", "error", true);
                 }
-
+            
                 // Try to invite the member
                 let res = await memberData.inviteMember(targetProfile);
-                // if (res.status == "fail") {
-                //     return IReply(interaction, res.message, "error", true);
-                // }
-
+                if (res.status == "fail") {
+                    return IReply(interaction, res.message, "error", true);
+                }
+            
                 // Invite creation successful, proceed with sending the invitation
-                // let inviteId = res.inviteId;
+                let inviteId = res.inviteId;
                 let buttonInvite = new ActionRowBuilder<ButtonBuilder>()
                     .setComponents(
                         new ButtonBuilder()
@@ -285,14 +285,14 @@ module.exports = {
                             .setLabel(`ไม่เข้าร่วม`)
                             .setEmoji("📕")
                             .setStyle(ButtonStyle.Danger),
-
+            
                         new ButtonBuilder()
-                            // .setCustomId(`guildInvite_${inviteId}`)
+                            .setCustomId(`guildInvite_${inviteId}`)
                             .setLabel(`เข้าร่วมกิลด์`)
                             .setEmoji("📗")
                             .setStyle(ButtonStyle.Success)
                     );
-
+            
                 let embeds = new EmbedBuilder()
                     .setAuthor({
                         name: `มีคำเชิญเข้าร่วมกิลด์จาก ${interaction.user.toString()}`,
@@ -308,7 +308,7 @@ module.exports = {
                         }
                     )
                     .setColor("#A4FFED");
-
+            
                 // Try to send the invitation
                 try {
                     await target.user.send({
@@ -319,12 +319,12 @@ module.exports = {
                 } catch (error) {
                     return IReply(interaction, "ไม่สามารถส่งข้อความไปยังสมาชิกได้เนื่องจาก สมาชิกปิดรับข้อความ", "error", true);
                 }
-
+            
             } catch (error) {
                 console.log(error);
                 return IReply(interaction, "ไม่สามารถสร้างคำเชิญได้", "error", true);
             }
-
+            
         }
         if (subCommand == "-join") {
             let ownerData = await new userData(interaction.user).getProfile() as any;
@@ -332,9 +332,9 @@ module.exports = {
                 return IReply(interaction, "คุณไม่สามารถขอเข้ากิลด์ได้ เนื่องจากคุณไม่มีข้อมูลนักผจญภัย โปรดลงทะเบียนก่อน", "error", true);
             }
 
-            // if (await memberData.checkGuild(ownerData)) {
-            //     return IReply(interaction, "คุณไม่สามารถขอเข้ากิลด์ได้เนื่องจากคุณมีกิลด์อยู่แล้ว", "info", true);
-            // }
+            if (await memberData.checkGuild(ownerData)) {
+                return IReply(interaction, "คุณไม่สามารถขอเข้ากิลด์ได้เนื่องจากคุณมีกิลด์อยู่แล้ว", "info", true);
+            }
 
             try {
                 let guildList = await prisma.guild.findMany();
@@ -373,7 +373,7 @@ module.exports = {
                 await interaction.reply({
                     content: "เลือกกิลด์ที่ต้องการเข้าร่วม",
                     components: actionRows,
-                    ephemeral: true
+                    ephemeral : true
                 });
 
                 const channel = interaction.channel as TextChannel;
@@ -404,7 +404,7 @@ module.exports = {
                 }
 
                 let userProfile = await new userData(interaction.user).getProfile();
-                if (!userProfile) return IReply(interaction, "ไม่สามารถดึงข้อมูลสมาชิกได้", "error", true);
+                if(!userProfile) return IReply(interaction, "ไม่สามารถดึงข้อมูลสมาชิกได้", "error", true);
                 if (!userProfile.discord_id) {
                     return IReply(interaction, "สมาชิกนี้ไม่มีข้อมูลนักผจญภัย", "error", true);
                 }
@@ -439,39 +439,39 @@ module.exports = {
             if (!memberData.checkPermission()) {
                 return IReply(interaction, "คุณไม่มีสิทธ์ในการตรวจสอบคำขอเข้าร่วมกิลด์", "error", true);
             }
-
+            
             try {
                 let ownerData = await new userData(interaction.user).getProfile();
-                if (!ownerData) return IReply(interaction, "ไม่สามารถเข้าถึงข้อมูลของคุณได้", "error", true);
+                if(!ownerData) return IReply(interaction, "ไม่สามารถเข้าถึงข้อมูลของคุณได้", "error", true);
                 let guild = await memberData.checkGuild(ownerData);
                 if (!guild) {
                     return IReply(interaction, "เกิดข้อผิดพลาดคุณไม่มีกิลด์", "error", true);
                 }
-
+            
                 console.log(guild);
                 let requestList = await prisma.inviteRequest.findMany({
                     where: {
                         guildId: guild.guildId
                     }
                 });
-
+            
                 if (!requestList.length) {
                     return IReply(interaction, "ไม่มีคำขอเข้าร่วมกิลด์", "error", true);
                 }
-
+            
                 let actionRows: ActionRowBuilder<StringSelectMenuBuilder>[] = [];
                 let userSelect: { value: string, label: string }[] = [];
-
+            
                 const guildSelectId = `accept-guild-request-${guild.guildId}`;
-
+            
                 for (const [index, request] of requestList.entries()) {
                     const username = await client.users.fetch(request.userId)
-
+            
                     userSelect.push({
                         value: username.id,
                         label: username.username
                     });
-
+            
                     if (userSelect.length === 25 || index === requestList.length - 1) {
                         const actionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
                             .addComponents(
@@ -481,19 +481,19 @@ module.exports = {
                                     .setPlaceholder("เลือกผู้ขอเข้าร่วมกิลด์")
                                     .addOptions(userSelect)
                             );
-
+            
                         actionRows.push(actionRow);
                         userSelect = [];
                     }
                 }
-
+            
                 await interaction.reply({
                     content: "เลือกผู้ขอเข้าร่วมกิลด์",
                     components: actionRows,
-                    ephemeral: true
+                    ephemeral : true
                 });
 
-
+                
                 const channel = interaction.channel as TextChannel;
 
                 const collector = channel.createMessageComponentCollector({
@@ -505,12 +505,12 @@ module.exports = {
                 collector.on("collect", async (i) => {
                     interaction.deleteReply().catch(() => { });
                 })
-
+            
             } catch (error) {
                 console.log(error)
                 return IReply(interaction, "ไม่สามารถสร้างหน้าต่างเพื่อสมาชิกได้", "error", true);
             }
-
+            
 
         }
     }

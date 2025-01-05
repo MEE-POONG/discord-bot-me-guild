@@ -11,6 +11,7 @@ import { GameRankModule } from './game-rank/game-rank.module';
 import { GameTypeModule } from './game-type/game-type.module';
 import { GameModule } from './game/game.module';
 import { WelcomeModule } from './welcome/welcome.module';
+import { FormRegisterModule } from './form-register/form-register.module';
 
 @Global()
 @Module({
@@ -48,6 +49,7 @@ import { WelcomeModule } from './welcome/welcome.module';
     GameTypeModule,
     GameModule,
     WelcomeModule,
+    FormRegisterModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

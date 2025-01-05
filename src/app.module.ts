@@ -23,12 +23,25 @@ import { UserDataModule } from './user-data/user-data.module';
     NecordModule.forRoot({
       token: process.env.DISCORD_BOT_TOKEN,
       intents: [
-        IntentsBitField.Flags.Guilds,
-        IntentsBitField.Flags.GuildMessages,
-        IntentsBitField.Flags.GuildMembers,
-        IntentsBitField.Flags.GuildPresences,
-        IntentsBitField.Flags.DirectMessages,
-        IntentsBitField.Flags.GuildVoiceStates,
+        IntentsBitField.Flags.Guilds, // การจัดการเซิร์ฟเวอร์ (เช่นคำสั่ง Slash Commands)
+        IntentsBitField.Flags.GuildMessages, // ตรวจสอบข้อความที่ส่งในเซิร์ฟเวอร์
+        IntentsBitField.Flags.GuildVoiceStates, // ตรวจสอบ Voice Channels
+        IntentsBitField.Flags.DirectMessages, // รับข้อความจาก DM ของบอท
+        IntentsBitField.Flags.GuildMembers, // รับข้อมูลสมาชิกในเซิร์ฟเวอร์
+        IntentsBitField.Flags.GuildBans, // ตรวจสอบ/จัดการการแบนสมาชิก
+        IntentsBitField.Flags.GuildEmojisAndStickers, // ใช้ Emoji และ Stickers
+        IntentsBitField.Flags.GuildIntegrations, // การทำงานร่วมกับ Integrations
+        IntentsBitField.Flags.GuildWebhooks, // ตรวจสอบการทำงานของ Webhooks
+        IntentsBitField.Flags.GuildInvites, // ตรวจสอบการสร้าง/ใช้ Invite Links
+        IntentsBitField.Flags.GuildPresences, // ตรวจสอบสถานะออนไลน์/ออฟไลน์ของสมาชิก
+        IntentsBitField.Flags.GuildMessageReactions, // ตรวจสอบปฏิกิริยา (Reactions) ในข้อความ
+        IntentsBitField.Flags.GuildMessageTyping, // ตรวจสอบว่าผู้ใช้กำลังพิมพ์ข้อความ
+        IntentsBitField.Flags.DirectMessageReactions, // ปฏิกิริยาในข้อความ DM
+        IntentsBitField.Flags.DirectMessageTyping, // ตรวจสอบการพิมพ์ข้อความใน DM
+        IntentsBitField.Flags.MessageContent, // อ่านเนื้อหาข้อความที่ส่ง (ต้องการ Privileged Intent)
+        IntentsBitField.Flags.GuildScheduledEvents, // จัดการ Events ในเซิร์ฟเวอร์
+        IntentsBitField.Flags.AutoModerationConfiguration, // ตรวจสอบการตั้งค่า Auto Moderation
+        IntentsBitField.Flags.AutoModerationExecution, // ตรวจสอบการทำงานของ Auto Moderationƒ
       ],
       development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID],
     }),

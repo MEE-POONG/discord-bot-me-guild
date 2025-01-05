@@ -12,6 +12,9 @@ import { GameTypeModule } from './game-type/game-type.module';
 import { GameModule } from './game/game.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { FormRegisterModule } from './form-register/form-register.module';
+import { GuildCreateModule } from './guild-create/guild-create.module';
+import { GuildManageModule } from './guild-manage/guild-manage.module';
+import { UserDataModule } from './user-data/user-data.module';
 
 @Global()
 @Module({
@@ -50,6 +53,9 @@ import { FormRegisterModule } from './form-register/form-register.module';
     GameModule,
     WelcomeModule,
     FormRegisterModule,
+    GuildCreateModule,
+    GuildManageModule,
+    UserDataModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

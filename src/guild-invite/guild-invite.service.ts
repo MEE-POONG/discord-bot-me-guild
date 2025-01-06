@@ -227,8 +227,16 @@ export class GuildInviteService implements OnModuleInit {
 
   @Button('guild-invite-cancel')
   async cancelInvite(@Context() [interaction]: ButtonContext): Promise<void> {
-    await interaction.message.delete();
-    await interaction.deferUpdate();
+    this.logger.log('คุณได้ตอบปฏิเสธคำเชิญนี้แล้ว');
+
+    interaction.update({
+      content: 'คุณได้ตอบปฏิเสธคำเชิญนี้แล้ว',
+      components: [],
+      embeds: [],
+      files: [],
+    });
+
+    return;
   }
 
   @Button('guild-invite-accept')

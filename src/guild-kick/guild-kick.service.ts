@@ -42,9 +42,9 @@ export class GuildKickService implements OnModuleInit {
 
     if (
       target.roles.cache.some(
-        (r) => r.id == process.env.DISCORD_GUILD_FOUNDER_ROLE_ID,
-        // ||
-        //   r.id == process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID,
+        (r) =>
+          r.id == process.env.DISCORD_GUILD_FOUNDER_ROLE_ID ||
+          r.id == process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID,
       )
     )
       return interaction.reply({

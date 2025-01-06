@@ -16,6 +16,7 @@ import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
+import { GuildInviteModule } from './guild-invite/guild-invite.module';
 
 @Global()
 @Module({
@@ -70,7 +71,8 @@ import { GuildKickModule } from './guild-kick/guild-kick.module';
     GuildCreateModule,
     GuildManageModule,
     UserDataModule,
-    GuildKickModule
+    GuildKickModule,
+    GuildInviteModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

@@ -192,14 +192,15 @@ model GameTypeGame {
 }
 
 model Guild {
-  id           String @id @default(auto()) @map("_id") @db.ObjectId
-  Logo         String @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  Logo         String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
   guild_copper BigInt?
   guild_leader String?
   guild_level  BigInt?
   guild_name   String?
   guild_roleId String?
   guild_size   BigInt?
+  GuildMembers GuildMembers[]
 }
 
 model GuildCreateReport {
@@ -213,9 +214,10 @@ model GuildCreateReport {
 
 model GuildMembers {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
-  guildId  String @db.ObjectId
+  guildId  String? @db.ObjectId
   position String
   userId   String
+  Guild    Guild? @relation(fields: [guildId], references: [id])
 }
 
 model GuildProfileDB {

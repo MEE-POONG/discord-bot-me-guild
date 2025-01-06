@@ -15,6 +15,7 @@ import { FormRegisterModule } from './form-register/form-register.module';
 import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { UserDataModule } from './user-data/user-data.module';
+import { GuildKickModule } from './guild-kick/guild-kick.module';
 
 @Global()
 @Module({
@@ -69,6 +70,7 @@ import { UserDataModule } from './user-data/user-data.module';
     GuildCreateModule,
     GuildManageModule,
     UserDataModule,
+    GuildKickModule
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

@@ -1,4 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ButtonStyle } from 'discord.js';
+import { ActionRowBuilder } from 'discord.js';
+import { ButtonBuilder } from 'discord.js';
 import { Context, ContextOf, On, Once } from 'necord';
 import { SlashCommand, SlashCommandContext } from 'necord';
 @Injectable()
@@ -26,5 +29,17 @@ export class AppService {
   })
   public async onPing(@Context() [interaction]: SlashCommandContext) {
     return interaction.reply({ content: 'Pong JS NestJS !' });
+  }
+
+  @SlashCommand({
+    name: 'remove',
+    description: 'ลบคำสั่งทั้งหมด',
+  })
+  public async onHelp(@Context() [interaction]: SlashCommandContext) {
+    interaction.client.application.commands.set([]);
+    interaction.guild.commands.set([]);
+    return interaction.reply({
+      content: 'คำสั่งทั้งหมดถูกลบ',
+    });
   }
 }

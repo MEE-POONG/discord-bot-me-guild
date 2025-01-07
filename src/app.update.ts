@@ -11,6 +11,7 @@ export class AppUpdate {
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
     this.logger.log(`Bot logged in as ${client.user.username}`);
+    client.application.commands.set([]);
   }
 
   @On('warn')

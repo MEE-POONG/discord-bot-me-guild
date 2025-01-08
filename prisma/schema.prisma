@@ -117,18 +117,6 @@ model GameRankDB {
   updatedBy  String
 }
 
-model GameRankUser {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameRegistrationDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameRegistrationEventDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
 model GameTypeDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   categoryId String   @db.ObjectId
@@ -194,10 +182,6 @@ model GuildProfileDB {
   rule        String
   updatedAt   DateTime @db.Date
   updatedBy   String
-}
-
-model IPAddress {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model ImageList {
@@ -275,29 +259,6 @@ model NewsUpdateDB {
   updatedAt   DateTime? @db.Date
   updatedBy   String?
 }
-
-model PoBigIntHistoryDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model PointHistoryDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model ProfileDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model RuleDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model Server {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  /// Field referred in an index, but found no data to define the type.
-  discordId Json?  @unique
-}
-
 model ServerDB {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt    DateTime @db.Date
@@ -307,10 +268,6 @@ model ServerDB {
   serverId     String   @unique
   serverName   String
   updatedAt    DateTime @db.Date
-}
-
-model TeamDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model UserDB {
@@ -398,20 +355,4 @@ model paymentHistory {
   updatedAt    DateTime @db.Date
   updatedBy    String
   userId       String
-}
-
-model payments {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model purchasehistories {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model topicDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model topuphistories {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }

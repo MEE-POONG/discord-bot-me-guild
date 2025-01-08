@@ -1,22 +1,23 @@
-import { Global, Module } from '@nestjs/common';
-import { AppService } from './app.service';
 import { IntentsBitField } from 'discord.js';
-import { NecordModule } from 'necord';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NecordPaginationModule } from '@necord/pagination';
-import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
+import { NecordModule } from 'necord';
+import { AppService } from './app.service';
 import { AppUpdate } from './app.update';
 import { PrismaService } from './prisma.service';
+// ดึงคำสั่ง
+import { FormRegisterModule } from './form-register/form-register.module';
+import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
 import { GameRankModule } from './game-rank/game-rank.module';
 import { GameTypeModule } from './game-type/game-type.module';
 import { GameModule } from './game/game.module';
-import { WelcomeModule } from './welcome/welcome.module';
-import { FormRegisterModule } from './form-register/form-register.module';
 import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
-import { UserDataModule } from './user-data/user-data.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
+import { UserDataModule } from './user-data/user-data.module';
+import { WelcomeModule } from './welcome/welcome.module';
 
 @Global()
 @Module({
@@ -77,4 +78,4 @@ import { GuildInviteModule } from './guild-invite/guild-invite.module';
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],
 })
-export class AppModule {}
+export class AppModule { }

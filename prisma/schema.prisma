@@ -50,26 +50,6 @@ model BlogDB {
   video       String
 }
 
-model CheckOnlineDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model Comment {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model CommentDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model CreditPoBigIntDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model CreditPointDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
 model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
@@ -83,14 +63,6 @@ model CustomerDB {
   updatedAt  DateTime @db.Date
   updatedBy  String
   username   String
-}
-
-model DiscordID {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model DiscordIDDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameCategoryDB {
@@ -114,18 +86,6 @@ model GameConditionMatchDB {
   updatedAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
   updatedBy  Json?
-}
-
-model GameEventDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameMatchDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameMatchScheduleDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameOnlineDB {
@@ -213,11 +173,11 @@ model GuildCreateReport {
 }
 
 model GuildMembers {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
   guildId  String? @db.ObjectId
   position String
   userId   String
-  Guild    Guild? @relation(fields: [guildId], references: [id])
+  Guild    Guild?  @relation(fields: [guildId], references: [id])
 }
 
 model GuildProfileDB {

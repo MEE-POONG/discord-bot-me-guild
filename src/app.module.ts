@@ -20,6 +20,7 @@ import { PrototypemModule } from './prototype/prototype.module';
 import { RegisterServermModule } from './register-server/register-server.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
+import { NewsUpdateModule } from './news-update/news-update.module';
 
 @Global()
 @Module({
@@ -74,6 +75,7 @@ import { WelcomeModule } from './welcome/welcome.module';
     GuildManageModule,
     GuildKickModule,
     GuildInviteModule,
+    NewsUpdateModule,
     PrototypemModule,
     RegisterServermModule,
     UserDataModule,

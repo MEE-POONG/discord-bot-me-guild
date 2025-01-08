@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { NewsUpdateService } from './news-update.service';
+import { EmbedBuilder } from 'discord.js';
 
 @Injectable()
 export class NewsUpdateCommands {
@@ -15,6 +16,7 @@ export class NewsUpdateCommands {
   })
   async handleLatestNews(@Context() [interaction]: SlashCommandContext) {
     try {
+      // ดึงข้อมูลข่าวล่าสุด
       const newsUpdates = await this.newsUpdateService.getLatestNews();
 
       if (newsUpdates.length === 0) {
@@ -24,15 +26,21 @@ export class NewsUpdateCommands {
         });
       }
 
-      const message = newsUpdates
-        .map(
-          (news, index) =>
-            `${index + 1}. **${news.title}**\n${news.description}\n[อ่านเพิ่มเติม](${news.creditlink})\n`,
-        )
-        .join('\n');
+      // ใช้ Embed สำหรับแสดงข้อมูลข่าว
+      const embed = new EmbedBuilder()
+        .setTitle('ข่าว 5 ลำดับล่าสุด')
+        .setColor(0x00AE86)
+        .setTimestamp();
 
-      return interaction.reply({
-        content: `**ข่าวล่าสุด**\n\n${message}`,
+      newsUpdates.forEach((news, index) => {
+        embed.addFields({
+          name: `${index + 1}. ${news.title}`,
+          value: `${news.description.length > 1024 ? news.description.substring(0, 1021) + '...' : news.description}\n[อ่านเพิ่มเติม](${news.creditlink})`,
+        });
+      });
+
+      await interaction.reply({
+        embeds: [embed],
         ephemeral: true,
       });
     } catch (error) {
@@ -51,9 +59,18 @@ export class NewsUpdateCommands {
   })
   async handleNewsDetail(
     @Context() [interaction]: SlashCommandContext,
-    @Options() options: { id: string }, // ใช้ @Options() แทน Context
+    @Options() options: { id: string },
   ) {
     try {
+      // ตรวจสอบ ID ที่รับเข้ามา
+      if (!options.id || typeof options.id !== 'string') {
+        return interaction.reply({
+          content: 'กรุณาระบุ ID ที่ถูกต้อง!',
+          ephemeral: true,
+        });
+      }
+
+      // ดึงข้อมูลข่าวตาม ID
       const news = await this.newsUpdateService.getNewsById(options.id);
 
       if (!news) {
@@ -63,8 +80,23 @@ export class NewsUpdateCommands {
         });
       }
 
-      return interaction.reply({
-        content: `**${news.title}**\n\n${news.description}\n\n[อ่านเพิ่มเติม](${news.creditlink})`,
+      // ตรวจสอบข้อความว่าเกิน 2000 ตัวอักษรหรือไม่
+      const description =
+        news.description.length > 4096
+          ? news.description.substring(0, 4093) + '...'
+          : news.description;
+
+      // ใช้ Embed สำหรับแสดงข่าว
+      const embed = new EmbedBuilder()
+        .setTitle(news.title)
+        .setDescription(description)
+        .setURL(news.creditlink)
+        .setImage(news.img)
+        .setColor(0x00AE86)
+        .setTimestamp();
+
+      await interaction.reply({
+        embeds: [embed],
         ephemeral: true,
       });
     } catch (error) {

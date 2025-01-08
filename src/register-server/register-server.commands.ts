@@ -5,23 +5,23 @@ import { RegisterServerService } from './register-server.service';
 @Injectable()
 export class RegisterServerCommands {
   private readonly logger = new Logger(RegisterServerCommands.name);
-  constructor(private readonly formRegisterService: RegisterServerService) {}
+  constructor(private readonly registerService: RegisterServerService) { }
 
   @SlashCommand({
     name: 'register-server',
-    description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+    description: 'ระบบเจ้าของดิสลงทะเบียน Discord Server',
   })
   async handleRegisterServer(@Context() [interaction]: SlashCommandContext) {
     try {
-      await this.formRegisterService.registerServerSystem(interaction);
+      await this.registerService.RegisterServerSystem(interaction);
       // return interaction.reply({
-      //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',
+      //   content: 'ลงทะเบียน DiscordServer สำเร็จ',
       //   ephemeral: true,
       // });
     } catch (error) {
-      this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
+      this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนเซิฟเวอร์ Discord ได้');
       return interaction.reply({
-        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
+        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนเซิฟเวอร์ Discord ได้',
         ephemeral: true,
       });
     }

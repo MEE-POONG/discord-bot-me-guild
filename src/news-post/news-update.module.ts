@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { NewsUpdateService } from './news-update.service'; // Import Service
-import { NewsUpdateRepository } from './news-update.repository'; // Import Repository
-import { PrismaService } from 'src/prisma.service'; // Import Prisma Service
+import { NewsUpdateService } from './news-update.service';
+import { NewsUpdateRepository } from './news-update.repository';
+import { NewsUpdateCommands } from './news-update.command';
+import { PrismaService } from 'src/prisma.service';
 
 @Module({
-  providers: [NewsUpdateService, NewsUpdateRepository, PrismaService], // ลงทะเบียน Providers
-  exports: [NewsUpdateRepository], // Export Repository
+  providers: [
+    NewsUpdateService,
+    NewsUpdateRepository,
+    NewsUpdateCommands,
+    PrismaService,
+  ],
+  exports: [NewsUpdateRepository],
 })
-export class NewsUpdateModule { }
+export class NewsUpdateModule {}

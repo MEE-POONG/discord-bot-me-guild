@@ -4,15 +4,15 @@ import { NewsUpdateDB } from '@prisma/client';
 
 @Injectable()
 export class NewsUpdateService {
-  constructor(private readonly newsUpdateRepository: NewsUpdateRepository) {}
+  constructor(private readonly repository: NewsUpdateRepository) {}
 
-  // ดึงข้อมูล 5 ลำดับล่าสุด
+  // ดึงข่าว 5 ลำดับล่าสุด
   async getLatestNews(): Promise<NewsUpdateDB[]> {
-    return this.newsUpdateRepository.getLatestNewsUpdates();
+    return this.repository.getLatestNewsUpdates();
   }
 
-  // ดึงข้อมูลข่าวตาม ID
+  // ดึงข่าวตาม ID
   async getNewsById(id: string): Promise<NewsUpdateDB> {
-    return this.newsUpdateRepository.getNewsUpdateById(id);
+    return this.repository.getNewsUpdateById(id);
   }
 }

@@ -1,34 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
+import { Injectable, Logger } from '@nestjs/common';
+import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { NewsUpdateService } from './news-update.service';
-import { NewsUpdateDto } from './news-update.dto';
- // DTO สำหรับการรับค่า
 
 @Injectable()
-export class NewsUpdateCommand {
+export class NewsUpdateCommands {
+  private readonly logger = new Logger(NewsUpdateCommands.name);
+
   constructor(private readonly newsUpdateService: NewsUpdateService) {}
 
-  // สร้างคำสั่งสำหรับดึงข่าวล่าสุด
+  // Command: ดึงข่าว 5 ลำดับล่าสุด
   @SlashCommand({
     name: 'news-latest',
     description: 'แสดงข่าว 5 ลำดับล่าสุด',
   })
-  async getLatestNews(
-    @Context() [interaction]: SlashCommandContext, // รับ context ของ interaction
-  ): Promise<void> {
+  async handleLatestNews(@Context() [interaction]: SlashCommandContext) {
     try {
-      // เรียกใช้ service สำหรับดึงข่าวล่าสุด
       const newsUpdates = await this.newsUpdateService.getLatestNews();
 
       if (newsUpdates.length === 0) {
-        await interaction.reply({
+        return interaction.reply({
           content: 'ไม่มีข่าวในระบบขณะนี้',
           ephemeral: true,
         });
-        return;
       }
 
-      // สร้างข้อความตอบกลับ
       const message = newsUpdates
         .map(
           (news, index) =>
@@ -36,47 +31,46 @@ export class NewsUpdateCommand {
         )
         .join('\n');
 
-      await interaction.reply({
+      return interaction.reply({
         content: `**ข่าวล่าสุด**\n\n${message}`,
-        ephemeral: true, // ข้อความตอบกลับเฉพาะผู้ใช้
+        ephemeral: true,
       });
     } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการดึงข่าว:', error);
-      await interaction.reply({
-        content: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง!',
+      this.logger.error('เกิดข้อผิดพลาดในการดึงข่าวล่าสุด:', error);
+      return interaction.reply({
+        content: 'ไม่สามารถดึงข้อมูลข่าวล่าสุดได้ กรุณาลองใหม่อีกครั้ง!',
         ephemeral: true,
       });
     }
   }
 
-  // สร้างคำสั่งสำหรับดึงข่าวตาม ID
+  // Command: ดึงข่าวตาม ID (ไม่ใช้ DTO)
   @SlashCommand({
     name: 'news-detail',
     description: 'แสดงรายละเอียดข่าวตาม ID',
   })
-  async getNewsById(
-    @Context() [interaction]: SlashCommandContext, // รับ context
-    @Options() options: NewsUpdateDto, // รับค่า ID ผ่าน DTO
-  ): Promise<void> {
+  async handleNewsDetail(
+    @Context() [interaction]: SlashCommandContext,
+    @Context('options') options: { id: string }, // รับค่า ID ผ่าน options
+  ) {
     try {
       const news = await this.newsUpdateService.getNewsById(options.id);
 
       if (!news) {
-        await interaction.reply({
+        return interaction.reply({
           content: 'ไม่พบบทความข่าวที่คุณค้นหา',
           ephemeral: true,
         });
-        return;
       }
 
-      await interaction.reply({
+      return interaction.reply({
         content: `**${news.title}**\n\n${news.description}\n\n[อ่านเพิ่มเติม](${news.creditlink})`,
         ephemeral: true,
       });
     } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการดึงข้อมูลข่าว:', error);
-      await interaction.reply({
-        content: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง!',
+      this.logger.error('เกิดข้อผิดพลาดในการดึงข้อมูลข่าว:', error);
+      return interaction.reply({
+        content: 'ไม่สามารถดึงข้อมูลข่าวได้ กรุณาลองใหม่อีกครั้ง!',
         ephemeral: true,
       });
     }

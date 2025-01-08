@@ -1,19 +1,13 @@
 import { Module } from '@nestjs/common';
-import { RegisterServerService } from './register-server.service';
+import { PrismaClient } from '@prisma/client';
 import { RegisterServerCommands } from './register-server.commands';
-// import { GameTypeRepository } from 'src/game-type/game-type.repository';
-// import { GameRepository } from 'src/game/game.repository';
-// import { GameRankRepository } from 'src/game-rank/game-rank.repository';
-// import { GameConditionMatchRepository } from 'src/game-condition-match/game-condition-match.repository';
+import { RegisterServerService } from './register-server.service';
 
 @Module({
   providers: [
-    RegisterServerService,
+    PrismaClient,
     RegisterServerCommands,
-    // GameTypeRepository,
-    // GameRepository,
-    // GameRankRepository,
-    // GameConditionMatchRepository,
+    RegisterServerService,
   ],
 })
 export class RegisterServermModule { }

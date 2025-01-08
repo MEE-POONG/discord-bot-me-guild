@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { GuildCreateService } from './guild-create.service';
 import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { GuildCreateDto } from './dto/length.dto';
-import { Client, UserManager } from 'discord.js';
 @Injectable()
 export class GuildCreateCommand {
   constructor(private readonly guildCreateService: GuildCreateService) {}

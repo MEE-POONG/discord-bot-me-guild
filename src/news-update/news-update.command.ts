@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { NewsUpdateService } from './news-update.service';
 
 @Injectable()
@@ -44,14 +44,14 @@ export class NewsUpdateCommands {
     }
   }
 
-  // Command: ดึงข่าวตาม ID (ไม่ใช้ DTO)
+  // Command: ดึงข่าวตาม ID
   @SlashCommand({
     name: 'news-detail',
     description: 'แสดงรายละเอียดข่าวตาม ID',
   })
   async handleNewsDetail(
     @Context() [interaction]: SlashCommandContext,
-    @Context('options') options: { id: string }, // รับค่า ID ผ่าน options
+    @Options() options: { id: string }, // ใช้ @Options() แทน Context
   ) {
     try {
       const news = await this.newsUpdateService.getNewsById(options.id);

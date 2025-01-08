@@ -16,6 +16,7 @@ import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
+import { PrototypemModule } from './prototype/prototype.module';
 import { RegisterServermModule } from './register-server/register-server.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
@@ -73,6 +74,7 @@ import { WelcomeModule } from './welcome/welcome.module';
     GuildManageModule,
     GuildKickModule,
     GuildInviteModule,
+    PrototypemModule,
     RegisterServermModule,
     UserDataModule,
     WelcomeModule,

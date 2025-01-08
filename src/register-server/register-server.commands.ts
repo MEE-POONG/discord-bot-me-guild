@@ -1,18 +1,29 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
-import { NecordPaginationService } from '@necord/pagination';
+import { RegisterServerService } from './register-server.service';
 
 @Injectable()
 export class RegisterServerCommands {
-  public constructor(
-    private readonly paginationService: NecordPaginationService,
-  ) {}
+  private readonly logger = new Logger(RegisterServerCommands.name);
+  constructor(private readonly formRegisterService: RegisterServerService) {}
 
-  @SlashCommand({ name: 'register-server', description: 'ลงทะเบียน Discord Server' })
-  public async onRegisterServer(@Context() [interaction]: SlashCommandContext) {
-    const pagination = this.paginationService.get('register-server');
-    const page = await pagination.build();
-
-    return interaction.reply({ ...page, ephemeral: true });
+  @SlashCommand({
+    name: 'form-register',
+    description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+  })
+  async handleRegisterServer(@Context() [interaction]: SlashCommandContext) {
+    try {
+      await this.formRegisterService.registerServerSystem(interaction);
+      // return interaction.reply({
+      //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',
+      //   ephemeral: true,
+      // });
+    } catch (error) {
+      this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
+      return interaction.reply({
+        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
+        ephemeral: true,
+      });
+    }
   }
 }

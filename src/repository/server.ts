@@ -6,8 +6,7 @@ export type ServerRepositoryType = {
   registerServer(
     serverId: string,
     serverName: string,
-    ownerId: string,
-    openBot: boolean
+    ownerId: string
   ): Promise<ServerDB>;
 
   getServerById(serverId: string): Promise<ServerDB | null>;
@@ -28,20 +27,19 @@ export class ServerRepository implements ServerRepositoryType {
     serverId: string,
     serverName: string,
     ownerId: string,
-    openBot: boolean
   ): Promise<ServerDB> {
     const now = new Date();
-    return this.prismaService.serverDB.create({
+    const serverSuccessfully = await this.prismaService.serverDB.create({
       data: {
         serverId,
         serverName,
         ownerId,
-        openBot,
         createdAt: now,
         registeredAt: now,
         updatedAt: now,
       },
     });
+    return serverSuccessfully; // คืนข้อมูลเซิร์ฟเวอร์ที่เพิ่งลงทะเบียนกลับมา
   }
 
   async getServerById(serverId: string): Promise<ServerDB | null> {

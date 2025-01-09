@@ -262,7 +262,7 @@ model NewsUpdateDB {
 model ServerDB {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt    DateTime @db.Date
-  openBot      Boolean
+  openBot      Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
   ownerId      String
   registeredAt DateTime @db.Date
   serverId     String   @unique

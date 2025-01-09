@@ -1,6 +1,7 @@
 import { PrismaService } from 'src/prisma.service';
 import { GameOnlineDB } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
+
 export type GameRepositoryType = {
   getGamesByType(
     typeId: string,

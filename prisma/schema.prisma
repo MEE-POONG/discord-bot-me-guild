@@ -161,11 +161,11 @@ model GuildCreateReport {
 }
 
 model GuildMembers {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  guildId  String? @db.ObjectId
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  guildId  String?  @db.ObjectId
   position String
   userId   String
-  Guild    GuildDB?  @relation(fields: [guildId], references: [id])
+  guildDB  GuildDB? @relation(fields: [guildId], references: [id])
 }
 
 model GuildProfileDB {

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  Guild,
+  GuildDB,
   GuildMembers,
   PrismaClient,
   UserDB,
@@ -25,7 +25,7 @@ import {
 @Injectable()
 export class GuildManageService {
   private readonly logger = new Logger(GuildManageService.name);
-  public guild: Guild | null = null;
+  public guildDB: GuildDB | null = null;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -42,14 +42,14 @@ export class GuildManageService {
       where: { userId: user.id },
     });
 
-    if (!guildMembers) return (this.guild = null);
+    if (!guildMembers) return (this.guildDB = null);
 
-    const guild = await this.prisma.guild.findFirst({
+    const guild = await this.prisma.guildDB.findFirst({
       where: { id: guildMembers.guildId },
     });
 
-    this.guild = guild || null;
-    return this.guild;
+    this.guildDB = guild || null;
+    return this.guildDB;
   }
 
   async checkGuild(userData: UserProfile) {
@@ -122,7 +122,7 @@ export class GuildManageService {
 
       if (report.members.length >= 1) {
         const membersList = [...report.members, interaction.user.id];
-        const guild = await this.prisma.guild.create({
+        const guild = await this.prisma.guildDB.create({
           data: {
             guild_name: report.guildName,
             guild_roleId: null,
@@ -164,7 +164,7 @@ export class GuildManageService {
           });
         }
 
-        await this.prisma.guild.update({
+        await this.prisma.guildDB.update({
           data: { guild_roleId: res.role.id },
           where: { id: guild.id },
         });
@@ -256,14 +256,14 @@ export class GuildManageService {
     }
   }
 
-  async deleteData(guild: Guild) {
-    await this.prisma.guild.delete({ where: { id: guild.id } }).catch(() => {
-      console.log(`Failed to delete guild: ${guild.id}`);
+  async deleteData(guildDB: GuildDB) {
+    await this.prisma.guildDB.delete({ where: { id: guildDB.id } }).catch(() => {
+      console.log(`Failed to delete guild: ${guildDB.id}`);
     });
     await this.prisma.guildMembers
-      .deleteMany({ where: { guildId: guild.id } })
+      .deleteMany({ where: { guildId: guildDB.id } })
       .catch(() => {
-        console.log(`Failed to delete guild members for guild: ${guild.id}`);
+        console.log(`Failed to delete guild members for guild: ${guildDB.id}`);
       });
   }
 

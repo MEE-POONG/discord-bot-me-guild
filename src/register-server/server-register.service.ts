@@ -19,15 +19,15 @@ import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Injectable()
-export class RegisterServerService {
-  private readonly logger = new Logger(RegisterServerService.name);
+export class ServerRegisterService {
+  private readonly logger = new Logger(ServerRegisterService.name);
   constructor(
     private readonly serverRepository: ServerRepository,
   ) { }
   public onModuleInit() {
-    this.logger.log('RegisterServer initialized');
+    this.logger.log('ServerRegister initialized');
   }
-  async RegisterServerSystem(interaction: any) {
+  async ServerRegisterSystem(interaction: any) {
     const guild = interaction.guild as Guild;
   
     // ตรวจสอบว่า guild มีข้อมูลหรือไม่
@@ -78,7 +78,7 @@ export class RegisterServerService {
       }
   
       // ดำเนินการลงทะเบียนเซิร์ฟเวอร์
-      const newServer = await this.serverRepository.registerServer(
+      const newServer = await this.serverRepository.ServerRegister(
         serverId,
         serverName,
         ownerId

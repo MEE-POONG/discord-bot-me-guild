@@ -1,19 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
-import { RegisterServerService } from './register-server.service';
+import { ServerRegisterService } from './server-register.service';
 
 @Injectable()
-export class RegisterServerCommands {
-  private readonly logger = new Logger(RegisterServerCommands.name);
-  constructor(private readonly registerService: RegisterServerService) { }
+export class ServerRegisterCommands {
+  private readonly logger = new Logger(ServerRegisterCommands.name);
+  constructor(private readonly registerService: ServerRegisterService) { }
 
   @SlashCommand({
-    name: 'register-server',
+    name: 'server-register',
     description: 'ระบบเจ้าของดิสลงทะเบียน Discord Server',
   })
-  async handleRegisterServer(@Context() [interaction]: SlashCommandContext) {
+  async handleServerRegister(@Context() [interaction]: SlashCommandContext) {
     try {
-      await this.registerService.RegisterServerSystem(interaction);
+      await this.registerService.ServerRegisterSystem(interaction);
       // return interaction.reply({
       //   content: 'ลงทะเบียน DiscordServer สำเร็จ',
       //   ephemeral: true,

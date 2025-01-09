@@ -21,6 +21,7 @@ import { ServerRegistermModule } from './server-register/server-register.module'
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
+import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
 
 @Global()
 @Module({
@@ -78,6 +79,7 @@ import { NewsUpdateModule } from './news-update/news-update.module';
     NewsUpdateModule,
     PrototypemModule,
     ServerRegistermModule,
+    ServerTryItOnModule,
     UserDataModule,
     WelcomeModule,
   ],

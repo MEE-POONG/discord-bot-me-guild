@@ -1,21 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UserDB } from '@prisma/client';
 import {
   EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  TextChannel,
-  ButtonInteraction,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  GuildMember,
-  ModalSubmitInteraction,
   Guild,
 } from 'discord.js';
-import { Button, ButtonContext, Context, Modal, ModalContext } from 'necord';
-import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Injectable()
@@ -35,9 +22,9 @@ export class ServerRegisterService {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle('ข้อผิดพลาดในการดึงข้อมูล')
+            .setTitle('❌ ข้อผิดพลาดในการดึงข้อมูล')
             .setDescription('ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์จาก Discord ได้')
-            .setColor(0xFF0000) // สีแดง
+            .setColor(0xff0000) // สีแดง
         ],
         ephemeral: true,
       });
@@ -48,9 +35,9 @@ export class ServerRegisterService {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle('ข้อผิดพลาดในการเข้าถึง')
-            .setDescription('คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้น')
-            .setColor(0xFF0000) // สีแดง
+            .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
+            .setDescription('🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้น')
+            .setColor(0xff0000) // สีแดง
         ],
         ephemeral: true,
       });
@@ -69,9 +56,9 @@ export class ServerRegisterService {
         return interaction.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle('ข้อผิดพลาดในการลงทะเบียน') // หัวข้อ
-              .setDescription(`เซิร์ฟเวอร์ "${existingServer.serverName}" ได้ลงทะเบียนไว้แล้ว`) // รายละเอียด
-              .setColor(0xFFA500) // สีส้ม (เตือน)
+              .setTitle('⚠️ ข้อผิดพลาดในการลงทะเบียน') // หัวข้อ
+              .setDescription(`📌 เซิร์ฟเวอร์ "${existingServer.serverName}" ได้ลงทะเบียนไว้แล้ว`) // รายละเอียด
+              .setColor(0xffa500) // สีส้ม (เตือน)
           ],
           ephemeral: true,
         });
@@ -89,9 +76,9 @@ export class ServerRegisterService {
         return interaction.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle('ลงทะเบียนสำเร็จ') // หัวข้อ
-              .setDescription(`เซิร์ฟเวอร์ "${newServer.serverName}" ลงทะเบียนสำเร็จแล้ว`) // รายละเอียด
-              .setColor(0x00FF00) // สีเขียว (สำเร็จ)
+              .setTitle('✅ ลงทะเบียนสำเร็จ') // หัวข้อ
+              .setDescription(`🎉 เซิร์ฟเวอร์ "${newServer.serverName}" ลงทะเบียนสำเร็จแล้ว`) // รายละเอียด
+              .setColor(0x00ff00) // สีเขียว (สำเร็จ)
           ],
           ephemeral: true,
         });
@@ -99,9 +86,9 @@ export class ServerRegisterService {
         return interaction.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle('ข้อผิดพลาดในการลงทะเบียน') // หัวข้อ
+              .setTitle('❌ ข้อผิดพลาดในการลงทะเบียน') // หัวข้อ
               .setDescription(`ไม่สามารถลงทะเบียน "${serverName}" DiscordServer ได้`) // รายละเอียด
-              .setColor(0xFF0000) // สีแดง
+              .setColor(0xff0000) // สีแดง
           ],
           ephemeral: true,
         });
@@ -112,14 +99,12 @@ export class ServerRegisterService {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle('ข้อผิดพลาดที่ไม่คาดคิด') // หัวข้อ
-            .setDescription(`เกิดข้อผิดพลาดในการลงทะเบียน "${serverName}" DiscordServer`) // รายละเอียด
-            .setColor(0xFF0000) // สีแดง
+            .setTitle('⚠️ ข้อผิดพลาดที่ไม่คาดคิด') // หัวข้อ
+            .setDescription(`🚨 เกิดข้อผิดพลาดในการลงทะเบียน "${serverName}" DiscordServer`) // รายละเอียด
+            .setColor(0xff0000) // สีแดง
         ],
         ephemeral: true,
       });
     }
   }
-  
-
 }

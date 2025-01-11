@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { AppUpdate } from './app.update';
 import { PrismaService } from './prisma.service';
 // ดึงคำสั่ง
+import { BlogModule } from './blog/blog.module';
 import { FormRegisterModule } from './form-register/form-register.module';
 import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
 import { GameRankModule } from './game-rank/game-rank.module';
@@ -68,6 +69,7 @@ import { ServerRolemModule } from './server-role/server-role.module';
       allowTraversal: false,
       buttonsPosition: 'end',
     }),
+    BlogModule,
     FormRegisterModule,
     GameCreateRoomModule,
     GameRankModule,

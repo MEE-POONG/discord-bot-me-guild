@@ -21,6 +21,21 @@ export async function validateServerAndRole(
     });
   }
 
+  // ตรวจสอบว่าเซิร์ฟเวอร์มีอยู่ใน ServerMasterDB หรือไม่
+  const serverMaster = await serverRepository.getServerById(guild.id);
+  if (!serverMaster) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ไม่พบการลงทะเบียนในระบบหลัก')
+          .setDescription(`เซิร์ฟเวอร์ "${guild.name}" ยังไม่ได้ลงทะเบียนในระบบหลัก`)
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+
   const existingServer = await serverRepository.getServerById(guild.id);
 
   // ตรวจสอบว่าเซิร์ฟเวอร์ลงทะเบียนในระบบหรือไม่
@@ -61,8 +76,8 @@ export async function validateServerAndRole(
           .setTitle('⚠️ พบความไม่ถูกต้อง')
           .setDescription(
             `ข้อมูลเซิร์ฟเวอร์ไม่ตรงกับข้อมูลในระบบ:\n` +
-              `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
-              `**เจ้าของ:** ${guild.ownerId}`,
+            `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
+            `**เจ้าของ:** ${guild.ownerId}`,
           )
           .setColor(0xffa500), // สีส้ม
       ],

@@ -57,7 +57,7 @@ export class ServerRoleService {
     });
   }
 
-  // Step 2: Handle Role Selection and Show Modal
+  // Step 2: Handle Role Selection
   async handleRoleSelection(interaction: StringSelectMenuInteraction) {
     const selectedRole = interaction.values[0]; // Get selected role (admin/user)
 

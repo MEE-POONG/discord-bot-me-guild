@@ -22,6 +22,7 @@ import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
 import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
+import { ServerRolemModule } from './server-role/server-role.module';
 
 @Global()
 @Module({
@@ -80,6 +81,7 @@ import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module
     PrototypemModule,
     ServerRegistermModule,
     ServerTryItOnModule,
+    ServerRolemModule,
     UserDataModule,
     WelcomeModule,
   ],

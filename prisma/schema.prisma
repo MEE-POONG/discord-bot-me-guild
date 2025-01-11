@@ -259,20 +259,24 @@ model NewsUpdateDB {
   updatedAt   DateTime? @db.Date
   updatedBy   String?
 }
+
 model ServerMasterDB {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId     String
-  serverId    String   @unique
-  serverName  String
-  createdAt   DateTime @db.Date
-  updatedAt   DateTime @db.Date
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId    String
+  serverId   String   @unique
+  serverName String
+  createdAt  DateTime @db.Date
+  updatedAt  DateTime @db.Date
 }
+
 model ServerDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   ownerId     String
   serverId    String   @unique
   serverName  String
   openBot     Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
+  adminRoleId String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
+  userRoleId  String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
   openUntilAt DateTime @db.Date
   createdAt   DateTime @db.Date
   updatedAt   DateTime @db.Date

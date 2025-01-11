@@ -64,20 +64,4 @@ export class ServerRepository implements ServerRepositoryType {
     });
   }
 
-  async openBotServer(serverId: string): Promise<ServerDB> {
-    const now = new Date();
-
-    // คำนวณวันหมดอายุเป็น 30 วันจากวันนี้
-    const openUntilAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-    return this.prismaService.serverDB.update({
-      where: { serverId },
-      data: {
-        openBot: true,
-        openUntilAt,
-        updatedAt: now,
-      },
-    });
-  }
-
 }

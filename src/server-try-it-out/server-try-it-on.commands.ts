@@ -5,7 +5,7 @@ import { ServerTryItOnService } from './server-try-it-on.service';
 @Injectable()
 export class ServerTryItOnCommands {
   private readonly logger = new Logger(ServerTryItOnCommands.name);
-  constructor(private readonly formRegisterService: ServerTryItOnService) {}
+  constructor(private readonly serverTryItOnService: ServerTryItOnService) { }
 
   @SlashCommand({
     name: 'server-try-it-on',
@@ -13,11 +13,7 @@ export class ServerTryItOnCommands {
   })
   async handleServerTryItOn(@Context() [interaction]: SlashCommandContext) {
     try {
-      await this.formRegisterService.ServerTryItOnSystem(interaction);
-      // return interaction.reply({
-      //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',
-      //   ephemeral: true,
-      // });
+      await this.serverTryItOnService.ServerTryItOnSystem(interaction);
     } catch (error) {
       this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
       return interaction.reply({

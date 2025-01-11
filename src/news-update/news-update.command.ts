@@ -3,13 +3,16 @@ import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { NewsUpdateService } from './news-update.service';
 import { EmbedBuilder } from 'discord.js';
 
+
+const IMAGE_DELIVERY_URL = 'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA';
+
+
 @Injectable()
 export class NewsUpdateCommands {
   private readonly logger = new Logger(NewsUpdateCommands.name);
 
   constructor(private readonly newsUpdateService: NewsUpdateService) {}
 
-  // Command: ดึงข่าว 3 ลำดับล่าสุด
   @SlashCommand({
     name: 'news-latest',
     description: 'ข่าวล่าสุด',
@@ -26,21 +29,22 @@ export class NewsUpdateCommands {
         });
       }
 
-      // สร้าง Embed สำหรับแสดงข่าว
-      const embed = new EmbedBuilder()
-        .setTitle('ข่าวล่าสุด')
-        .setColor(0x00ae86)
-        .setTimestamp();
+      // สร้าง Embed สำหรับแต่ละข่าว
+      const embeds = newsUpdates.map((news) => {
+        const imageUrl = `${IMAGE_DELIVERY_URL}/${news.img}/public`; // URL รูปภาพ
 
-      newsUpdates.forEach((news) => {
-        embed.addFields({
-          name: news.title,
-          value: `${news.description.substring(0, 1021)}...\n[อ่านเพิ่มเติม](${news.creditlink})`,
-        });
+        return new EmbedBuilder()
+          .setTitle(news.title)
+          .setDescription(
+            `${news.description.substring(0, 1021)}...\n[อ่านเพิ่มเติม](${news.creditlink})`
+          )
+          .setImage(imageUrl) // แสดงรูปภาพ
+          .setColor(0x00ae86)
+          .setTimestamp(news.createdAt || new Date());
       });
 
       await interaction.reply({
-        embeds: [embed],
+        embeds: embeds,
         ephemeral: true,
       });
     } catch (error) {

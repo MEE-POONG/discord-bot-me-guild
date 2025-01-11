@@ -321,7 +321,7 @@ export class GuildManageService {
     const positionRole = guildServer.roles.cache.get(
       process.env.DISCORD_GUILD_ROLE_ID,
     );
-    const position = positionRole ? positionRole.position + 1 : undefined;
+    const position = positionRole ? positionRole.position - 1 : undefined;
 
     try {
       const role = await guildServer.roles.create({

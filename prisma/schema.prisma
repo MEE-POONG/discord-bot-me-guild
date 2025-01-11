@@ -140,15 +140,20 @@ model GameTypeGame {
 }
 
 model GuildDB {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  Logo         String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
-  guild_copper BigInt?
-  guild_leader String?
-  guild_level  BigInt?
-  guild_name   String?
-  guild_roleId String?
-  guild_size   BigInt?
-  GuildMembers GuildMembers[]
+  id                       String         @id @default(auto()) @map("_id") @db.ObjectId
+  Logo                     String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
+  guild_copper             BigInt?
+  guild_leader             String?
+  guild_level              BigInt?
+  guild_name               String?
+  guild_roleId             String?
+  guild_size               BigInt?
+  guild_room_chat          String?
+  guild_room_mainHall      String?
+  guild_room_secondaryHall String?
+  guild_room_activity      String?
+  guild_room_visiting      String?
+  GuildMembers             GuildMembers[]
 }
 
 model GuildCreateReport {
@@ -269,6 +274,8 @@ model ServerDB {
   openBot         Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
   adminRoleId     String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
   userRoleId      String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
+  guildHeadRoleId   String? // บทบาทหัวหน้ากิล (optional)
+  guildCoRoleId         String? // บทบาทรองหัวหน้ากิล (optional)
   openUntilAt     DateTime @db.Date
   welcomechannel  String?
   registerChannel String?

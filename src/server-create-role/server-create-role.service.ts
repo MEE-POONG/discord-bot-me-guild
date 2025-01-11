@@ -2,16 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   EmbedBuilder,
   ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
-  ModalSubmitInteraction,
   Guild,
+  CacheType,
 } from 'discord.js';
-import { Context, Options, StringSelect, StringSelectContext } from 'necord';
-import { GuildCreateDto } from 'src/guild-create/dto/length.dto';
+import { Context, StringSelect, StringSelectContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -20,7 +16,7 @@ import { ServerCreateRoleNameDto } from './dto/length.dto';
 @Injectable()
 export class ServerCreateRoleService {
   private readonly logger = new Logger(ServerCreateRoleService.name);
-  private roleName;
+  private roleName: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -35,34 +31,27 @@ export class ServerCreateRoleService {
   async ServerCreateRoleSystem(interaction: any, options: ServerCreateRoleNameDto) {
     this.roleName = options.rolename;
 
-    const roleCheck = 'owner'; // Only owners can access this command
-    const validationError = await validateServerAndRole(interaction, roleCheck, this.serverRepository);
-    if (validationError) {
-      return validationError; // Reply has already been handled
-    }
-    const serverId = interaction.guildId;
+    const validationError = await validateServerAndRole(
+      interaction,
+      'owner',
+      this.serverRepository,
+    );
+    if (validationError) return validationError;
 
-    const server = await this.serverRepository.getServerById(serverId);
-
+    const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) {
-      return interaction.reply({
-        content: '❌ ไม่พบข้อมูลเซิร์ฟเวอร์ โปรดตรวจสอบอีกครั้ง!',
-        ephemeral: true,
-      });
+      return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์ โปรดตรวจสอบอีกครั้ง!');
     }
-    console.log(53, server);
-
 
     const roleSelectionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-
       new StringSelectMenuBuilder()
         .setCustomId('SELECT_MENU_ROLE_TYPE')
         .setPlaceholder('เลือกบทบาทที่ต้องการจัดการ')
         .addOptions([
           { label: 'Admin Role', value: 'admin', description: 'จัดการบทบาทสำหรับ Admin' },
           { label: 'User Role', value: 'user', description: 'จัดการบทบาทสำหรับ User' },
-          { label: 'Head Role', value: 'head', description: 'จัดการบทบาทสำหรับ head' },
-          { label: 'Co Role', value: 'co', description: 'จัดการบทบาทสำหรับ User' },
+          { label: 'Head Role', value: 'head', description: 'จัดการบทบาทสำหรับ Head' },
+          { label: 'Co Role', value: 'co', description: 'จัดการบทบาทสำหรับ Co' },
         ]),
     );
 
@@ -71,121 +60,84 @@ export class ServerCreateRoleService {
         new EmbedBuilder()
           .setTitle('📋 จัดการบทบาทเซิร์ฟเวอร์')
           .setDescription(
-            `กรุณาเลือกบทบาทที่คุณต้องการสร้างหรือจัดการจากรายการด้านล่าง:\n\n` +
+            `กรุณาเลือกบทบาทที่คุณต้องการสร้างหรือจัดการจากรายการด้านล่าง:\n` +
             `- Admin: สำหรับจัดการเซิร์ฟเวอร์\n` +
             `- User: สำหรับผู้ใช้งานทั่วไป\n` +
             `- Head: สำหรับหัวหน้ากลุ่ม\n` +
             `- Co: สำหรับผู้ช่วยหรือผู้ร่วมกลุ่ม`,
           )
-          .setColor(0x00bfff), // สีฟ้า
+          .setColor(0x00bfff),
       ],
       components: [roleSelectionRow],
       ephemeral: true,
     });
   }
-  private async replyStopCreate(interaction) {
+
+  @StringSelect('SELECT_MENU_ROLE_TYPE')
+  public async handleRoleRegistration(@Context() [interaction]: StringSelectContext) {
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+    if (!server) return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์');
+
+    const newRole = await interaction.guild.roles.create({ name: this.roleName });
+    const roleType = interaction.values[0];
+    const roleFieldMapping = {
+      admin: 'adminRoleId',
+      user: 'userRoleId',
+      head: 'guildHeadRoleId',
+      co: 'guildCoRoleId',
+    };
+
+    if (server[roleFieldMapping[roleType]]) {
+      return this.replyStopCreate(interaction, roleType);
+    }
+
+    try {
+      await this.serverRepository.updateServer(newRole.guild.id, {
+        [roleFieldMapping[roleType]]: newRole.id,
+      });
+      return this.replySuccess(interaction, roleType);
+    } catch (error) {
+      this.logger.error(`Error updating server role: ${error.message}`);
+      return this.replyError(interaction, '❌ เกิดข้อผิดพลาดระหว่างการสร้างบทบาท');
+    }
+  }
+
+  private replyStopCreate(interaction: StringSelectMenuInteraction<CacheType>, roleType: string) {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setTitle('❌ ไม่สามารถสร้างบทบาทใหม่ได้')
           .setDescription(
-            `บทบาท **Admin** นี้มีอยู่แล้วในเซิร์ฟเวอร์\n` +
-            `หากต้องการแก้ไขบทบาท โปรดใช้คำสั่ง \`/server-update-role\``,
+            `บทบาท **${roleType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์\n` +
+            `หากต้องการแก้ไข โปรดใช้คำสั่ง \`/server-update-role\``,
           )
-          .setColor(0xffa500), // สีส้ม
-      ],
-      ephemeral: true, // แสดงเฉพาะกับผู้ใช้ที่เรียกคำสั่ง
-    });
-  }
-
-  @StringSelect('SELECT_MENU_ROLE_TYPE')
-  public async handleRoleRegistration(@Context() [interaction]: StringSelectContext) {
-
-    const serverId = interaction.guildId;
-    const serverDB = await this.serverRepository.getServerById(serverId);
-
-    const newRole = await interaction.guild.roles.create({ name: this.roleName });
-    const isAdmin = interaction.values[0] === "admin";
-    const isUser = interaction.values[0] === "user";
-    const isHead = interaction.values[0] === "head";
-    console.log(69, newRole.guild.id);
-    console.log(69, newRole.id);
-    if (isAdmin) {
-      if (serverDB.adminRoleId) {
-        return this.replyStopCreate(interaction);
-      }
-      try {
-
-        await this.serverRepository.updateServer(newRole.guild.id, {
-          adminRoleId: newRole.id
-        });
-        return this.replySuccess(interaction);
-      } catch (error) {
-        return this.replyError(interaction);
-
-      }
-    } else if (isUser) {
-      if (serverDB.userRoleId) {
-        return this.replyStopCreate(interaction);
-      }
-      try {
-        await this.serverRepository.updateServer(newRole.guild.id, {
-          userRoleId: newRole.id
-        });
-        return this.replySuccess(interaction);
-      } catch (error) {
-        return this.replyError(interaction);
-      }
-    } else if (isHead) {
-      if (serverDB.guildHeadRoleId) {
-        return this.replyStopCreate(interaction);
-      }
-      try {
-        await this.serverRepository.updateServer(newRole.guild.id, {
-          guildHeadRoleId: newRole.id
-        });
-        return this.replySuccess(interaction);
-      } catch (error) {
-        return this.replyError(interaction);
-      }
-    } else {
-      if (serverDB.guildCoRoleId) {
-        return this.replyStopCreate(interaction);
-      }
-      try {
-        await this.serverRepository.updateServer(newRole.guild.id, {
-          guildCoRoleId: newRole.id
-        });
-        return this.replySuccess(interaction);
-      } catch (error) {
-        return this.replyError(interaction);
-      }
-    }
-  }
-  private replyError(interaction) {
-    return interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('❌ เกิดข้อผิดพลาด')
-          .setDescription(
-            `ไม่สามารถสร้างบทบาท **${this.roleName}** ของประเภท **${interaction.values[0]}** ได้\n` +
-            `โปรดตรวจสอบสิทธิ์หรือข้อมูลเซิร์ฟเวอร์ และลองใหม่อีกครั้ง`,
-          )
-          .setColor(0xff0000), // สีแดง
+          .setColor(0xffa500),
       ],
       ephemeral: true,
     });
   }
 
-  private replySuccess(interaction) {
+  private replyError(interaction: any, message: string) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ เกิดข้อผิดพลาด')
+          .setDescription(message)
+          .setColor(0xff0000),
+      ],
+      ephemeral: true,
+    });
+  }
+
+  private replySuccess(interaction: StringSelectMenuInteraction<CacheType>, roleType: string) {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setTitle('✅ การสร้างบทบาทสำเร็จ')
           .setDescription(
-            `🎉 บทบาท **${this.roleName}** สำหรับประเภท **${interaction.values[0]}** ถูกสร้างและบันทึกเรียบร้อยแล้ว`,
+            `🎉 บทบาท **${this.roleName}** สำหรับประเภท **${roleType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว`,
           )
-          .setColor(0x00ff00), // สีเขียว
+          .setColor(0x00ff00),
       ],
       ephemeral: true,
     });

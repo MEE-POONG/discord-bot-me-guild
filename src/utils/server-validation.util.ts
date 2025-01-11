@@ -21,29 +21,13 @@ export async function validateServerAndRole(
     });
   }
 
-  // ตรวจสอบว่าเซิร์ฟเวอร์มีอยู่ใน ServerMasterDB หรือไม่
-  const serverMaster = await serverRepository.getServerById(guild.id);
-  if (!serverMaster) {
+  // ดึงข้อมูลเซิร์ฟเวอร์จากฐานข้อมูล
+  const server = await serverRepository.getServerById(guild.id);
+  if (!server) {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
-          .setTitle('❌ ไม่พบการลงทะเบียนในระบบหลัก')
-          .setDescription(`เซิร์ฟเวอร์ "${guild.name}" ยังไม่ได้ลงทะเบียนในระบบหลัก`)
-          .setColor(0xff0000), // สีแดง
-      ],
-      ephemeral: true,
-    });
-  }
-
-
-  const existingServer = await serverRepository.getServerById(guild.id);
-
-  // ตรวจสอบว่าเซิร์ฟเวอร์ลงทะเบียนในระบบหรือไม่
-  if (!existingServer) {
-    return interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('❌ ไม่พบการลงทะเบียน')
+          .setTitle('❌ ไม่พบการลงทะเบียนในระบบ')
           .setDescription(`เซิร์ฟเวอร์ "${guild.name}" ยังไม่ได้ลงทะเบียนในระบบ`)
           .setColor(0xff0000), // สีแดง
       ],
@@ -51,9 +35,9 @@ export async function validateServerAndRole(
     });
   }
 
-  // ตรวจสอบว่าหมดอายุใช้งานหรือไม่
+  // ตรวจสอบว่าหมดอายุการใช้งานหรือไม่
   const now = new Date();
-  if (existingServer.openUntilAt && now > new Date(existingServer.openUntilAt)) {
+  if (server.openUntilAt && now > new Date(server.openUntilAt) && server.openBot) {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
@@ -67,9 +51,24 @@ export async function validateServerAndRole(
       ephemeral: true,
     });
   }
+  
+  if (!server.openBot) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('⛔ ยังไม่รับอนุญาติใช้งาน')
+          .setDescription(
+            `การใช้งาน Bot สำหรับเซิร์ฟเวอร์ "${guild.name}" ยังไม่รับอนุญาติใช้งาน\n` +
+            `ติดต่อผู้ให้บริการ`,
+          )
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
 
   // ตรวจสอบข้อมูลที่ลงทะเบียนว่าตรงหรือไม่
-  if (existingServer.serverName !== guild.name || existingServer.ownerId !== guild.ownerId) {
+  if (server.serverName !== guild.name || server.ownerId !== guild.ownerId) {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
@@ -87,11 +86,10 @@ export async function validateServerAndRole(
 
   // เจ้าของเซิร์ฟเวอร์ (owner) สามารถใช้งานได้ทุกคำสั่ง
   if (guild.ownerId === interaction.user.id) {
-    return null; // Validation passed
+    return null; // Validation ผ่าน
   }
 
   const member = guild.members.cache.get(interaction.user.id);
-
   if (!member) {
     return interaction.reply({
       embeds: [
@@ -104,17 +102,13 @@ export async function validateServerAndRole(
     });
   }
 
-  // ตรวจสอบบทบาทสำหรับ adminRoleId
+  // ตรวจสอบบทบาทสำหรับ adminRoleId หรือ userRoleId
   if (roleCheck === 'admin' || roleCheck === 'user') {
-    if (existingServer.adminRoleId && member.roles.cache.has(existingServer.adminRoleId)) {
-      return null; // Admin can access both admin and user commands
-    }
-  }
+    const roleIdToCheck =
+      roleCheck === 'admin' ? server.adminRoleId : server.userRoleId;
 
-  // ตรวจสอบบทบาทสำหรับ userRoleId
-  if (roleCheck === 'user') {
-    if (existingServer.userRoleId && member.roles.cache.has(existingServer.userRoleId)) {
-      return null; // User can access user commands
+    if (roleIdToCheck && member.roles.cache.has(roleIdToCheck)) {
+      return null; // ผ่านการตรวจสอบบทบาท
     }
   }
 

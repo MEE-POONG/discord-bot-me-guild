@@ -21,6 +21,7 @@ import { RegisterServermModule } from './register-server/register-server.module'
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
+import { BlogModule } from './blog/blog.module';
 
 @Global()
 @Module({
@@ -66,6 +67,7 @@ import { NewsUpdateModule } from './news-update/news-update.module';
       allowTraversal: false,
       buttonsPosition: 'end',
     }),
+    BlogModule,
     FormRegisterModule,
     GameCreateRoomModule,
     GameRankModule,

@@ -12,7 +12,7 @@ export class NewsUpdateCommands {
   // Command: ดึงข่าว 3 ลำดับล่าสุด
   @SlashCommand({
     name: 'news-latest',
-    description: 'แสดงข่าว 3 ลำดับล่าสุด',
+    description: 'ข่าวล่าสุด',
   })
   async handleLatestNews(@Context() [interaction]: SlashCommandContext) {
     try {
@@ -28,7 +28,7 @@ export class NewsUpdateCommands {
 
       // สร้าง Embed สำหรับแสดงข่าว
       const embed = new EmbedBuilder()
-        .setTitle('ข่าว 3 ลำดับล่าสุด')
+        .setTitle('ข่าวล่าสุด')
         .setColor(0x00ae86)
         .setTimestamp();
 

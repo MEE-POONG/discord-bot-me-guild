@@ -139,7 +139,7 @@ model GameTypeGame {
   updatedBy String
 }
 
-model Guild {
+model GuildDB {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
   Logo         String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
   guild_copper BigInt?
@@ -161,11 +161,11 @@ model GuildCreateReport {
 }
 
 model GuildMembers {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  guildId  String? @db.ObjectId
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  guildId  String?  @db.ObjectId
   position String
   userId   String
-  Guild    Guild?  @relation(fields: [guildId], references: [id])
+  guildDB  GuildDB? @relation(fields: [guildId], references: [id])
 }
 
 model GuildProfileDB {
@@ -259,15 +259,23 @@ model NewsUpdateDB {
   updatedAt   DateTime? @db.Date
   updatedBy   String?
 }
+model ServerMasterDB {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId     String
+  serverId    String   @unique
+  serverName  String
+  createdAt   DateTime @db.Date
+  updatedAt   DateTime @db.Date
+}
 model ServerDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt    DateTime @db.Date
-  openBot      Boolean
-  ownerId      String
-  registeredAt DateTime @db.Date
-  serverId     String   @unique
-  serverName   String
-  updatedAt    DateTime @db.Date
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId     String
+  serverId    String   @unique
+  serverName  String
+  openBot     Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
+  openUntilAt DateTime @db.Date
+  createdAt   DateTime @db.Date
+  updatedAt   DateTime @db.Date
 }
 
 model UserDB {

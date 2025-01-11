@@ -17,11 +17,11 @@ import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
 import { PrototypemModule } from './prototype/prototype.module';
-import { RegisterServermModule } from './register-server/register-server.module';
+import { ServerRegistermModule } from './server-register/server-register.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
-import { BlogModule } from './blog/blog.module';
+import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
 
 @Global()
 @Module({
@@ -79,7 +79,8 @@ import { BlogModule } from './blog/blog.module';
     GuildInviteModule,
     NewsUpdateModule,
     PrototypemModule,
-    RegisterServermModule,
+    ServerRegistermModule,
+    ServerTryItOnModule,
     UserDataModule,
     WelcomeModule,
   ],

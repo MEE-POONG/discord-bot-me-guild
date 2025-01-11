@@ -3,11 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { ServerDB } from '@prisma/client';
 
 export type ServerRepositoryType = {
-  registerServer(
+  ServerRegister(
     serverId: string,
     serverName: string,
-    ownerId: string,
-    openBot: boolean
+    ownerId: string
   ): Promise<ServerDB>;
 
   getServerById(serverId: string): Promise<ServerDB | null>;
@@ -24,24 +23,23 @@ export type ServerRepositoryType = {
 export class ServerRepository implements ServerRepositoryType {
   constructor(private readonly prismaService: PrismaService) { }
 
-  async registerServer(
+  async ServerRegister(
     serverId: string,
     serverName: string,
     ownerId: string,
-    openBot: boolean
   ): Promise<ServerDB> {
     const now = new Date();
-    return this.prismaService.serverDB.create({
+    const serverSuccessfully = await this.prismaService.serverDB.create({
       data: {
         serverId,
         serverName,
         ownerId,
-        openBot,
         createdAt: now,
-        registeredAt: now,
+        openUntilAt: now,
         updatedAt: now,
       },
     });
+    return serverSuccessfully; // คืนข้อมูลเซิร์ฟเวอร์ที่เพิ่งลงทะเบียนกลับมา
   }
 
   async getServerById(serverId: string): Promise<ServerDB | null> {
@@ -65,4 +63,21 @@ export class ServerRepository implements ServerRepositoryType {
       where: { serverId },
     });
   }
+
+  async openBotServer(serverId: string): Promise<ServerDB> {
+    const now = new Date();
+
+    // คำนวณวันหมดอายุเป็น 30 วันจากวันนี้
+    const openUntilAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    return this.prismaService.serverDB.update({
+      where: { serverId },
+      data: {
+        openBot: true,
+        openUntilAt,
+        updatedAt: now,
+      },
+    });
+  }
+
 }

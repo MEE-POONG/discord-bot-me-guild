@@ -25,6 +25,7 @@ import { NewsUpdateModule } from './news-update/news-update.module';
 import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
 import { ServerCreateRolemModule } from './server-create-role/server-create-role.module';
 import { ServerUpdateRolemModule } from './server-update-role/server-update-role.module';
+import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
 
 @Global()
 @Module({
@@ -86,6 +87,7 @@ import { ServerUpdateRolemModule } from './server-update-role/server-update-role
     ServerTryItOnModule,
     ServerCreateRolemModule,
     ServerUpdateRolemModule,
+    ServerSetRoommModule,
     UserDataModule,
     WelcomeModule,
   ],

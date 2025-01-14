@@ -79,7 +79,6 @@ export class ServerSetRoomService {
     const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์');
 
-    const newRoom = await interaction.guild.channels.create({ name: this.roomName });
     const roomType = interaction.values[0];
     const roomFieldMapping = {
       welcome: 'welcomechannel',
@@ -88,9 +87,16 @@ export class ServerSetRoomService {
       gamematch: 'gameChannel',
     };
 
-    if (server[roomFieldMapping[roomType]]) {
-      return this.replyStopCreate(interaction, roomType);
+    const existingChannel = interaction.guild.channels.cache.find(
+      channel => channel.id === server[roomFieldMapping[roomType]]
+    );
+
+    if (existingChannel) {
+      // หากพบห้อง ให้หยุดการทำงานและแจ้งเตือนผู้ใช้
+      return this.replyStopCreate(interaction, roomType, existingChannel.name);
     }
+
+    const newRoom = await interaction.guild.channels.create({ name: this.roomName });
 
     try {
       await this.serverRepository.updateServer(newRoom.guild.id, {
@@ -103,14 +109,18 @@ export class ServerSetRoomService {
     }
   }
 
-  private replyStopCreate(interaction: StringSelectMenuInteraction<CacheType>, roomType: string) {
+  private replyStopCreate(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    roomType: string,
+    existingChannelName: string,
+  ) {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setTitle('❌ ไม่สามารถสร้างบทบาทใหม่ได้')
           .setDescription(
-            `บทบาท **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์\n` +
-            `หากต้องการแก้ไข โปรดใช้คำสั่ง \`/server-update-room\``,
+            `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์\n` +
+            `หากต้องการสร้างใหม่ ลบห้อง **${existingChannelName}** ก่อน`,
           )
           .setColor(0xffa500),
       ],

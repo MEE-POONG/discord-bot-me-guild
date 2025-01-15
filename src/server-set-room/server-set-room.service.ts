@@ -6,6 +6,9 @@ import {
   StringSelectMenuInteraction,
   Guild,
   CacheType,
+  TextChannel,
+  ButtonBuilder,
+  ButtonStyle,
 } from 'discord.js';
 import { Context, StringSelect, StringSelectContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
@@ -70,7 +73,7 @@ export class ServerSetRoomService {
       components: [roomSelectionRow],
       ephemeral: true,
     });
-    
+
   }
 
   @StringSelect('SELECT_MENU_ROOM_TYPE')
@@ -97,7 +100,9 @@ export class ServerSetRoomService {
     }
 
     const newRoom = await interaction.guild.channels.create({ name: this.roomName });
-
+    if (roomType === 'register') {
+      await this.createRegistrationMessage(newRoom); // เรียกฟังก์ชันส่งข้อความ
+    }
     try {
       await this.serverRepository.updateServer(newRoom.guild.id, {
         [roomFieldMapping[roomType]]: newRoom.id,
@@ -108,6 +113,37 @@ export class ServerSetRoomService {
       return this.replyError(interaction, '❌ เกิดข้อผิดพลาดระหว่างการสร้างบทบาท');
     }
   }
+
+  private createRegistrationMessage(channel: TextChannel) {
+    const embeds = new EmbedBuilder()
+      .setTitle('ลงทะเบียนนักผจญภัย')
+      .setDescription(
+        '- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"',
+      )
+      .setColor(16760137)
+      .setFooter({
+        text: 'ข้อมูลของคุณจะถูกเก็บเป็นความลับ',
+        iconURL: 'https://cdn-icons-png.flaticon.com/512/4104/4104800.png',
+      })
+      .setImage(
+        'https://media.discordapp.net/attachments/1222826027445653536/1222826136359276595/registerguild.webp?ex=6617a095&is=66052b95&hm=17dfd3921b25470b1e99016eb9f89dd68fb1ada3481867d145c8acf81e25cec6&=&format=webp&width=839&height=400',
+      )
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
+
+    const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setCustomId('register-button')
+        .setEmoji('📝')
+        .setLabel('ลงทะเบียน')
+        .setStyle(ButtonStyle.Primary),
+    );
+
+    return channel.send({
+      embeds: [embeds],
+      components: [actionRow],
+    });
+  }
+
 
   private replyStopCreate(
     interaction: StringSelectMenuInteraction<CacheType>,
@@ -133,10 +169,10 @@ export class ServerSetRoomService {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
-        .setTitle('❌ เกิดข้อผิดพลาด')
-        .setDescription(message)
-        .setFooter({ text: 'โปรดติดต่อผู้ดูแลระบบหากปัญหายังคงอยู่' })
-        .setColor(0xff0000),
+          .setTitle('❌ เกิดข้อผิดพลาด')
+          .setDescription(message)
+          .setFooter({ text: 'โปรดติดต่อผู้ดูแลระบบหากปัญหายังคงอยู่' })
+          .setColor(0xff0000),
       ],
       ephemeral: true,
     });
@@ -146,11 +182,11 @@ export class ServerSetRoomService {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
-        .setTitle('✅ การสร้างห้องสำเร็จ')
-        .setDescription(
-          `🎉 ห้อง **${this.roomName}** สำหรับประเภท **${roomType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!`,
-        )
-        .setColor(0x00ff00),
+          .setTitle('✅ การสร้างห้องสำเร็จ')
+          .setDescription(
+            `🎉 ห้อง **${this.roomName}** สำหรับประเภท **${roomType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!`,
+          )
+          .setColor(0x00ff00),
       ],
       ephemeral: true,
     });

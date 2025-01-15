@@ -11,6 +11,7 @@ export class ServerSetRoomCommands {
   @SlashCommand({
     name: 'server-set-room',
     description: 'สร้างและกำหนดค่าห้องในเซิร์ฟเวอร์',
+    defaultMemberPermissions: '0',
   })
   async handleServerSetRoom(@Context() [interaction]: SlashCommandContext, @Options() options: ServerSetRoomDto) {
     try {

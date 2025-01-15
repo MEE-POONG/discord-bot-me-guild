@@ -10,6 +10,7 @@ export class ServerTryItOnCommands {
   @SlashCommand({
     name: 'server-try-it-on',
     description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+    defaultMemberPermissions: '0',
   })
   async handleServerTryItOn(@Context() [interaction]: SlashCommandContext) {
     try {

@@ -70,7 +70,7 @@ export class GuildManageService {
 
       if (!report) {
         return interaction.reply({
-          content: 'ไม่พบรายงานที่คุณต้องการยอเลิก',
+          content: 'ไม่พบรายงานที่คุณต้องการยกเลิก',
           ephemeral: true,
         });
       }

@@ -5,7 +5,7 @@ import {
 } from 'discord.js';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
-import { validateServerAndRole } from 'src/utils/server-validation.util';
+import { validateServerAndRole, validateServerOwner } from 'src/utils/server-validation.util';
 
 @Injectable()
 export class ServerTryItOnService {
@@ -14,7 +14,7 @@ export class ServerTryItOnService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   public onModuleInit() {
     this.logger.log('ServerTryItOn initialized');
@@ -22,8 +22,7 @@ export class ServerTryItOnService {
 
   // Handle the try-it-on system
   async ServerTryItOnSystem(interaction: any) {
-    const roleCheck = 'owner'; // Required role for this command
-    const validationError = await validateServerAndRole(interaction, roleCheck, this.serverRepository);
+    const validationError = await validateServerOwner(interaction, this.serverRepository);
     if (validationError) {
       return validationError; // Reply has already been handled
     }

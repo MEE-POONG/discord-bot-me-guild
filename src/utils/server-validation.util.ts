@@ -123,3 +123,53 @@ export async function validateServerAndRole(
     ephemeral: true,
   });
 }
+
+export async function validateServerOwner(
+  interaction: any,
+  serverRepository: ServerRepository,
+) {
+  const guild = interaction.guild as Guild;
+
+  // ตรวจสอบว่า interaction มาจาก guild หรือไม่
+  if (!guild) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ข้อผิดพลาดในการดึงข้อมูล')
+          .setDescription('ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์จาก Discord ได้')
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // ดึงข้อมูลเซิร์ฟเวอร์จากฐานข้อมูล
+  const server = await serverRepository.getServerById(guild.id);
+  if (!server) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ไม่พบการลงทะเบียนในระบบ')
+          .setDescription(`เซิร์ฟเวอร์ "${guild.name}" ยังไม่ได้ลงทะเบียนในระบบ`)
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // ตรวจสอบว่า user เป็นเจ้าของเซิร์ฟเวอร์หรือไม่
+  if (guild.ownerId !== interaction.user.id) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
+          .setDescription('🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้น')
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // หากผ่านการตรวจสอบทั้งหมด
+  return null; // Validation ผ่าน
+}

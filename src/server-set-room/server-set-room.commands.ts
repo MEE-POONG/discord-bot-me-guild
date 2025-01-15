@@ -6,19 +6,22 @@ import { ServerSetRoomDto } from './dto/length.dto';
 @Injectable()
 export class ServerSetRoomCommands {
   private readonly logger = new Logger(ServerSetRoomCommands.name);
-  constructor(private readonly ServerSetRoomService: ServerSetRoomService) {}
+  constructor(private readonly ServerSetRoomService: ServerSetRoomService) { }
 
   @SlashCommand({
     name: 'server-set-room',
-    description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+    description: 'สร้างและกำหนดค่าห้องในเซิร์ฟเวอร์',
   })
   async handleServerSetRoom(@Context() [interaction]: SlashCommandContext, @Options() options: ServerSetRoomDto) {
     try {
-      await this.ServerSetRoomService.ServerSetRoomSystem(interaction,options);
+      await this.ServerSetRoomService.ServerSetRoomSystem(interaction, options);
     } catch (error) {
-      this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
+      this.logger.error('เกิดข้อผิดพลาดขณะพยายามสร้างห้อง:', error);
       return interaction.reply({
-        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
+        content:
+          '❌ **ไม่สามารถสร้างห้องได้**\n' +
+          'เกิดข้อผิดพลาดระหว่างการประมวลผลคำสั่งของคุณ\n' +
+          'โปรดลองอีกครั้ง หรือติดต่อผู้ดูแลเซิร์ฟเวอร์หากปัญหายังคงอยู่',
         ephemeral: true,
       });
     }

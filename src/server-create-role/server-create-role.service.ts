@@ -63,6 +63,8 @@ export class ServerCreateRoleService {
             `กรุณาเลือกประเภทบทบาทที่คุณต้องการจากรายการด้านล่าง:\n` +
             `- **Admin**: บทบาทสำหรับจัดการเซิร์ฟเวอร์\n` +
             `- **User**: บทบาทสำหรับสมาชิกทั่วไป\n` +
+            `- **Visitor**: บทบาทสำหรับสมาชิกไม่ทางการ\n` +
+            `- **Adventurer**: บทบาทสำหรับสมาชิกเป็นทางการ\n` +
             `- **Head**: บทบาทสำหรับหัวหน้ากลุ่ม\n` +
             `- **Co**: บทบาทสำหรับผู้ช่วยกลุ่ม`
           )
@@ -83,6 +85,8 @@ export class ServerCreateRoleService {
     const roleFieldMapping = {
       admin: 'adminRoleId',
       user: 'userRoleId',
+      adventurer: 'adventurerRoleId',
+      visitor: 'visitorRoleId',
       head: 'guildHeadRoleId',
       co: 'guildCoRoleId',
     };
@@ -129,7 +133,7 @@ export class ServerCreateRoleService {
       ephemeral: true,
     });
   }
-  
+
   private replySuccess(interaction: StringSelectMenuInteraction<CacheType>, roleType: string) {
     return interaction.reply({
       embeds: [

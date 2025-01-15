@@ -15,12 +15,17 @@ import {
 } from 'discord.js';
 import { Button, ButtonContext, Context, Modal, ModalContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
+import { ServerRepository } from 'src/repository/server';
 import { isValidEmail } from 'src/utils/validEmail';
 
 @Injectable()
 export class FormRegisterService {
   private readonly logger = new Logger(FormRegisterService.name);
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly serverRepository: ServerRepository,
+
+  ) { }
   public onModuleInit() {
     this.logger.log('FormRegisterService initialized');
   }
@@ -58,6 +63,34 @@ export class FormRegisterService {
 
   @Button('register-button')
   async registerModal(@Context() [interaction]: ButtonContext) {
+    const checkUser = interaction.member as GuildMember;
+    const userDB = await this.prisma.userDB.findFirst({
+      where: {
+        OR: [
+          { discord_id: interaction.user.id },
+        ],
+      },
+    });
+
+    if (userDB) {
+      const server = await this.serverRepository.getServerById(interaction.guildId);
+
+      if (server.visitorRoleId) {
+        await checkUser.roles.remove(server.visitorRoleId).catch((e) => {
+        });
+      }
+
+      if (server.adventurerRoleId) {
+        await checkUser.roles.add(server.adventurerRoleId).catch((e) => {
+        });
+      }
+      // this.showProfile(interaction, userDB);
+
+      return interaction.reply({
+        content: 'ชื่อผู้ใช้งาน หรือ ข้อมูลนี้มีอยู่ในระบบแล้ว',
+        ephemeral: true,
+      });
+    }
     try {
       const createTextInput = (
         customId: string,
@@ -143,7 +176,7 @@ export class FormRegisterService {
 
       if (user) {
         return interaction.reply({
-          content: 'ชื่อผู้ใช้งาน หรือ ข้อมูลนี้มีอยู่ในระบบแล้ว',
+          content: 'เกิดข้อผิดพลาด',
           ephemeral: true,
         });
       }
@@ -165,9 +198,17 @@ export class FormRegisterService {
         data: schema,
       });
 
+      const server = await this.serverRepository.getServerById(interaction.guildId);
       this.showProfile(interaction, data);
-      await member.roles.remove('1229840227820896257').catch((e) => {});
-      await member.roles.add('1229840434914918452').catch((e) => {});
+      if (server.visitorRoleId) {
+        await member.roles.remove(server.visitorRoleId).catch((e) => {
+        });
+      }
+
+      if (server.adventurerRoleId) {
+        await member.roles.add(server.adventurerRoleId).catch((e) => {
+        });
+      }
     } catch (err) {
       this.logger.error('ไม่สามารถตรวจสอบข้อมูลสมาชิกได้', err);
       return interaction.reply({

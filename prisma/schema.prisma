@@ -266,23 +266,25 @@ model NewsUpdateDB {
 }
 
 model ServerDB {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId         String
-  serverId        String   @unique
-  serverName      String
-  Master          Boolean  @default(false)
-  openBot         Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
-  adminRoleId     String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
-  userRoleId      String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
-  guildHeadRoleId   String? // บทบาทหัวหน้ากิล (optional)
-  guildCoRoleId         String? // บทบาทรองหัวหน้ากิล (optional)
-  openUntilAt     DateTime @db.Date
-  welcomechannel  String?
-  registerChannel String?
-  newsChannel     String?
-  gameChannel     String?
-  createdAt       DateTime @db.Date
-  updatedAt       DateTime @db.Date
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId          String
+  serverId         String   @unique
+  serverName       String
+  Master           Boolean  @default(false)
+  openBot          Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
+  adminRoleId      String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
+  userRoleId       String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
+  adventurerRoleId String?
+  visitorRoleId    String?
+  guildHeadRoleId  String? // บทบาทหัวหน้ากิล (optional)
+  guildCoRoleId    String? // บทบาทรองหัวหน้ากิล (optional)
+  openUntilAt      DateTime @db.Date
+  welcomechannel   String?
+  registerChannel  String?
+  newsChannel      String?
+  gameChannel      String?
+  createdAt        DateTime @db.Date
+  updatedAt        DateTime @db.Date
 }
 
 model UserDB {

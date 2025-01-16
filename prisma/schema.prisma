@@ -29,7 +29,7 @@ model ActType {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy Json?
+  createdBy String
   deleteBy  String
   name      String
   updatedAt DateTime @db.Date
@@ -38,13 +38,13 @@ model ActType {
 
 model BlogDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt   DateTime @db.Date
-  createdBy   String
   creditlink  String
   deleteBy    String
   description String
   img         String
   title       String
+  createdAt   DateTime @db.Date
+  createdBy   String
   updatedAt   DateTime @db.Date
   updatedBy   String
   video       String
@@ -54,7 +54,7 @@ model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  Json?
+  createdBy  String
   deleteBy   String
   discord_id String   @unique
   email      String   @unique
@@ -85,7 +85,7 @@ model GameConditionMatchDB {
   rankNumber BigInt
   updatedAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  updatedBy  Json?
+  updatedBy  String
 }
 
 model GameOnlineDB {
@@ -96,7 +96,7 @@ model GameOnlineDB {
   game_name   String
   logo        String?
   /// Could not determine type: the field only had null or empty values in the sample set.
-  numberMatch Json?
+  numberMatch String
   partyLimit  BigInt
   ranking     Boolean
   updatedAt   DateTime @db.Date
@@ -106,7 +106,7 @@ model GameOnlineDB {
 model GameRankDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
-  createdBy  Json?
+  createdBy  String
   deleteBy   String
   gameId     String   @db.ObjectId
   imgRank    String
@@ -221,7 +221,7 @@ model NewsCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy Json?
+  createdBy String
   deleteBy  String
   title     String
   updatedAt DateTime @db.Date
@@ -233,7 +233,7 @@ model NewsTypeDB {
   categoryId String   @db.ObjectId
   createdAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  Json?
+  createdBy  String
   deleteBy   String
   title      String
   updatedAt  DateTime @db.Date
@@ -244,7 +244,7 @@ model NewsTypeNews {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt    DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy    Json?
+  createdBy    String
   deleteBy     String
   newsUpdateId String   @db.ObjectId
   typeId       String   @db.ObjectId
@@ -293,7 +293,7 @@ model UserDB {
   birthday          DateTime? @db.Date
   createdAt         DateTime  @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy         Json?
+  createdBy         String
   deleteBy          String
   discord_id        String    @unique
   email             String    @unique
@@ -341,9 +341,9 @@ model WebDefaultDB {
   deleteBy       String
   facebook       String
   /// Could not determine type: the field only had null or empty values in the sample set.
-  gmail          Json?
+  gmail          String
   /// Could not determine type: the field only had null or empty values in the sample set.
-  instagram      Json?
+  instagram      String
   logoCircle     String
   logoSquare     String
   logoWide       String

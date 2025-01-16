@@ -10,7 +10,7 @@ export class ServerRegisterCommands {
   @SlashCommand({
     name: 'server-register',
     description: 'ระบบเจ้าของดิสลงทะเบียน Discord Server',
-    defaultMemberPermissions: '0',
+    // defaultMemberPermissions: '0',
   })
   async handleServerRegister(@Context() [interaction]: SlashCommandContext) {
     try {

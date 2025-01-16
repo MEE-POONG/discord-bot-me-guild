@@ -54,7 +54,7 @@ import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
         IntentsBitField.Flags.AutoModerationConfiguration, // ตรวจสอบการตั้งค่า Auto Moderation
         IntentsBitField.Flags.AutoModerationExecution, // ตรวจสอบการทำงานของ Auto Moderationƒ
       ],
-      development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID],
+      development: [],
     }),
     NecordPaginationModule.forRoot({
       buttons: {

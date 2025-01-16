@@ -10,7 +10,7 @@ export class GuildKickCommands {
   @SlashCommand({
     name: 'guild-kick',
     description: 'ยกเลิกการเชิญสมาชิกเข้าร่วมกิลด์',
-    defaultMemberPermissions: '0',
+    defaultMemberPermissions: '8',
   })
   public async onGuildKick(
     @Context() [interaction]: SlashCommandContext,

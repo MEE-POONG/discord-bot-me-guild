@@ -10,7 +10,7 @@ export class GuildInviteCommands {
   @SlashCommand({
     name: 'guild-invite',
     description: 'เชิญสมาชิกเข้าร่วมกิลด์',
-    defaultMemberPermissions: '0',
+    defaultMemberPermissions: '8',
   })
   public async onGuildInvite(
     @Context() [interaction]: SlashCommandContext,

@@ -11,7 +11,7 @@ export class ServerCreateRoleCommands {
   @SlashCommand({
     name: 'server-create-role',
     description: 'ลงทะเบียนโลใช้งาน',
-    defaultMemberPermissions: '0',
+    defaultMemberPermissions: '8',
   })
   async handleServerCreateRole(@Context() [interaction]: SlashCommandContext, @Options() options: ServerCreateRoleNameDto) {
     try {

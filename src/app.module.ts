@@ -1,4 +1,4 @@
-import { IntentsBitField } from 'discord.js';
+import { Collection, Guild, IntentsBitField } from 'discord.js';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NecordPaginationModule } from '@necord/pagination';
@@ -26,6 +26,7 @@ import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module
 import { ServerCreateRolemModule } from './server-create-role/server-create-role.module';
 import { ServerUpdateRolemModule } from './server-update-role/server-update-role.module';
 import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
+import { Client, GatewayIntentBits } from 'discord.js';
 
 @Global()
 @Module({
@@ -94,4 +95,64 @@ import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],
 })
-export class AppModule { }
+export class AppModule {
+  private client: Client;
+
+  constructor() {
+    this.client = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildBans,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.MessageContent,
+      ],
+    });
+
+    this.client.login(process.env.DISCORD_BOT_TOKEN);
+    this.client.on('ready', async () => {
+      const guilds = this.client.guilds.cache;
+      const allCommands = new Map<string, any>();
+
+      for (const guild of guilds.values()) {
+        const commands = await guild.commands.fetch();
+
+        if (commands.size > 0) {
+          // Save commands to allCommands map
+          commands.forEach((command) => {
+            allCommands.set(command.name, command);
+          });
+        }
+
+        commands.forEach((command) => {
+          console.log(
+            `Command Name: ${command.name}, Command Description: ${command.description}`,
+          );
+        });
+      }
+
+      // Create commands for each guild
+      for (const guild of guilds.values()) {
+        allCommands.forEach((command) => {
+          guild.commands.create({
+            name: command.name,
+            description: command.description,
+            options: command.options as any,
+          });
+        });
+      }
+    });
+
+  }
+}

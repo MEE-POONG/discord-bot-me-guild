@@ -180,18 +180,19 @@ export class FormRegisterService {
           ephemeral: true,
         });
       }
-
+      const now = new Date();
       const schema = {
         discord_id: interaction.user.id,
         email: email,
         nickname: nickname,
-        deleteBy: '',
         birthday: new Date('01/01/1980'),
         firstname: firstname,
         lastname: lastname,
-        updatedBy: 'system',
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: now,
+        createdBy: 'system', // หรือ interaction.user.id
+        updatedAt: now,
+        updatedBy: 'system', // หรือ interaction.user.id
+        deleteBy: '', // ค่าเริ่มต้นเป็นค่าว่าง
       };
 
       const data = await this.prisma.userDB.create({

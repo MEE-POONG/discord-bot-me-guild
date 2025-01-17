@@ -1,7 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ButtonStyle } from 'discord.js';
-import { ActionRowBuilder } from 'discord.js';
-import { ButtonBuilder } from 'discord.js';
 import { Context, ContextOf, On, Once } from 'necord';
 import { SlashCommand, SlashCommandContext } from 'necord';
 @Injectable()

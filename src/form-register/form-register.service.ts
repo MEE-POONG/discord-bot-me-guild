@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UserDB } from '@prisma/client';
+import { profile } from 'console';
 import {
   EmbedBuilder,
   ActionRowBuilder,
@@ -24,8 +25,7 @@ export class FormRegisterService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-
-  ) { }
+  ) {}
   public onModuleInit() {
     this.logger.log('FormRegisterService initialized');
   }
@@ -61,33 +61,64 @@ export class FormRegisterService {
     });
   }
 
+  private createSuccessEmbed(interaction: ButtonInteraction | ModalSubmitInteraction, userDB: UserDB) {
+    return new EmbedBuilder()
+      .setAuthor({
+        name: `ลงทะเบียนนักผจญภัยสำเร็จ | ${interaction.guild?.name}`,
+        iconURL: interaction.guild?.iconURL() ?? undefined,
+      })
+      .setFields(
+        {
+          name: 'ชื่อ - นามสกุล',
+          value: `${userDB.firstname} ${userDB.lastname}`,
+          inline: true,
+        },
+        {
+          name: 'นามแฝง',
+          value: `${userDB.nickname}`,
+          inline: true,
+        },
+        {
+          name: 'วันเกิด',
+          value: `${userDB.birthday}`,
+          inline: true,
+        },
+        {
+          name: 'อีเมล',
+          value: `${userDB.email}`,
+          inline: true,
+        },
+      )
+      .setThumbnail(interaction.user.displayAvatarURL())
+      .setColor('#a0ff71');
+  }
+
   @Button('register-button')
   async registerModal(@Context() [interaction]: ButtonContext) {
     const checkUser = interaction.member as GuildMember;
     const userDB = await this.prisma.userDB.findFirst({
       where: {
-        OR: [
-          { discord_id: interaction.user.id },
-        ],
+        OR: [{ discord_id: interaction.user.id }],
       },
     });
 
     if (userDB) {
-      const server = await this.serverRepository.getServerById(interaction.guildId);
+      const server = await this.serverRepository.getServerById(
+        interaction.guildId,
+      );
 
       if (server.visitorRoleId) {
-        await checkUser.roles.remove(server.visitorRoleId).catch((e) => {
-        });
+        await checkUser.roles.remove(server.visitorRoleId).catch((e) => {});
       }
 
       if (server.adventurerRoleId) {
-        await checkUser.roles.add(server.adventurerRoleId).catch((e) => {
-        });
+        await checkUser.roles.add(server.adventurerRoleId).catch((e) => {});
       }
-      // this.showProfile(interaction, userDB);
+
+      const embeds = this.createSuccessEmbed(interaction, userDB);
 
       return interaction.reply({
-        content: 'ชื่อผู้ใช้งาน หรือ ข้อมูลนี้มีอยู่ในระบบแล้ว',
+        embeds: [embeds],
         ephemeral: true,
       });
     }
@@ -199,16 +230,22 @@ export class FormRegisterService {
         data: schema,
       });
 
-      const server = await this.serverRepository.getServerById(interaction.guildId);
-      this.showProfile(interaction, data);
+      const server = await this.serverRepository.getServerById(
+        interaction.guildId,
+      );
+
+      const embeds = this.createSuccessEmbed(interaction, data);
+      interaction.reply({
+        embeds: [embeds],
+        ephemeral: true,
+      });
+
       if (server.visitorRoleId) {
-        await member.roles.remove(server.visitorRoleId).catch((e) => {
-        });
+        await member.roles.remove(server.visitorRoleId).catch((e) => {});
       }
 
       if (server.adventurerRoleId) {
-        await member.roles.add(server.adventurerRoleId).catch((e) => {
-        });
+        await member.roles.add(server.adventurerRoleId).catch((e) => {});
       }
     } catch (err) {
       this.logger.error('ไม่สามารถตรวจสอบข้อมูลสมาชิกได้', err);
@@ -219,51 +256,4 @@ export class FormRegisterService {
     }
   }
 
-  async showProfile(
-    interaction: ButtonInteraction | ModalSubmitInteraction,
-    profile: UserDB,
-  ) {
-    try {
-      const embeds = new EmbedBuilder()
-        .setAuthor({
-          name: `ลงทะเบียนนักผจญภัยสำเร็จ | ${interaction.guild?.name}`,
-          iconURL: interaction.guild?.iconURL() ?? undefined,
-        })
-        .setFields(
-          {
-            name: 'ชื่อ - นามสกุล',
-            value: `${profile.firstname} ${profile.lastname}`,
-            inline: true,
-          },
-          {
-            name: 'นามแฝง',
-            value: `${profile.nickname}`,
-            inline: true,
-          },
-          {
-            name: 'วันเกิด',
-            value: `${profile.birthday}`,
-            inline: true,
-          },
-          {
-            name: 'อีเมล',
-            value: `${profile.email}`,
-            inline: true,
-          },
-        )
-        .setThumbnail(interaction.user.displayAvatarURL())
-        .setColor('#a0ff71');
-
-      interaction.reply({
-        embeds: [embeds],
-        ephemeral: true,
-      });
-    } catch (error) {
-      interaction.reply({
-        content: 'ไม่สามารถแสดงข้อมูลสมาชิกได้',
-        ephemeral: true,
-      });
-      this.logger.error('ไม่สามารถแสดงข้อมูลสมาชิกได้', error);
-    }
-  }
 }

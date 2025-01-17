@@ -29,7 +29,7 @@ model ActType {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy Json?
+  createdBy String
   deleteBy  String
   name      String
   updatedAt DateTime @db.Date
@@ -38,43 +38,23 @@ model ActType {
 
 model BlogDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt   DateTime @db.Date
-  createdBy   String
+  title       String
   creditlink  String
-  deleteBy    String
   description String
   img         String
-  title       String
+  video       String
+  createdAt   DateTime @db.Date
+  createdBy   String
   updatedAt   DateTime @db.Date
   updatedBy   String
-  video       String
-}
-
-model CheckOnlineDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model Comment {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model CommentDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model CreditPoBigIntDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model CreditPointDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  deleteBy    String
 }
 
 model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  Json?
+  createdBy  String
   deleteBy   String
   discord_id String   @unique
   email      String   @unique
@@ -83,14 +63,6 @@ model CustomerDB {
   updatedAt  DateTime @db.Date
   updatedBy  String
   username   String
-}
-
-model DiscordID {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model DiscordIDDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameCategoryDB {
@@ -113,19 +85,7 @@ model GameConditionMatchDB {
   rankNumber BigInt
   updatedAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  updatedBy  Json?
-}
-
-model GameEventDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameMatchDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameMatchScheduleDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  updatedBy  String
 }
 
 model GameOnlineDB {
@@ -136,7 +96,7 @@ model GameOnlineDB {
   game_name   String
   logo        String?
   /// Could not determine type: the field only had null or empty values in the sample set.
-  numberMatch Json?
+  numberMatch String
   partyLimit  BigInt
   ranking     Boolean
   updatedAt   DateTime @db.Date
@@ -146,7 +106,7 @@ model GameOnlineDB {
 model GameRankDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
-  createdBy  Json?
+  createdBy  String
   deleteBy   String
   gameId     String   @db.ObjectId
   imgRank    String
@@ -155,18 +115,6 @@ model GameRankDB {
   number     BigInt
   updatedAt  DateTime @db.Date
   updatedBy  String
-}
-
-model GameRankUser {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameRegistrationDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model GameRegistrationEventDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model GameTypeDB {
@@ -191,16 +139,21 @@ model GameTypeGame {
   updatedBy String
 }
 
-model Guild {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  Logo         String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
-  guild_copper BigInt?
-  guild_leader String?
-  guild_level  BigInt?
-  guild_name   String?
-  guild_roleId String?
-  guild_size   BigInt?
-  GuildMembers GuildMembers[]
+model GuildDB {
+  id                       String         @id @default(auto()) @map("_id") @db.ObjectId
+  Logo                     String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
+  guild_copper             BigInt?
+  guild_leader             String?
+  guild_level              BigInt?
+  guild_name               String?
+  guild_roleId             String?
+  guild_size               BigInt?
+  guild_room_chat          String?
+  guild_room_mainHall      String?
+  guild_room_secondaryHall String?
+  guild_room_activity      String?
+  guild_room_visiting      String?
+  GuildMembers             GuildMembers[]
 }
 
 model GuildCreateReport {
@@ -213,11 +166,11 @@ model GuildCreateReport {
 }
 
 model GuildMembers {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  guildId  String? @db.ObjectId
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  guildId  String?  @db.ObjectId
   position String
   userId   String
-  Guild    Guild? @relation(fields: [guildId], references: [id])
+  guildDB  GuildDB? @relation(fields: [guildId], references: [id])
 }
 
 model GuildProfileDB {
@@ -234,10 +187,6 @@ model GuildProfileDB {
   rule        String
   updatedAt   DateTime @db.Date
   updatedBy   String
-}
-
-model IPAddress {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model ImageList {
@@ -272,7 +221,7 @@ model NewsCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy Json?
+  createdBy String
   deleteBy  String
   title     String
   updatedAt DateTime @db.Date
@@ -284,7 +233,7 @@ model NewsTypeDB {
   categoryId String   @db.ObjectId
   createdAt  DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  Json?
+  createdBy  String
   deleteBy   String
   title      String
   updatedAt  DateTime @db.Date
@@ -295,7 +244,7 @@ model NewsTypeNews {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt    DateTime @db.Date
   /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy    Json?
+  createdBy    String
   deleteBy     String
   newsUpdateId String   @db.ObjectId
   typeId       String   @db.ObjectId
@@ -316,61 +265,45 @@ model NewsUpdateDB {
   updatedBy   String?
 }
 
-model PoBigIntHistoryDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model PointHistoryDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model ProfileDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model RuleDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model Server {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  /// Field referred in an index, but found no data to define the type.
-  discordId Json?  @unique
-}
-
 model ServerDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt    DateTime @db.Date
-  openBot      Boolean
-  ownerId      String
-  registeredAt DateTime @db.Date
-  serverId     String   @unique
-  serverName   String
-  updatedAt    DateTime @db.Date
-}
-
-model TeamDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId          String
+  serverId         String   @unique
+  serverName       String
+  Master           Boolean  @default(false)
+  openBot          Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
+  adminRoleId      String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
+  userRoleId       String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
+  adventurerRoleId String?
+  visitorRoleId    String?
+  guildHeadRoleId  String? // บทบาทหัวหน้ากิล (optional)
+  guildCoRoleId    String? // บทบาทรองหัวหน้ากิล (optional)
+  openUntilAt      DateTime @db.Date
+  welcomechannel   String?
+  registerChannel  String?
+  newsChannel      String?
+  gameChannel      String?
+  createdAt        DateTime @db.Date
+  updatedAt        DateTime @db.Date
 }
 
 model UserDB {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  alternativeGender String?
   birthday          DateTime? @db.Date
-  createdAt         DateTime  @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy         Json?
-  deleteBy          String
+  username          String?
   discord_id        String    @unique
   email             String    @unique
   firstname         String?
   gender            String?
+  alternativeGender String?
   lastname          String?
   nickname          String?
   password          String?
+  createdAt         DateTime  @db.Date
+  createdBy         String
+  deleteBy          String
   updatedAt         DateTime  @db.Date
   updatedBy         String
-  username          String?
 }
 
 model UserGameRank {
@@ -407,9 +340,9 @@ model WebDefaultDB {
   deleteBy       String
   facebook       String
   /// Could not determine type: the field only had null or empty values in the sample set.
-  gmail          Json?
+  gmail          String
   /// Could not determine type: the field only had null or empty values in the sample set.
-  instagram      Json?
+  instagram      String
   logoCircle     String
   logoSquare     String
   logoWide       String
@@ -438,20 +371,4 @@ model paymentHistory {
   updatedAt    DateTime @db.Date
   updatedBy    String
   userId       String
-}
-
-model payments {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model purchasehistories {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model topicDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-}
-
-model topuphistories {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }

@@ -1,22 +1,32 @@
+import { Collection, Guild, IntentsBitField } from 'discord.js';
 import { Global, Module } from '@nestjs/common';
-import { AppService } from './app.service';
-import { IntentsBitField } from 'discord.js';
-import { NecordModule } from 'necord';
 import { ConfigModule } from '@nestjs/config';
 import { NecordPaginationModule } from '@necord/pagination';
-import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
+import { NecordModule } from 'necord';
+import { AppService } from './app.service';
 import { AppUpdate } from './app.update';
 import { PrismaService } from './prisma.service';
+// ดึงคำสั่ง
+import { BlogModule } from './blog/blog.module';
+import { FormRegisterModule } from './form-register/form-register.module';
+import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
 import { GameRankModule } from './game-rank/game-rank.module';
 import { GameTypeModule } from './game-type/game-type.module';
 import { GameModule } from './game/game.module';
-import { WelcomeModule } from './welcome/welcome.module';
-import { FormRegisterModule } from './form-register/form-register.module';
 import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
-import { UserDataModule } from './user-data/user-data.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
+import { PrototypemModule } from './prototype/prototype.module';
+import { ServerRegistermModule } from './server-register/server-register.module';
+import { UserDataModule } from './user-data/user-data.module';
+import { WelcomeModule } from './welcome/welcome.module';
+import { NewsUpdateModule } from './news-update/news-update.module';
+import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
+import { ServerCreateRolemModule } from './server-create-role/server-create-role.module';
+import { ServerUpdateRolemModule } from './server-update-role/server-update-role.module';
+import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
+import { Client, GatewayIntentBits } from 'discord.js';
 
 @Global()
 @Module({
@@ -45,7 +55,7 @@ import { GuildInviteModule } from './guild-invite/guild-invite.module';
         IntentsBitField.Flags.AutoModerationConfiguration, // ตรวจสอบการตั้งค่า Auto Moderation
         IntentsBitField.Flags.AutoModerationExecution, // ตรวจสอบการทำงานของ Auto Moderationƒ
       ],
-      development: [process.env.DISCORD_DEVELOPMENT_GUILD_ID],
+      development: [],
     }),
     NecordPaginationModule.forRoot({
       buttons: {
@@ -62,19 +72,87 @@ import { GuildInviteModule } from './guild-invite/guild-invite.module';
       allowTraversal: false,
       buttonsPosition: 'end',
     }),
+    BlogModule,
+    FormRegisterModule,
     GameCreateRoomModule,
     GameRankModule,
     GameTypeModule,
     GameModule,
-    WelcomeModule,
-    FormRegisterModule,
     GuildCreateModule,
     GuildManageModule,
-    UserDataModule,
     GuildKickModule,
     GuildInviteModule,
+    NewsUpdateModule,
+    PrototypemModule,
+    ServerRegistermModule,
+    ServerTryItOnModule,
+    ServerCreateRolemModule,
+    ServerUpdateRolemModule,
+    ServerSetRoommModule,
+    UserDataModule,
+    WelcomeModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],
 })
-export class AppModule {}
+export class AppModule {
+  private client: Client;
+
+  constructor() {
+    this.client = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildBans,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.MessageContent,
+      ],
+    });
+
+    this.client.login(process.env.DISCORD_BOT_TOKEN);
+    this.client.on('ready', async () => {
+      const guilds = this.client.guilds.cache;
+      const allCommands = new Map<string, any>();
+
+      for (const guild of guilds.values()) {
+        const commands = await guild.commands.fetch();
+
+        if (commands.size > 0) {
+          // Save commands to allCommands map
+          commands.forEach((command) => {
+            allCommands.set(command.name, command);
+          });
+        }
+
+        commands.forEach((command) => {
+          console.log(
+            `Command Name: ${command.name}, Command Description: ${command.description}`,
+          );
+        });
+      }
+
+      // Create commands for each guild
+      for (const guild of guilds.values()) {
+        allCommands.forEach((command) => {
+          guild.commands.create({
+            name: command.name,
+            description: command.description,
+            options: command.options as any,
+          });
+        });
+      }
+    });
+
+  }
+}

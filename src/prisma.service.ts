@@ -4,13 +4,12 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   async onModuleInit() {
     await this.$connect();
-    this.logger.log('Successfully connected to the database using Prisma service');
+    this.logger.log('PrismaService Successfully connected to the database using Prisma service');
   }
 
   async onModuleDestroy() {

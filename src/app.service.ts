@@ -1,7 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ButtonStyle } from 'discord.js';
-import { ActionRowBuilder } from 'discord.js';
-import { ButtonBuilder } from 'discord.js';
 import { Context, ContextOf, On, Once } from 'necord';
 import { SlashCommand, SlashCommandContext } from 'necord';
 @Injectable()
@@ -10,7 +7,7 @@ export class AppService {
 
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
-    this.logger.log(`Bot logged in as ${client.user.username}`);
+    this.logger.log(`app.service Bot logged in as ${client.user.username}`);
   }
 
   @On('warn')

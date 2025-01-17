@@ -18,7 +18,14 @@ export class BlogRepository implements BlogRepositoryType {
     const now = new Date();
     return this.prismaService.blogDB.create({
       data: {
-        ...data,
+        title: data.title || 'Untitled',
+        creditlink: data.creditlink || '',
+        description: data.description || '',
+        img: data.img || '',
+        video: data.video || '',
+        createdBy: data.createdBy || 'system',
+        updatedBy: data.updatedBy || 'system',
+        deleteBy: data.deleteBy || '',
         createdAt: now,
         updatedAt: now,
       },

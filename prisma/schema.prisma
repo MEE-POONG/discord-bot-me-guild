@@ -38,16 +38,16 @@ model ActType {
 
 model BlogDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
   creditlink  String
-  deleteBy    String
   description String
   img         String
-  title       String
+  video       String
   createdAt   DateTime @db.Date
   createdBy   String
   updatedAt   DateTime @db.Date
   updatedBy   String
-  video       String
+  deleteBy    String
 }
 
 model CustomerDB {
@@ -289,22 +289,21 @@ model ServerDB {
 
 model UserDB {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  alternativeGender String?
   birthday          DateTime? @db.Date
-  createdAt         DateTime  @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy         String
-  deleteBy          String
+  username          String?
   discord_id        String    @unique
   email             String    @unique
   firstname         String?
   gender            String?
+  alternativeGender String?
   lastname          String?
   nickname          String?
   password          String?
+  createdAt         DateTime  @db.Date
+  createdBy         String
+  deleteBy          String
   updatedAt         DateTime  @db.Date
   updatedBy         String
-  username          String?
 }
 
 model UserGameRank {

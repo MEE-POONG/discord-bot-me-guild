@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { FormRegisterService } from './form-register.service';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import { getGuildIdsValues } from 'src/utils/guilds';
 
 @Injectable()
 export class FormRegisterCommands {
@@ -10,6 +11,7 @@ export class FormRegisterCommands {
   @SlashCommand({
     name: 'form-register',
     description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+    guilds: getGuildIdsValues,
   })
   async handleFormRegister(@Context() [interaction]: SlashCommandContext) {
     try {

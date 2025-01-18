@@ -102,13 +102,13 @@ export class GuildInviteService implements OnModuleInit {
           userId: interaction.user.id,
         },
         include: {
-          Guild: true,
+          guildDB: true,
         },
       });
 
       const invite = await this.prisma.inviteData.create({
         data: {
-          guildId: owner.Guild.id,
+          guildId: owner.guildDB.id,
           userId: userData.discord_id,
         },
       });
@@ -274,7 +274,7 @@ export class GuildInviteService implements OnModuleInit {
         return;
       }
 
-      const guildData = await this.prisma.guild.findFirst({
+      const guildData = await this.prisma.guildDB.findFirst({
         where: { id: inviteData.guildId },
       });
 

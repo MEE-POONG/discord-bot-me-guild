@@ -53,7 +53,7 @@ export class ServerRegisterService {
       return this.replyWithError(
         interaction,
         '❌ ข้อผิดพลาดในการลงทะเบียน',
-        `ไม่สามารถลงทะเบียน "${serverName}" DiscordServer ได้`
+        `ไม่สามารถลงทะเบียน "${serverName}" ได้`
       );
     } catch (error) {
       this.logger.error('Error registering server:', error);

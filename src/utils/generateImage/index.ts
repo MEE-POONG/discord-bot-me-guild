@@ -3,7 +3,7 @@ import { GuildMember } from 'discord.js';
 
 export function generateImage(member: GuildMember) {
   return new Promise<Buffer>((resolve, reject) => {
-    registerFont('./src/utils/generateImage/SOV_ThonBuri.ttf', {
+    registerFont('./src/utils/generateImage/FC Mission Rounded [Non-commercial].ttf', {
       family: 'CustomFont',
     });
     const canvas = createCanvas(840, 480);

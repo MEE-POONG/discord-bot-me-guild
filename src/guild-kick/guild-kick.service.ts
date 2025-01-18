@@ -84,7 +84,7 @@ export class GuildKickService implements OnModuleInit {
           userId: userData.discord_id,
         },
         include: {
-          guildDB: true,
+          Guild: true,
         },
       });
 
@@ -105,7 +105,7 @@ export class GuildKickService implements OnModuleInit {
           });
 
       const roleGuild = member.roles.cache.find(
-        (r) => r.id === guildMember.guildDB?.guild_roleId,
+        (r) => r.id === guildMember.Guild?.guild_roleId,
       );
 
       if (roleGuild)

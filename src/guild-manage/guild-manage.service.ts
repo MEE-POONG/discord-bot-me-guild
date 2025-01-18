@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  GuildDB,
+  Guild,
   GuildMembers,
   PrismaClient,
   UserDB,
@@ -25,7 +25,7 @@ import {
 @Injectable()
 export class GuildManageService {
   private readonly logger = new Logger(GuildManageService.name);
-  public guildDB: GuildDB | null = null;
+  public guild: Guild | null = null;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -42,14 +42,14 @@ export class GuildManageService {
       where: { userId: user.id },
     });
 
-    if (!guildMembers) return (this.guildDB = null);
+    if (!guildMembers) return (this.guild = null);
 
-    const guild = await this.prisma.guildDB.findFirst({
+    const guild = await this.prisma.guild.findFirst({
       where: { id: guildMembers.guildId },
     });
 
-    this.guildDB = guild || null;
-    return this.guildDB;
+    this.guild = guild || null;
+    return this.guild;
   }
 
   async checkGuild(userData: UserProfile) {
@@ -70,7 +70,7 @@ export class GuildManageService {
 
       if (!report) {
         return interaction.reply({
-          content: 'ไม่พบรายงานที่คุณต้องการยกเลิก',
+          content: 'ไม่พบรายงานที่คุณต้องการยอเลิก',
           ephemeral: true,
         });
       }
@@ -122,7 +122,7 @@ export class GuildManageService {
 
       if (report.members.length >= 1) {
         const membersList = [...report.members, interaction.user.id];
-        const guild = await this.prisma.guildDB.create({
+        const guild = await this.prisma.guild.create({
           data: {
             guild_name: report.guildName,
             guild_roleId: null,
@@ -164,7 +164,7 @@ export class GuildManageService {
           });
         }
 
-        await this.prisma.guildDB.update({
+        await this.prisma.guild.update({
           data: { guild_roleId: res.role.id },
           where: { id: guild.id },
         });
@@ -256,14 +256,14 @@ export class GuildManageService {
     }
   }
 
-  async deleteData(guildDB: GuildDB) {
-    await this.prisma.guildDB.delete({ where: { id: guildDB.id } }).catch(() => {
-      console.log(`Failed to delete guild: ${guildDB.id}`);
+  async deleteData(guild: Guild) {
+    await this.prisma.guild.delete({ where: { id: guild.id } }).catch(() => {
+      console.log(`Failed to delete guild: ${guild.id}`);
     });
     await this.prisma.guildMembers
-      .deleteMany({ where: { guildId: guildDB.id } })
+      .deleteMany({ where: { guildId: guild.id } })
       .catch(() => {
-        console.log(`Failed to delete guild members for guild: ${guildDB.id}`);
+        console.log(`Failed to delete guild members for guild: ${guild.id}`);
       });
   }
 
@@ -321,7 +321,7 @@ export class GuildManageService {
     const positionRole = guildServer.roles.cache.get(
       process.env.DISCORD_GUILD_ROLE_ID,
     );
-    const position = positionRole ? positionRole.position - 1 : undefined;
+    const position = positionRole ? positionRole.position + 1 : undefined;
 
     try {
       const role = await guildServer.roles.create({

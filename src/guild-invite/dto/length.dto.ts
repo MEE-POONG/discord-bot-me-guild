@@ -4,7 +4,7 @@ import { StringOption, UserOption } from 'necord';
 export class GuildInviteDto {
   @UserOption({
     name: 'member-to-invite',
-    description: 'สมาชิกที่จะถูกเชิญ',
+    description: 'สมาชิกที่จะถูกเติญ',
     required: true,
   })
   member: GuildMember;

@@ -12,7 +12,7 @@ import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import {
   ActionRowBuilder,
   ChannelType,
-  StringSelectMenuBuilder,
+  SelectMenuBuilder,
   GuildMember,
   CategoryChannel,
   VoiceChannel,
@@ -70,8 +70,8 @@ export class GameCreateRoomService implements OnModuleInit {
               `หน้า ${page}/${Math.ceil(gameTypes.total / gameTypes.limit)}`,
             )
             .setComponents([
-              new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-                new StringSelectMenuBuilder()
+              new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+                new SelectMenuBuilder()
                   .setCustomId('SELECT_MENU_GAME_CREATE_ROOM')
                   .setPlaceholder('เลือกประเภทเกมส์')
                   .setMaxValues(1)
@@ -124,8 +124,8 @@ export class GameCreateRoomService implements OnModuleInit {
           new PageBuilder()
             .setContent(`Page ${page}/${Math.ceil(games.total / games.limit)}`)
             .setComponents([
-              new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-                new StringSelectMenuBuilder()
+              new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+                new SelectMenuBuilder()
                   .setCustomId('SELECT_MENU_GAME')
                   .setPlaceholder('เลือกเกมส์')
                   .setMaxValues(1)
@@ -158,8 +158,8 @@ export class GameCreateRoomService implements OnModuleInit {
     this.storeSelectedValues('select_menu_game', interaction.values);
     return interaction.update({
       components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
+        new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+          new SelectMenuBuilder()
             .setCustomId('SELECT_MENU_MODE')
             .setPlaceholder('มี Range หรือไม่')
             .setMaxValues(1)
@@ -341,8 +341,8 @@ export class GameCreateRoomService implements OnModuleInit {
 
     return interaction.update({
       components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
+        new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+          new SelectMenuBuilder()
             .setCustomId('SELECT_MENU_PLAY_MODE')
             .setPlaceholder('เลือกรูปแบบการเล่น')
             .setMaxValues(1)
@@ -384,8 +384,8 @@ export class GameCreateRoomService implements OnModuleInit {
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
     return interaction.update({
       components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
+        new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+          new SelectMenuBuilder()
             .setCustomId('SELECT_MENU_PLAY_RANGED_MODE')
             .setPlaceholder('เลือกระดับการเล่น')
             .setMaxValues(1)
@@ -423,8 +423,8 @@ export class GameCreateRoomService implements OnModuleInit {
       );
     return interaction.update({
       components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
+        new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+          new SelectMenuBuilder()
             .setCustomId('SELECT_MENU_PEOPLE')
             .setPlaceholder('เลือกจำนวนผู้เล่น')
             .setMaxValues(1)

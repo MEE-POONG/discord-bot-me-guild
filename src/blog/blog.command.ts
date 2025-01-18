@@ -10,7 +10,7 @@ export class BlogCommands {
   constructor(private readonly blogService: BlogService) {}
 
   @SlashCommand({
-    name: 'blogupdate',
+    name: 'blog-update',
     description: 'ระบบสำหรับดูข้อมูลบทความล่าสุด',
   })
   async handleBlog(@Context() [interaction]: SlashCommandContext) {

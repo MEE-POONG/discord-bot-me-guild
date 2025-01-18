@@ -7,7 +7,7 @@ export class AppService {
 
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
-    this.logger.log(`Bot logged in as ${client.user.username}`);
+    this.logger.log(`app.service Bot logged in as ${client.user.username}`);
   }
 
   @On('warn')
@@ -26,5 +26,17 @@ export class AppService {
   })
   public async onPing(@Context() [interaction]: SlashCommandContext) {
     return interaction.reply({ content: 'Pong JS NestJS !' });
+  }
+
+  @SlashCommand({
+    name: 'remove',
+    description: 'ลบคำสั่งทั้งหมด',
+  })
+  public async onHelp(@Context() [interaction]: SlashCommandContext) {
+    interaction.client.application.commands.set([]);
+    interaction.guild.commands.set([]);
+    return interaction.reply({
+      content: 'คำสั่งทั้งหมดถูกลบ',
+    });
   }
 }

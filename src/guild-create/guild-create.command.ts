@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { GuildCreateService } from './guild-create.service';
 import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { GuildCreateDto } from './dto/length.dto';
-import { Client, UserManager } from 'discord.js';
 @Injectable()
 export class GuildCreateCommand {
   constructor(private readonly guildCreateService: GuildCreateService) {}
@@ -10,6 +9,7 @@ export class GuildCreateCommand {
   @SlashCommand({
     name: 'guild-create',
     description: 'สร้างกิลด์ (ฟรี)',
+    defaultMemberPermissions: '8',
   })
   async handle(
     @Context() [interaction]: SlashCommandContext,

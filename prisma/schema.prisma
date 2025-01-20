@@ -76,16 +76,16 @@ model GameCategoryDB {
 }
 
 model GameConditionMatchDB {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime @db.Date
-  createdBy  String?
-  deleteBy   String?
-  gameId     String   @db.ObjectId
-  maxParty   BigInt
-  rankNumber BigInt
-  updatedAt  DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  updatedBy  String
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  maxParty     Int
+  limitNumber  Int           @default(0)
+  gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
+  gameId       String        @db.ObjectId
+  createdAt    DateTime      @default(now())
+  createdBy    String?
+  updatedAt    DateTime      @updatedAt
+  updatedBy    String
+  deleteBy     String
 }
 
 model GameOnlineDB {
@@ -102,8 +102,9 @@ model GameOnlineDB {
   deleteBy    String
 
   // ความสัมพันธ์ many-to-many ผ่าน GameTypeGame
-  gameTypeGame GameTypeGame[] @relation("GameOnlineToGameTypeGame")
-  GameRankDB   GameRankDB[]
+  gameTypeGame         GameTypeGame[]         @relation("GameOnlineToGameTypeGame")
+  GameRankDB           GameRankDB[]
+  GameConditionMatchDB GameConditionMatchDB[]
 }
 
 model GameTypeDB {
@@ -144,7 +145,6 @@ model GameRankDB {
   imgRank      String
   selcetShow   String
   nameRank     String
-  partyLimit   Int
   number       BigInt
   createdAt    DateTime      @db.Date
   createdBy    String

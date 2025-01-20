@@ -380,8 +380,16 @@ export class GameCreateRoomService implements OnModuleInit {
         return this.createAndMoveToVoiceChannel(interaction, room_name);
       }
     }
-
+    
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
+
+    if (!game_rank.length) {
+      return interaction.update({
+        components: [],
+        content: "ไม่พบระดับการเล่นสําหรับเกมนี้",
+      })
+    }
+    
     return interaction.update({
       components: [
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(

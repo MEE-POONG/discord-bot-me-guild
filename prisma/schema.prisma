@@ -144,6 +144,7 @@ model GameRankDB {
   imgRank      String
   selcetShow   String
   nameRank     String
+  partyLimit   Int
   number       BigInt
   createdAt    DateTime      @db.Date
   createdBy    String

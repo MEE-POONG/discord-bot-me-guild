@@ -429,6 +429,14 @@ export class GameCreateRoomService implements OnModuleInit {
         game_uid,
         Number(gameRank.number),
       );
+
+      if (!game_condition_match.length) {
+        return interaction.update({
+          components: [],
+          content: "ไม่พบจำนวนผู้เล่นสําหรับเกมนี้",
+        })
+      }
+
     return interaction.update({
       components: [
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(

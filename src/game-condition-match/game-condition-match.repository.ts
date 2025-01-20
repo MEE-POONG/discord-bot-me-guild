@@ -20,7 +20,7 @@ export class GameConditionMatchRepository
   ): Promise<GameConditionMatchDB[]> {
     return this.prismaService.gameConditionMatchDB.findMany({
       where: {
-        gameId, rankNumber
+        gameId
       },
     });
   }

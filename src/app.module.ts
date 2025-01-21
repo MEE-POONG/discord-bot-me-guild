@@ -137,7 +137,7 @@ export class AppModule {
 
         commands.forEach((command) => {
           console.log(
-            `Command Name: ${command.name}, Command Description: ${command.description}`,
+            `Guild: ${guild.name}, Command Name: ${command.name}, Command Description: ${command.description}`,
           );
         });
       }

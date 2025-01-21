@@ -5,6 +5,7 @@ import { GameTypeRepository } from 'src/game-type/game-type.repository';
 import { GameRepository } from 'src/game/game.repository';
 import { GameRankRepository } from 'src/game-rank/game-rank.repository';
 import { GameConditionMatchRepository } from 'src/game-condition-match/game-condition-match.repository';
+import { ServerRepository } from 'src/repository/server';
 
 @Module({
   providers: [
@@ -14,6 +15,7 @@ import { GameConditionMatchRepository } from 'src/game-condition-match/game-cond
     GameRepository,
     GameRankRepository,
     GameConditionMatchRepository,
+    ServerRepository,
   ],
 })
 export class GameCreateRoomModule {}

@@ -30,6 +30,7 @@ import { GameTypeRepository } from 'src/game-type/game-type.repository';
 import { GameRepository } from 'src/game/game.repository';
 import { GameRankRepository } from 'src/game-rank/game-rank.repository';
 import { GameConditionMatchRepository } from 'src/game-condition-match/game-condition-match.repository';
+import { ServerRepository } from 'src/repository/server';
 
 const CATEGORY_TITLE = 'แนวเกมส์';
 const ITEMS_PER_PAGE = 5;
@@ -48,6 +49,7 @@ export class GameCreateRoomService implements OnModuleInit {
     private readonly gameRepository: GameRepository,
     private readonly gameRankRepository: GameRankRepository,
     private readonly gameConditionMatchRepository: GameConditionMatchRepository,
+    private readonly serverRepository: ServerRepository,
     client: Client,
   ) {
     this.client = client;
@@ -166,6 +168,25 @@ export class GameCreateRoomService implements OnModuleInit {
           content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
         });
       }
+      const server = await this.serverRepository.getServerById(interaction.guildId);
+      if (!server) {
+        return interaction.update({
+          content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
+        });
+      }
+      const gamePositionCreate = server.gamePositionCreate;
+      const gameMacthReplyChanel = server.gameChannel;
+
+      if (!gamePositionCreate) {
+        return interaction.update({
+          content: '❌ ไม่มีตำแหน่งที่กำหนดไว้สำหรับสร้างห้องในเซิร์ฟเวอร์นี้',
+        });
+      }
+      if (!gameMacthReplyChanel) {
+        return interaction.update({
+          content: '❌ ไม่มีตำแหน่งที่กำหนดสำหรับแจ้งเตือนการสร้างห้องเล่นเกมส์',
+        });
+      }
 
       const game_uid = this.selectedValues.find(
         (value) => value.key === 'select_menu_game',
@@ -173,10 +194,6 @@ export class GameCreateRoomService implements OnModuleInit {
 
       const game_rank_id = this.selectedValues.find(
         (value) => value.key === 'select_menu_play_ranged_mode',
-      )?.value;
-
-      const game_mode = this.selectedValues.find(
-        (value) => value.key === 'select_menu_play_mode',
       )?.value;
 
       const game_rank = game_rank_id
@@ -189,16 +206,14 @@ export class GameCreateRoomService implements OnModuleInit {
         name: `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`,
         type: ChannelType.GuildVoice,
         userLimit: limit || Number(game?.partyLimit),
-        parent: interaction.guild.channels.cache.get(
-          process.env.DISCORD_GUILD_CHANEL_ID,
-        ) as CategoryChannel,
+        parent: interaction.guild.channels.cache.get(gamePositionCreate) as CategoryChannel,
       });
 
       if (channel) {
         await interaction.member.voice.setChannel(channel);
         this.party_id = channel.id;
         const channel_text = await this.client.channels.fetch(
-          process.env.DISCORD_GUILD_CHANEL_PARTY_ID,
+          gameMacthReplyChanel,
         );
         if (
           channel_text &&
@@ -319,7 +334,7 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuPlayMode(
     @Context() [interaction]: StringSelectContext,
   ) {
-      this.storeSelectedValues('select_menu_game', interaction.values);
+    this.storeSelectedValues('select_menu_game', interaction.values);
 
     return interaction.update({
       components: [
@@ -366,6 +381,7 @@ export class GameCreateRoomService implements OnModuleInit {
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
 
     if (!game_rank.length) {
+      // console.log(384, " game_rank : ", game_rank, " game_rank : ", game_uid);
       return interaction.update({
         components: [],
         content: "ไม่พบระดับการเล่นสําหรับเกมนี้",

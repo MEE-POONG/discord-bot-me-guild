@@ -280,16 +280,37 @@ export class GameCreateRoomService implements OnModuleInit {
       }
 
       return interaction.update({
-        content: `สร้างห้องเกมส์ ${channel.name} เรียบร้อย`,
+        content: `✅ สร้างห้องเกมส์ **${channel.name}** เรียบร้อยแล้ว!`,
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('🎮 ห้องเกมส์ถูกสร้างสำเร็จ!')
+            .setDescription(`คุณได้สร้างห้อง **${channel.name}**`)
+            .setThumbnail(interaction.user.displayAvatarURL())
+            .addFields(
+              { name: 'ชื่อห้อง', value: `${channel.name}`, inline: true },
+              {
+                name: 'จำนวนผู้เล่นสูงสุด',
+                value: `${limit || Number(game?.partyLimit)}`,
+                inline: true,
+              },
+            )
+            .setColor('Blue'),
+        ],
         components: [],
-        embeds: [],
         files: [],
       });
     } else {
       return interaction.update({
-        content: 'ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้',
+        content: '❌ ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้',
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('⚠️ ข้อผิดพลาด')
+            .setDescription(
+              'ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้ กรุณาลองอีกครั้ง',
+            )
+            .setColor('Red'),
+        ],
         components: [],
-        embeds: [],
         files: [],
       });
     }
@@ -380,7 +401,7 @@ export class GameCreateRoomService implements OnModuleInit {
         return this.createAndMoveToVoiceChannel(interaction, room_name);
       }
     }
-    
+
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
 
     if (!game_rank.length) {
@@ -389,7 +410,7 @@ export class GameCreateRoomService implements OnModuleInit {
         content: "ไม่พบระดับการเล่นสําหรับเกมนี้",
       })
     }
-    
+
     return interaction.update({
       components: [
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -430,12 +451,12 @@ export class GameCreateRoomService implements OnModuleInit {
         Number(gameRank.number),
       );
 
-      if (!game_condition_match.length) {
-        return interaction.update({
-          components: [],
-          content: "ไม่พบจำนวนผู้เล่นสําหรับเกมนี้",
-        })
-      }
+    if (!game_condition_match.length) {
+      return interaction.update({
+        components: [],
+        content: "ไม่พบจำนวนผู้เล่นสําหรับเกมนี้",
+      })
+    }
 
     return interaction.update({
       components: [

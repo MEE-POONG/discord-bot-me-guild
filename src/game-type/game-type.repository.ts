@@ -44,9 +44,14 @@ export class GameTypeRepository implements GameTypeRepositoryType {
     if (!category) {
       throw new Error(`ไม่พบหมวดหมู่เกมที่ชื่อ "${categoryTitle}"`);
     }
-
+    
     const data = await this.prismaService.gameTypeDB.findMany({
-      where: { categoryId: category.id },
+      where: {
+        categoryId: category.id, // กรองตาม categoryId
+        gameTypeGame: {
+          some: {}, // เงื่อนไขนี้กรองเฉพาะรายการที่มีความสัมพันธ์กับ GameTypeGame
+        },
+      },
       skip,
       take: itemsPerPage,
     });

@@ -153,32 +153,6 @@ export class GameCreateRoomService implements OnModuleInit {
     return interaction.update({ ...page });
   }
 
-  @StringSelect('SELECT_MENU_GAME')
-  public async onSelectMenuGame(@Context() [interaction]: StringSelectContext) {
-    this.storeSelectedValues('select_menu_game', interaction.values);
-    return interaction.update({
-      components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('SELECT_MENU_MODE')
-            .setPlaceholder('มี Range หรือไม่')
-            .setMaxValues(1)
-            .setMinValues(1)
-            .setOptions([
-              {
-                label: 'มี Range',
-                value: 'HAS_RANGE',
-              },
-              {
-                label: 'ไม่มี Range',
-                value: 'NO_RANGE',
-              },
-            ]),
-        ),
-      ],
-    });
-  }
-
   private async createAndMoveToVoiceChannel(
     interaction: StringSelectMenuInteraction<CacheType>,
     gameName: string,
@@ -341,24 +315,11 @@ export class GameCreateRoomService implements OnModuleInit {
     }
   }
 
-  @StringSelect('SELECT_MENU_MODE')
+  @StringSelect('SELECT_MENU_GAME')
   public async onSelectMenuPlayMode(
     @Context() [interaction]: StringSelectContext,
   ) {
-    this.storeSelectedValues('select_menu_mode', interaction.values);
-
-    const check_no_range = interaction.values[0] === 'NO_RANGE';
-    if (check_no_range) {
-      const game_uid = this.selectedValues.find(
-        (value) => value.key === 'select_menu_game',
-      )?.value;
-      const game_name = await this.gameRepository.getGameById(game_uid);
-      const room_name = ` ${game_name.game_name} `;
-
-      if (game_uid) {
-        return this.createAndMoveToVoiceChannel(interaction, room_name);
-      }
-    }
+      this.storeSelectedValues('select_menu_game', interaction.values);
 
     return interaction.update({
       components: [

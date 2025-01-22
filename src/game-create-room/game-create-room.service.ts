@@ -39,7 +39,7 @@ const IMAGE_DELIVERY_URL = 'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA';
 @Injectable()
 export class GameCreateRoomService implements OnModuleInit {
   private readonly logger = new Logger(GameCreateRoomService.name);
-  private selectedValues: { key: string; value: string }[] = [];
+  private selectedValues: { key: string; user: string; value: string }[] = [];
   private client: Client;
   private party_id: string;
 
@@ -97,21 +97,34 @@ export class GameCreateRoomService implements OnModuleInit {
     );
   }
 
-  private storeSelectedValues(key: string, values: string[]) {
-    this.selectedValues.push({ key, value: values.join(' ') });
+  private storeSelectedValues(key: string, user: string, values: string[]) {
+    // Check if the value already exists for the user and key
+    const existingIndex = this.selectedValues.findIndex(
+      (entry) => entry.key === key && entry.user === user
+    );
+
+    if (existingIndex !== -1) {
+      // Update the existing entry
+      this.selectedValues[existingIndex].value = values.join(' ');
+    } else {
+      // Add a new entry
+      this.selectedValues.push({ key, user, value: values.join(' ') });
+    }
   }
 
   @StringSelect('SELECT_MENU_GAME_CREATE_ROOM')
   public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
     const user = interaction.user;
 
-    this.storeSelectedValues('game_create_room', interaction.values);
-    this.storeSelectedValues('user_id', [user.id]);
-    this.storeSelectedValues('user_name', [user.username]);
-    this.storeSelectedValues('user_display_name', [user.displayName]);
-    this.storeSelectedValues('user_tag', [user.tag]);
-    this.storeSelectedValues('user_avatar', [user.avatarURL()]);
-    this.storeSelectedValues('user_created_at', [user.createdAt.toISOString()]);
+    this.storeSelectedValues('game_create_room', user.id, interaction.values);
+    this.storeSelectedValues('user_id', user.id, [user.id]);
+    this.storeSelectedValues('user_name', user.id, [user.username]);
+    this.storeSelectedValues('user_display_name', user.id, [user.displayName]);
+    this.storeSelectedValues('user_tag', user.id, [user.tag]);
+    this.storeSelectedValues('user_avatar', user.id, [user.avatarURL()]);
+    this.storeSelectedValues('user_created_at', user.id, [
+      user.createdAt.toISOString(),
+    ]);
 
     const games = await this.gameRepository.getGamesByType(
       interaction.values[0],
@@ -160,6 +173,8 @@ export class GameCreateRoomService implements OnModuleInit {
     gameName: string,
     limit: number = 0,
   ) {
+    const user = interaction.user;
+
     if (interaction.member instanceof GuildMember) {
       const voiceChannel = interaction.member.voice.channel;
 
@@ -189,11 +204,11 @@ export class GameCreateRoomService implements OnModuleInit {
       }
 
       const game_uid = this.selectedValues.find(
-        (value) => value.key === 'select_menu_game',
+        (value) => value.key === 'select_menu_game' && value.user === user.id,
       )?.value;
 
       const game_rank_id = this.selectedValues.find(
-        (value) => value.key === 'select_menu_play_ranged_mode',
+        (value) => value.key === 'select_menu_play_ranged_mode' && value.user === user.id,
       )?.value;
 
       const game_rank = game_rank_id
@@ -202,19 +217,23 @@ export class GameCreateRoomService implements OnModuleInit {
 
       const game = await this.gameRepository.getGameById(game_uid);
 
+      const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`;
+
+
       const channel = await interaction.guild?.channels.create({
-        name: `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`,
+        name: channel_name,
         type: ChannelType.GuildVoice,
         userLimit: limit || Number(game?.partyLimit),
-        parent: interaction.guild.channels.cache.get(gamePositionCreate) as CategoryChannel,
+        parent: interaction.guild.channels.cache.get(
+          gamePositionCreate,
+        ) as CategoryChannel,
       });
 
       if (channel) {
         await interaction.member.voice.setChannel(channel);
         this.party_id = channel.id;
-        const channel_text = await this.client.channels.fetch(
-          gameMacthReplyChanel,
-        );
+        const channel_text =
+          await this.client.channels.fetch(gameMacthReplyChanel);
         if (
           channel_text &&
           (channel_text instanceof TextChannel ||
@@ -268,6 +287,7 @@ export class GameCreateRoomService implements OnModuleInit {
         }
       }
 
+      this.logger.log('selectedValues', this.selectedValues);
       return interaction.update({
         content: `✅ สร้างห้องเกมส์ **${channel.name}** เรียบร้อยแล้ว!`,
         embeds: [
@@ -334,7 +354,8 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuPlayMode(
     @Context() [interaction]: StringSelectContext,
   ) {
-    this.storeSelectedValues('select_menu_game', interaction.values);
+    const user = interaction.user;
+    this.storeSelectedValues('select_menu_game', user.id, interaction.values);
 
     return interaction.update({
       components: [
@@ -363,11 +384,16 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuPlayRangedMode(
     @Context() [interaction]: StringSelectContext,
   ) {
-    this.storeSelectedValues('select_menu_play_mode', interaction.values);
+    const user = interaction.user;
+    this.storeSelectedValues(
+      'select_menu_play_mode',
+      user.id,
+      interaction.values,
+    );
 
     const check_no_range = interaction.values[0] === 'NORMAL';
     const game_uid = this.selectedValues.find(
-      (value) => value.key === 'select_menu_game',
+      (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
     if (check_no_range) {
       const game_name = await this.gameRepository.getGameById(game_uid);
@@ -384,8 +410,8 @@ export class GameCreateRoomService implements OnModuleInit {
       // console.log(384, " game_rank : ", game_rank, " game_rank : ", game_uid);
       return interaction.update({
         components: [],
-        content: "ไม่พบระดับการเล่นสําหรับเกมนี้",
-      })
+        content: 'ไม่พบระดับการเล่นสําหรับเกมนี้',
+      });
     }
 
     return interaction.update({
@@ -411,14 +437,19 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuManyPeoplePlay(
     @Context() [interaction]: StringSelectContext,
   ) {
+    const user = interaction.user;
     this.storeSelectedValues(
       'select_menu_play_ranged_mode',
+      user.id,
       interaction.values,
     );
 
     const game_uid = this.selectedValues.find(
-      (value) => value.key === 'select_menu_game',
+      (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
+
+    // console.log('game_uid', game_uid);
+    
     const gameRank = await this.gameRankRepository.getGamesRankByID(
       interaction.values[0],
     );
@@ -431,8 +462,8 @@ export class GameCreateRoomService implements OnModuleInit {
     if (!game_condition_match.length) {
       return interaction.update({
         components: [],
-        content: "ไม่พบจำนวนผู้เล่นสําหรับเกมนี้",
-      })
+        content: 'ไม่พบจำนวนผู้เล่นสําหรับเกมนี้',
+      });
     }
 
     return interaction.update({
@@ -456,12 +487,28 @@ export class GameCreateRoomService implements OnModuleInit {
 
   @StringSelect('SELECT_MENU_PEOPLE')
   public async onSelectPeople(@Context() [interaction]: StringSelectContext) {
-    this.storeSelectedValues('select_menu_people', interaction.values);
+    const user = interaction.user;
+    this.storeSelectedValues(
+      'select_menu_people',
+      user.id,
+      interaction.values,
+    );
+    // console.log('this.selectedValues', this.selectedValues);
 
     const game_uid = this.selectedValues.find(
-      (value) => value.key === 'select_menu_game',
+      (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
+
+    // console.log('game_uid', game_uid);
+    
     const game_name = await this.gameRepository.getGameById(game_uid);
+
+    if (!game_name) {
+      return interaction.update({
+        components: [],
+        content: 'ไม่พบเกมส์นี้',
+      });
+    }
     const room_name = ` ${game_name.game_name} `;
 
     const game_condition_match =

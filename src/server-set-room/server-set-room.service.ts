@@ -103,6 +103,9 @@ export class ServerSetRoomService {
     if (roomType === 'register') {
       await this.createRegistrationMessage(newRoom); // เรียกฟังก์ชันส่งข้อความ
     }
+    if (roomType === 'gamematch') {
+      await this.createGameCenterMessage(newRoom); // เรียกฟังก์ชันส่งข้อความ
+    }
     try {
       await this.serverRepository.updateServer(newRoom.guild.id, {
         [roomFieldMapping[roomType]]: newRoom.id,

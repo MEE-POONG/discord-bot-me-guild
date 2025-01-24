@@ -112,19 +112,27 @@ export class GameCreateRoomService implements OnModuleInit {
     }
   }
 
+  private async isUserConnectedToVoiceChannel(interaction: StringSelectMenuInteraction<CacheType>): Promise<boolean> {
+    if (interaction.member instanceof GuildMember) {
+      const voiceChannel = interaction.member.voice.channel;
+      if (!voiceChannel) {
+        await interaction.update({
+          content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
+          components: [],
+          files: [],
+          embeds: [],
+        });
+        return false;
+      }
+    }
+    return true;
+  }
+
   @StringSelect('SELECT_MENU_GAME_CREATE_ROOM')
   public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
-
-    // if (interaction.member instanceof GuildMember) {
-    //   const voiceChannel = interaction.member.voice.channel;
-
-    //   if (!voiceChannel) {
-    //     return interaction.reply({
-    //       content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
-    //       ephemeral: true, // ข้อความจะเห็นได้เฉพาะผู้ใช้ที่กดปุ่ม
-    //     });
-    //   }
-    // }
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
 
     const user = interaction.user;
 
@@ -339,6 +347,7 @@ export class GameCreateRoomService implements OnModuleInit {
 
   @Button('JOIN_PARTY')
   public async onJoinParty(@Context() [interaction]: ButtonContext) {
+    
     if (interaction.member instanceof GuildMember) {
       const channelId = this.party_id;
 
@@ -377,6 +386,10 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuPlayMode(
     @Context() [interaction]: StringSelectContext,
   ) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
     const user = interaction.user;
     this.storeSelectedValues('select_menu_game', user.id, interaction.values);
 
@@ -407,6 +420,10 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuPlayRangedMode(
     @Context() [interaction]: StringSelectContext,
   ) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
     const user = interaction.user;
     this.storeSelectedValues(
       'select_menu_play_mode',
@@ -460,6 +477,10 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onSelectMenuManyPeoplePlay(
     @Context() [interaction]: StringSelectContext,
   ) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
     const user = interaction.user;
     this.storeSelectedValues(
       'select_menu_play_ranged_mode',
@@ -510,6 +531,10 @@ export class GameCreateRoomService implements OnModuleInit {
 
   @StringSelect('SELECT_MENU_PEOPLE')
   public async onSelectPeople(@Context() [interaction]: StringSelectContext) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
     const user = interaction.user;
     this.storeSelectedValues(
       'select_menu_people',

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { NecordPaginationService } from '@necord/pagination';
+import { GuildMember } from 'discord.js';
 
 @Injectable()
 export class GameCreateRoomCommands {
@@ -12,6 +13,17 @@ export class GameCreateRoomCommands {
   public async onGameCreateRoom(@Context() [interaction]: SlashCommandContext) {
     const pagination = this.paginationService.get('game_create_room');
     const page = await pagination.build();
+
+    if (interaction.member instanceof GuildMember) {
+      const voiceChannel = interaction.member.voice.channel;
+
+      if (!voiceChannel) {
+        return interaction.reply({
+          content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
+          ephemeral: true,
+        });
+      }
+    }
 
     return interaction.reply({ ...page, ephemeral: true });
   }

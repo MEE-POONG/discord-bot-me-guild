@@ -106,6 +106,24 @@ model GameOnlineDB {
   GameConditionMatchDB GameConditionMatchDB[]
 }
 
+model GameMatchDB {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String
+  gameId       String   @db.ObjectId
+  rank         Boolean
+  selectRankID String?  @db.ObjectId
+  channel_id   String
+  partyLimit   Int
+  limitNumber  Int
+  status       Boolean
+  members      String[]
+  createdAt    DateTime @default(now())
+  createdBy    String?
+  updatedAt    DateTime @updatedAt
+  updatedBy    String
+  deleteBy     String
+}
+
 model GameTypeDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   categoryId String   @db.ObjectId

@@ -143,6 +143,41 @@ export class ServerSetRoomService {
       components: [actionRow],
     });
   }
+  private createGameCenterMessage(channel: TextChannel) {
+    const embeds = new EmbedBuilder()
+      .setTitle('𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑮𝒂𝒎𝒆𝒔 𝑪𝒆𝒏𝒕𝒆𝒓')
+      .setColor(10513407) // ใช้ค่าจากสีเดิม
+      .setImage(
+        'https://media.discordapp.net/attachments/855643137716650015/1287768914490691627/DALLE_2024-09-23_20.33.10_-_A_vibrant_fantasy-themed_banner_with_the_text_Game_Center_displayed_prominently._The_background_includes_a_magical_battlefield_scene_with_elements_l.webp?ex=66f2bfc2&is=66f16e42&hm=e3f5bf29bc2d01cd93f4868ac6c2d655ee4893c90ecffa3b6bb5f01cae705147&=&animated=true&width=840&height=480',
+      )
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
+
+    const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setCustomId("create-game-match")
+        .setEmoji("🎮")
+        .setLabel("สร้างการจับคู่เกม")
+        .setStyle(ButtonStyle.Primary),
+
+      new ButtonBuilder()
+        .setCustomId("join-game-match")
+        .setEmoji("🎎")
+        .setLabel("เข้าร่วมเกมธรรมดา")
+        .setStyle(ButtonStyle.Primary),
+
+      new ButtonBuilder()
+        .setCustomId("join-game-match-rank")
+        .setEmoji("🏆")
+        .setLabel("เข้าร่วมเกมแรงค์")
+        .setStyle(ButtonStyle.Primary
+        ),
+    );
+
+    return channel.send({
+      embeds: [embeds],
+      components: [actionRow],
+    });
+  }
 
 
   private replyStopCreate(

@@ -11,6 +11,7 @@ export class ServerUpdateRoleCommands {
   @SlashCommand({
     name: 'server-update-role',
     description: 'ลงทะเบียนโลใช้งาน',
+    defaultMemberPermissions:'8'
   })
   async handleServerUpdateRole(@Context() [interaction]: SlashCommandContext, @Options() options: ServerUpdateRoleNameDto) {
     try {

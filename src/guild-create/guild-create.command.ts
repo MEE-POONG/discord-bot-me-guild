@@ -9,7 +9,6 @@ export class GuildCreateCommand {
   @SlashCommand({
     name: 'guild-create',
     description: 'สร้างกิลด์ (ฟรี)',
-    defaultMemberPermissions: '8',
   })
   async handle(
     @Context() [interaction]: SlashCommandContext,

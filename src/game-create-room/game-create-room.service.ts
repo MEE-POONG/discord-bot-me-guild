@@ -114,6 +114,18 @@ export class GameCreateRoomService implements OnModuleInit {
 
   @StringSelect('SELECT_MENU_GAME_CREATE_ROOM')
   public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
+
+    // if (interaction.member instanceof GuildMember) {
+    //   const voiceChannel = interaction.member.voice.channel;
+
+    //   if (!voiceChannel) {
+    //     return interaction.reply({
+    //       content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
+    //       ephemeral: true, // ข้อความจะเห็นได้เฉพาะผู้ใช้ที่กดปุ่ม
+    //     });
+    //   }
+    // }
+
     const user = interaction.user;
 
     this.storeSelectedValues('game_create_room', user.id, interaction.values);
@@ -329,6 +341,17 @@ export class GameCreateRoomService implements OnModuleInit {
   public async onJoinParty(@Context() [interaction]: ButtonContext) {
     if (interaction.member instanceof GuildMember) {
       const channelId = this.party_id;
+
+      const voiceChannel = interaction.member.voice.channel;
+      if (!voiceChannel) {
+        await interaction.reply({
+          content: '❌ คุณต้องอยู่ในห้องเสียงก่อนจึงจะสามารถเข้าร่วมห้องได้',
+          ephemeral: true, // ข้อความจะเห็นได้เฉพาะผู้ใช้ที่กดปุ่ม
+          fetchReply: true, // ใช้เพื่อให้เราสามารถดึงข้อมูลข้อความที่ส่งออกมาได้
+        });
+        return;
+      }
+
       const channel = (await this.client.channels.fetch(
         channelId,
       )) as VoiceChannel;
@@ -449,7 +472,7 @@ export class GameCreateRoomService implements OnModuleInit {
     )?.value;
 
     // console.log('game_uid', game_uid);
-    
+
     const gameRank = await this.gameRankRepository.getGamesRankByID(
       interaction.values[0],
     );
@@ -500,7 +523,7 @@ export class GameCreateRoomService implements OnModuleInit {
     )?.value;
 
     // console.log('game_uid', game_uid);
-    
+
     const game_name = await this.gameRepository.getGameById(game_uid);
 
     if (!game_name) {

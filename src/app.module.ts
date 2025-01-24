@@ -56,7 +56,7 @@ import { GameJoinModule } from './game-join/game-join.module';
         IntentsBitField.Flags.AutoModerationConfiguration, // ตรวจสอบการตั้งค่า Auto Moderation
         IntentsBitField.Flags.AutoModerationExecution, // ตรวจสอบการทำงานของ Auto Moderationƒ
       ],
-      development: [],
+      development: [process.env.DISCORD_GUILD_ID],
     }),
     NecordPaginationModule.forRoot({
       buttons: {

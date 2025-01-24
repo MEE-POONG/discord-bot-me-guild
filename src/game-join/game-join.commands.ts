@@ -1,12 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { GameJoinService } from './game-join.service';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import { GuildMember } from 'discord.js';
+import { NecordPaginationService } from '@necord/pagination';
 @Injectable()
 export class GameJoinCommands {
-  constructor(private readonly gameJoinService: GameJoinService) {}
+  constructor(private readonly paginationService: NecordPaginationService) {}
 
   @SlashCommand({ name: 'game-join', description: 'Join Game' })
   public async onGameJoin(@Context() [interaction]: SlashCommandContext) {
-    return this.gameJoinService.onGameJoin(interaction);
+    const pagination = this.paginationService.get('GAME_JOIN');
+    const page = await pagination.build();
+
+    if (interaction.member instanceof GuildMember) {
+      const voiceChannel = interaction.member.voice.channel;
+
+      if (!voiceChannel) {
+        return interaction.reply({
+          content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
+          ephemeral: true,
+        });
+      }
+    }
+
+    return interaction.reply({ ...page, ephemeral: true });
   }
 }

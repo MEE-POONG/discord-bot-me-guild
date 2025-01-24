@@ -27,6 +27,7 @@ import { ServerCreateRolemModule } from './server-create-role/server-create-role
 import { ServerUpdateRolemModule } from './server-update-role/server-update-role.module';
 import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
 import { Client, GatewayIntentBits } from 'discord.js';
+import { GameJoinModule } from './game-join/game-join.module';
 
 @Global()
 @Module({
@@ -91,6 +92,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
     ServerSetRoommModule,
     UserDataModule,
     WelcomeModule,
+    GameJoinModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

@@ -100,7 +100,7 @@ export class GameCreateRoomService implements OnModuleInit {
   private storeSelectedValues(key: string, user: string, values: string[]) {
     // Check if the value already exists for the user and key
     const existingIndex = this.selectedValues.findIndex(
-      (entry) => entry.key === key && entry.user === user
+      (entry) => entry.key === key && entry.user === user,
     );
 
     if (existingIndex !== -1) {
@@ -112,7 +112,9 @@ export class GameCreateRoomService implements OnModuleInit {
     }
   }
 
-  private async isUserConnectedToVoiceChannel(interaction: StringSelectMenuInteraction<CacheType>): Promise<boolean> {
+  private async isUserConnectedToVoiceChannel(
+    interaction: StringSelectMenuInteraction<CacheType>,
+  ): Promise<boolean> {
     if (interaction.member instanceof GuildMember) {
       const voiceChannel = interaction.member.voice.channel;
       if (!voiceChannel) {
@@ -203,7 +205,9 @@ export class GameCreateRoomService implements OnModuleInit {
           content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
         });
       }
-      const server = await this.serverRepository.getServerById(interaction.guildId);
+      const server = await this.serverRepository.getServerById(
+        interaction.guildId,
+      );
       if (!server) {
         return interaction.update({
           content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
@@ -219,7 +223,8 @@ export class GameCreateRoomService implements OnModuleInit {
       }
       if (!gameMacthReplyChanel) {
         return interaction.update({
-          content: '❌ ไม่มีตำแหน่งที่กำหนดสำหรับแจ้งเตือนการสร้างห้องเล่นเกมส์',
+          content:
+            '❌ ไม่มีตำแหน่งที่กำหนดสำหรับแจ้งเตือนการสร้างห้องเล่นเกมส์',
         });
       }
 
@@ -228,7 +233,9 @@ export class GameCreateRoomService implements OnModuleInit {
       )?.value;
 
       const game_rank_id = this.selectedValues.find(
-        (value) => value.key === 'select_menu_play_ranged_mode' && value.user === user.id,
+        (value) =>
+          value.key === 'select_menu_play_ranged_mode' &&
+          value.user === user.id,
       )?.value;
 
       const game_rank = game_rank_id
@@ -237,8 +244,7 @@ export class GameCreateRoomService implements OnModuleInit {
 
       const game = await this.gameRepository.getGameById(game_uid);
 
-      const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`;
-
+      const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : 'NORMAL'} - PARTY`;
 
       const channel = await interaction.guild?.channels.create({
         name: channel_name,
@@ -347,7 +353,6 @@ export class GameCreateRoomService implements OnModuleInit {
 
   @Button('JOIN_PARTY')
   public async onJoinParty(@Context() [interaction]: ButtonContext) {
-    
     if (interaction.member instanceof GuildMember) {
       const channelId = this.party_id;
 
@@ -536,11 +541,7 @@ export class GameCreateRoomService implements OnModuleInit {
     }
 
     const user = interaction.user;
-    this.storeSelectedValues(
-      'select_menu_people',
-      user.id,
-      interaction.values,
-    );
+    this.storeSelectedValues('select_menu_people', user.id, interaction.values);
     // console.log('this.selectedValues', this.selectedValues);
 
     const game_uid = this.selectedValues.find(

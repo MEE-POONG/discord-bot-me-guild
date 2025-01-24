@@ -11,6 +11,7 @@ export class FormRegisterCommands {
   @SlashCommand({
     name: 'form-register',
     description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+    defaultMemberPermissions: '8',
     guilds: getGuildIdsValues,
   })
   async handleFormRegister(@Context() [interaction]: SlashCommandContext) {

@@ -57,10 +57,7 @@ import { TestCreateChannelmModule } from './test-create-channel/test-create-chan
         IntentsBitField.Flags.AutoModerationConfiguration, // ตรวจสอบการตั้งค่า Auto Moderation
         IntentsBitField.Flags.AutoModerationExecution, // ตรวจสอบการทำงานของ Auto Moderationƒ
       ],
-      development: [
-        
-        
-        DISCORD_GUILD_ID],
+      development: [process.env.DISCORD_GUILD_ID],
     }),
     NecordPaginationModule.forRoot({
       buttons: {

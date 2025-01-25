@@ -28,6 +28,7 @@ import { ServerUpdateRolemModule } from './server-update-role/server-update-role
 import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { GameJoinModule } from './game-join/game-join.module';
+import { TestCreateChannelmModule } from './test-create-channel/test-create-channel.module';
 
 @Global()
 @Module({
@@ -56,7 +57,10 @@ import { GameJoinModule } from './game-join/game-join.module';
         IntentsBitField.Flags.AutoModerationConfiguration, // ตรวจสอบการตั้งค่า Auto Moderation
         IntentsBitField.Flags.AutoModerationExecution, // ตรวจสอบการทำงานของ Auto Moderationƒ
       ],
-      development: [process.env.DISCORD_GUILD_ID],
+      development: [
+        
+        
+        DISCORD_GUILD_ID],
     }),
     NecordPaginationModule.forRoot({
       buttons: {
@@ -79,6 +83,7 @@ import { GameJoinModule } from './game-join/game-join.module';
     GameRankModule,
     GameTypeModule,
     GameModule,
+    GameJoinModule,
     GuildCreateModule,
     GuildManageModule,
     GuildKickModule,
@@ -90,9 +95,9 @@ import { GameJoinModule } from './game-join/game-join.module';
     ServerCreateRolemModule,
     ServerUpdateRolemModule,
     ServerSetRoommModule,
+    TestCreateChannelmModule,
     UserDataModule,
     WelcomeModule,
-    GameJoinModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

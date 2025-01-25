@@ -62,6 +62,7 @@ export class ServerSetRoomService {
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการ:\n` +
             `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
             `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **News Room**: ห้องสำหรับโพตส์ข่าว MeGuild\n` +
             `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม`,
           )
           .setColor(0x00bfff),

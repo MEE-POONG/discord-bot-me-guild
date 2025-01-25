@@ -214,7 +214,7 @@ export class GameCreateRoomService implements OnModuleInit {
         });
       }
       const gamePositionCreate = server.gamePositionCreate;
-      const gameMacthReplyChanel = server.gameChannel;
+      const gameMacthReplyChanel = server.gamePostChannel;
 
       if (!gamePositionCreate) {
         return interaction.update({

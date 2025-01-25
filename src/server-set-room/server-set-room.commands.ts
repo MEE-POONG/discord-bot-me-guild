@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
+import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { ServerSetRoomService } from './server-set-room.service';
-import { ServerSetRoomDto } from './dto/length.dto';
 
 @Injectable()
 export class ServerSetRoomCommands {
@@ -13,9 +12,9 @@ export class ServerSetRoomCommands {
     description: 'สร้างและกำหนดค่าห้องในเซิร์ฟเวอร์',
     defaultMemberPermissions: '8',
   })
-  async handleServerSetRoom(@Context() [interaction]: SlashCommandContext, @Options() options: ServerSetRoomDto) {
+  async handleServerSetRoom(@Context() [interaction]: SlashCommandContext) {
     try {
-      await this.ServerSetRoomService.ServerSetRoomSystem(interaction, options);
+      await this.ServerSetRoomService.ServerSetRoomSystem(interaction);
     } catch (error) {
       this.logger.error('เกิดข้อผิดพลาดขณะพยายามสร้างห้อง:', error);
       return interaction.reply({

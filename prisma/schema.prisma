@@ -314,7 +314,7 @@ model ServerDB {
   registerChannel     String?
   newsChannel         String?
   gameChannel         String?
-  gamebtnChannel      String?
+  gamePostChannel     String?
   gamePositionCreate  String?
   guildChannel        String?
   guildPositionCreate String?

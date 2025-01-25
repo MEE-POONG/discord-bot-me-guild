@@ -13,7 +13,6 @@ import { Context, StringSelect, StringSelectContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
-import { ServerSetRoomDto } from './dto/length.dto';
 
 @Injectable()
 export class ServerSetRoomService {
@@ -23,14 +22,13 @@ export class ServerSetRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   public onModuleInit() {
     this.logger.log('ServerSetRoomService initialized');
   }
 
-  async ServerSetRoomSystem(interaction: any, options: ServerSetRoomDto) {
-    this.roomName = options.roomName;
+  async ServerSetRoomSystem(interaction: any,) {
 
     const validationError = await validateServerAndRole(
       interaction,
@@ -106,6 +104,7 @@ export class ServerSetRoomService {
     return {
       welcome: 'welcomechannel',
       register: 'registerChannel',
+      news: 'newsChannel',
       gamematch: 'gameChannel',
       gamebtn: 'gamebtnChannel',
     };
@@ -144,43 +143,91 @@ export class ServerSetRoomService {
   }
 
   private async createGameMatchRooms(
-    interaction: StringSelectMenuInteraction<CacheType>,
-    defaultRoomNames: any,
-  ) {
-    const gameBtnChannel = await interaction.guild.channels.create({
-      name: defaultRoomNames['gamebtn'],
-      type: 0,
-    });
+  interaction: StringSelectMenuInteraction<CacheType>,
+  defaultRoomNames: any,
+) {
+  // Create a category (group) for the game channels
+  const gameCategory = await interaction.guild.channels.create({
+    name: '🎮 Game Center',
+    type: 4, // Category Channel
+  });
 
-    const gameChannel = await interaction.guild.channels.create({
-      name: defaultRoomNames['gamematch'],
-      type: 2,
-    });
+  // Create game button text channel under the category
+  const gameChannel = await interaction.guild.channels.create({
+    name: defaultRoomNames['gamebtn'],
+    type: 0, // Text Channel
+    parent: gameCategory.id, // Set the category as the parent
+  });
 
-    await this.serverRepository.updateServer(interaction.guildId, {
-      gamebtnChannel: gameBtnChannel.id,
-      gameChannel: gameChannel.id,
-    });
+  // Create game match text channel under the category
+  const gamePositionCreate = await interaction.guild.channels.create({
+    name: defaultRoomNames['gamematch'],
+    type: 0, // Text Channel
+    parent: gameCategory.id, // Set the category as the parent
+  });
 
-    return interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('✅ การสร้างห้องสำเร็จ')
-          .setDescription(
-            `🎉 ห้อง **${defaultRoomNames['gamebtn']}** และ **${defaultRoomNames['gamematch']}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!`,
-          )
-          .setColor(0x00ff00),
-      ],
-      ephemeral: true,
-    });
-  }
+  // Update the database with the new channels
+  await this.serverRepository.updateServer(interaction.guildId, {
+    gameChannel: gameChannel.id,
+    gamePositionCreate: gamePositionCreate.id,
+  });
 
+  // Build the embed message
+  const embeds = new EmbedBuilder()
+    .setTitle('𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑮𝒂𝒎𝒆𝒔 𝑪𝒆𝒏𝒕𝒆𝒓')
+    .setColor(10513407)
+    .setImage(
+      'https://media.discordapp.net/attachments/855643137716650015/1287768914490691627/DALLE_2024-09-23_20.33.10_-_A_vibrant_fantasy-themed_banner_with_the_text_Game_Center_displayed_prominently._The_background_includes_a_magical_battlefield_scene_with_elements_l.webp?ex=66f2bfc2&is=66f16e42&hm=e3f5bf29bc2d01cd93f4868ac6c2d655ee4893c90ecffa3b6bb5f01cae705147&=&animated=true&width=840&height=480',
+    )
+    .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
+
+  // Build the action row with buttons
+  const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
+    new ButtonBuilder()
+      .setCustomId('create-game-match')
+      .setEmoji('🎮')
+      .setLabel('สร้างการจับคู่เกม')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('join-game-match')
+      .setEmoji('🎎')
+      .setLabel('เข้าร่วมเกมธรรมดา')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId('join-game-match-rank')
+      .setEmoji('🏆')
+      .setLabel('เข้าร่วมเกมแรงค์')
+      .setStyle(ButtonStyle.Primary),
+  );
+
+  // Send the embed and buttons to the game button channel
+  await gameChannel.send({
+    embeds: [embeds],
+    components: [actionRow],
+  });
+
+  // Reply to the interaction to confirm the creation
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle('✅ การสร้างห้องสำเร็จ')
+        .setDescription(
+          `🎉 ห้อง **${defaultRoomNames['gamebtn']}** และ **${defaultRoomNames['gamematch']}** ถูกสร้างและบันทึกเรียบร้อยแล้วในหมวดหมู่ **Game Center**!`,
+        )
+        .setColor(0x00ff00),
+    ],
+    ephemeral: true,
+  });
+}
   private async createRegistrationMessage(channel: TextChannel) {
     const embed = new EmbedBuilder()
       .setTitle('ลงทะเบียนนักผจญภัย')
       .setDescription('- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"')
       .setColor(16760137)
       .setFooter({ text: 'ข้อมูลของคุณจะถูกเก็บเป็นความลับ' })
+      .setImage(
+        'https://media.discordapp.net/attachments/1222826027445653536/1222826136359276595/registerguild.webp?ex=6617a095&is=66052b95&hm=17dfd3921b25470b1e99016eb9f89dd68fb1ada3481867d145c8acf81e25cec6&=&format=webp&width=839&height=400',
+      )
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
 
     const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(

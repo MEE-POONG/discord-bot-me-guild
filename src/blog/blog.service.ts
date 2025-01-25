@@ -8,6 +8,7 @@ const IMAGE_DELIVERY_URL = 'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA';
 @Injectable()
 export class BlogService {
   private readonly logger = new Logger(BlogService.name);
+  private readonly cache = new Map<string, any[]>(); // ใช้แคชในหน่วยความจำ
 
   constructor(
     private readonly prisma: PrismaService,
@@ -25,11 +26,21 @@ export class BlogService {
   }
 
   // ดึงข้อมูลทั้งหมดจาก BlogDB
-  async getAllBlogs(limit = 3) {
-    return this.prisma.blogDB.findMany({
+  async getAllBlogs(limit = 3): Promise<any[]> {
+    const cacheKey = `blogs:${limit}`;
+    if (this.cache.has(cacheKey)) {
+      this.logger.log(`ดึงข้อมูลบทความจากแคช: ${cacheKey}`);
+      return this.cache.get(cacheKey)!;
+    }
+
+    const blogs = await this.prisma.blogDB.findMany({
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
+
+    this.cache.set(cacheKey, blogs); // บันทึกข้อมูลลงในแคช
+    this.logger.log(`ดึงข้อมูลบทความจากฐานข้อมูลและบันทึกในแคช: ${cacheKey}`);
+    return blogs;
   }
 
   // ฟังก์ชันแสดงบทความ
@@ -72,7 +83,7 @@ export class BlogService {
     // ส่ง Embed ตอบกลับ
     await interaction.reply({
       embeds: embeds,
-      ephemeral: true,
+      ephemeral: false, // เปลี่ยนเป็น false เพื่อให้ข้อมูลแสดงแบบคงอยู่
     });
   }
 }

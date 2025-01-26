@@ -3,9 +3,7 @@ import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { NewsUpdateService } from './news-update.service';
 import { EmbedBuilder } from 'discord.js';
 
-
 const IMAGE_DELIVERY_URL = 'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA';
-
 
 @Injectable()
 export class NewsUpdateCommands {
@@ -15,12 +13,20 @@ export class NewsUpdateCommands {
 
   @SlashCommand({
     name: 'news-latest',
-    description: 'ข่าวล่าสุด',
+    description: 'แสดงข่าวล่าสุด',
   })
   async handleLatestNews(@Context() [interaction]: SlashCommandContext) {
     try {
+      const guildId = interaction.guildId;
+      if (!guildId) {
+        return interaction.reply({
+          content: 'ไม่สามารถระบุเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง!',
+          ephemeral: true,
+        });
+      }
+
       // ดึงข้อมูลข่าว 3 ลำดับล่าสุด
-      const newsUpdates = await this.newsUpdateService.getLatestNews();
+      const newsUpdates = await this.newsUpdateService.getLatestNews(guildId);
 
       if (newsUpdates.length === 0) {
         return interaction.reply({
@@ -31,14 +37,14 @@ export class NewsUpdateCommands {
 
       // สร้าง Embed สำหรับแต่ละข่าว
       const embeds = newsUpdates.map((news) => {
-        const imageUrl = `${IMAGE_DELIVERY_URL}/${news.img}/public`; // URL รูปภาพ
+        const imageUrl = `${IMAGE_DELIVERY_URL}/${news.img}/public`;
 
         return new EmbedBuilder()
           .setTitle(news.title)
           .setDescription(
-            `${news.description.substring(0, 1021)}...\n[อ่านเพิ่มเติม](${news.creditlink})`
+            `${news.description.substring(0, 1021)}...\n[อ่านเพิ่มเติม](${news.creditlink})`,
           )
-          .setImage(imageUrl) // แสดงรูปภาพ
+          .setImage(imageUrl)
           .setColor(0x00ae86)
           .setTimestamp(news.createdAt || new Date());
       });

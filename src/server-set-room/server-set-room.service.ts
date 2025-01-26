@@ -186,19 +186,14 @@ export class ServerSetRoomService {
     // Build the action row with buttons
     const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
       new ButtonBuilder()
-        .setCustomId('create-game-match')
+        .setCustomId('game-create-room')
         .setEmoji('🎮')
         .setLabel('สร้างการจับคู่เกม')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId('join-game-match')
+        .setCustomId('game-join')
         .setEmoji('🎎')
         .setLabel('เข้าร่วมเกมธรรมดา')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('join-game-match-rank')
-        .setEmoji('🏆')
-        .setLabel('เข้าร่วมเกมแรงค์')
         .setStyle(ButtonStyle.Primary),
     );
   

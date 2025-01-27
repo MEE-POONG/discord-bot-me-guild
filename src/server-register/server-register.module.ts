@@ -12,4 +12,4 @@ import { ServerRepository } from 'src/repository/server';
     ServerRegisterService,
   ],
 })
-export class ServerRegistermModule { }
+export class ServerRegisterModule { }

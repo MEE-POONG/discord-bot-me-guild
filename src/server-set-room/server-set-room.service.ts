@@ -48,8 +48,8 @@ export class ServerSetRoomService {
         .setPlaceholder('เลือกบทบาทที่ต้องการจัดการ')
         .addOptions([
           { label: 'Welcome Room', value: 'welcome', description: 'สร้างห้อง Welcome' },
-          { label: 'Register Room', value: 'register', description: 'สร้างห้อง Register' },
           { label: 'News Room', value: 'news', description: 'สร้างห้อง News' },
+          { label: 'Register Room', value: 'register', description: 'สร้างห้อง Register' },
           { label: 'GameMatch Room', value: 'gamematch', description: 'สร้างห้อง GameMatch' },
         ]),
     );
@@ -61,8 +61,8 @@ export class ServerSetRoomService {
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการ:\n` +
             `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
-            `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
             `- **News Room**: ห้องสำหรับโพตส์ข่าว MeGuild\n` +
+            `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
             `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม`,
           )
           .setColor(0x00bfff),
@@ -104,8 +104,8 @@ export class ServerSetRoomService {
   private getRoomFieldMapping() {
     return {
       welcome: 'welcomechannel',
-      register: 'registerChannel',
       news: 'newsChannel',
+      register: 'registerChannel',
       gamematch: 'gameChannel',
       gamebtn: 'gamebtnChannel',
     };
@@ -114,8 +114,8 @@ export class ServerSetRoomService {
   private getDefaultRoomNames() {
     return {
       welcome: '🚪𝒘𝒆𝒍𝒄𝒐𝒎𝒆',
+      news: 'ประกาศข่าวสาร',
       register: '🧾︰ลงทะเบียน',
-      news: '📢︰ประกาศ-discord',
       gamematch: '👼︰หาปาร์ตี้เล่นเกม',
       gamebtn: '💬︰หาห้องเกม',
     };
@@ -127,42 +127,65 @@ export class ServerSetRoomService {
     defaultRoomNames: any,
     roomFieldMapping: any,
   ) {
-    // ตรวจสอบว่า meguildGroup มีอยู่หรือยัง
+    // ตรวจสอบหรือสร้างหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
     let meguildGroup = await this.serverRepository.getServerById(interaction.guildId);
     if (!meguildGroup || !meguildGroup.meguildGroup) {
-      // ถ้าไม่มี meguildGroup ให้สร้างใหม่
       const category = await interaction.guild.channels.create({
-        name: 'MeGuild Group',
+        name: `〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓`,
         type: 4, // Category Channel
+        position: 0, // กำหนดให้เป็นอันดับแรก
       });
-
-      // บันทึก ID ของ meguildGroup ลงในฐานข้อมูล
+  
+      // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
       await this.serverRepository.updateServer(interaction.guildId, {
         meguildGroup: category.id,
       });
-
-      // อัปเดตข้อมูลในตัวแปร meguildGroup
       meguildGroup.meguildGroup = category.id;
     }
-
-    // สร้างห้องภายใต้ meguildGroup
+  
+    // ตรวจสอบหรือสร้างหมวดหมู่ 〔🎮〕Game Center
+    let gameCenterGroup = await this.serverRepository.getServerById(interaction.guildId);
+    if (!gameCenterGroup || !gameCenterGroup.gamePositionCreate) {
+      const gameCategory = await interaction.guild.channels.create({
+        name: `〔🎮〕Game Center`,
+        type: 4, // Category Channel
+        position: 1, // กำหนดให้อยู่หลัง 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+      });
+  
+      // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
+      await this.serverRepository.updateServer(interaction.guildId, {
+        gamePositionCreate: gameCategory.id,
+      });
+    }
+  
+    // จัดลำดับห้องใน 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+    const parentCategoryId = meguildGroup.meguildGroup;
+    const channelPositionMapping = {
+      welcome: 0,
+      news: 1,
+      register: 2,
+    };
+  
     const newRoom = await interaction.guild.channels.create({
       name: defaultRoomNames[roomType],
       type: 0, // Text Channel
-      parent: meguildGroup.meguildGroup, // ตั้ง parent เป็น meguildGroup
+      parent: parentCategoryId, // ตั้ง parent เป็น 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+      position: channelPositionMapping[roomType], // กำหนดลำดับห้อง
     });
-
+  
     // บันทึกข้อมูลห้องในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       [roomFieldMapping[roomType]]: newRoom.id,
     });
-
+  
     if (roomType === 'register') {
       await this.createRegistrationMessage(newRoom);
     }
-
+  
     return this.replySuccess(interaction, roomType);
   }
+  
+
 
 
   private async createGameMatchRooms(
@@ -171,7 +194,7 @@ export class ServerSetRoomService {
   ) {
     // Create a category (group) for the game channels
     const gameCategory = await interaction.guild.channels.create({
-      name: '🎮 Game Center',
+      name: `〔🎮〕Game Center`,
       type: 4, // Category Channel
     });
 

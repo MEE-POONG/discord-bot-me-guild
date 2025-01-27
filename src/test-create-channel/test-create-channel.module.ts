@@ -12,4 +12,4 @@ import { ServerRepository } from 'src/repository/server';
     TestCreateChannelService,
   ],
 })
-export class TestCreateChannelmModule { }
+export class TestCreateChannelModule { }

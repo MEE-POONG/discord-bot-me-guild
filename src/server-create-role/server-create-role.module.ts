@@ -12,4 +12,4 @@ import { ServerRepository } from 'src/repository/server';
     ServerCreateRoleService,
   ],
 })
-export class ServerCreateRolemModule { }
+export class ServerCreateRoleModule { }

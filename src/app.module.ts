@@ -18,17 +18,18 @@ import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
 import { PrototypemModule } from './prototype/prototype.module';
-import { ServerRegistermModule } from './server-register/server-register.module';
+import { ServerRegisterModule } from './server-register/server-register.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
 import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
-import { ServerCreateRolemModule } from './server-create-role/server-create-role.module';
-import { ServerUpdateRolemModule } from './server-update-role/server-update-role.module';
-import { ServerSetRoommModule } from './server-set-room/server-set-room.module';
+import { ServerCreateRoleModule } from './server-create-role/server-create-role.module';
+import { ServerUpdateRoleModule } from './server-update-role/server-update-role.module';
+import { ServerSetRoomModule } from './server-set-room/server-set-room.module';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { GameJoinModule } from './game-join/game-join.module';
-import { TestCreateChannelmModule } from './test-create-channel/test-create-channel.module';
+import { TestCreateChannelModule } from './test-create-channel/test-create-channel.module';
+import { ServerClearModule } from './server-clear/server-clear.module';
 
 @Global()
 @Module({
@@ -87,12 +88,13 @@ import { TestCreateChannelmModule } from './test-create-channel/test-create-chan
     GuildInviteModule,
     NewsUpdateModule,
     PrototypemModule,
-    ServerRegistermModule,
+    ServerRegisterModule,
     ServerTryItOnModule,
-    ServerCreateRolemModule,
-    ServerUpdateRolemModule,
-    ServerSetRoommModule,
-    TestCreateChannelmModule,
+    ServerCreateRoleModule,
+    ServerClearModule,
+    ServerUpdateRoleModule,
+    ServerSetRoomModule,
+    TestCreateChannelModule,
     UserDataModule,
     WelcomeModule,
   ],

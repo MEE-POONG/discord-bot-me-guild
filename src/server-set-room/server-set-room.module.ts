@@ -12,4 +12,4 @@ import { ServerRepository } from 'src/repository/server';
     ServerSetRoomService,
   ],
 })
-export class ServerSetRoommModule { }
+export class ServerSetRoomModule { }

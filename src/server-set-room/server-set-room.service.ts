@@ -28,7 +28,8 @@ export class ServerSetRoomService {
     this.logger.log('ServerSetRoomService initialized');
   }
 
-  async ServerSetRoomSystem(interaction: any,) {
+  async ServerSetRoomSystem(interaction: any) {
+    await interaction.deferReply({ ephemeral: true });
 
     const validationError = await validateServerAndRole(
       interaction,
@@ -54,21 +55,20 @@ export class ServerSetRoomService {
         ]),
     );
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการ:\n` +
             `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
-            `- **News Room**: ห้องสำหรับโพตส์ข่าว MeGuild\n` +
+            `- **News Room**: ห้องสำหรับโพสต์ข่าว MeGuild\n` +
             `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
             `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม`,
           )
           .setColor(0x00bfff),
       ],
       components: [roomSelectionRow],
-      ephemeral: true,
     });
   }
 
@@ -127,64 +127,54 @@ export class ServerSetRoomService {
     defaultRoomNames: any,
     roomFieldMapping: any,
   ) {
-    // ตรวจสอบหรือสร้างหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
-    let meguildGroup = await this.serverRepository.getServerById(interaction.guildId);
-    if (!meguildGroup || !meguildGroup.meguildGroup) {
-      const category = await interaction.guild.channels.create({
+    const guild = interaction.guild;
+
+    // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+    let meguildPositionCreate = await this.serverRepository.getServerById(interaction.guildId);
+    let meguildCategory = guild.channels.cache.get(meguildPositionCreate?.meguildPositionCreate || '');
+
+    if (!meguildCategory || meguildCategory.type !== 4) { // ตรวจสอบว่าหมวดหมู่มีอยู่และเป็น Category
+      // สร้างหมวดหมู่ใหม่
+      const newCategory = await guild.channels.create({
         name: `〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓`,
         type: 4, // Category Channel
-        position: 0, // กำหนดให้เป็นอันดับแรก
+        position: 0,
       });
-  
+
       // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
       await this.serverRepository.updateServer(interaction.guildId, {
-        meguildGroup: category.id,
+        meguildPositionCreate: newCategory.id,
       });
-      meguildGroup.meguildGroup = category.id;
+
+      meguildCategory = newCategory;
     }
-  
-    // ตรวจสอบหรือสร้างหมวดหมู่ 〔🎮〕Game Center
-    let gameCenterGroup = await this.serverRepository.getServerById(interaction.guildId);
-    if (!gameCenterGroup || !gameCenterGroup.gamePositionCreate) {
-      const gameCategory = await interaction.guild.channels.create({
-        name: `〔🎮〕Game Center`,
-        type: 4, // Category Channel
-        position: 1, // กำหนดให้อยู่หลัง 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
-      });
-  
-      // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
-      await this.serverRepository.updateServer(interaction.guildId, {
-        gamePositionCreate: gameCategory.id,
-      });
-    }
-  
+
     // จัดลำดับห้องใน 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
-    const parentCategoryId = meguildGroup.meguildGroup;
     const channelPositionMapping = {
       welcome: 0,
       news: 1,
       register: 2,
     };
-  
-    const newRoom = await interaction.guild.channels.create({
+
+    const newRoom = await guild.channels.create({
       name: defaultRoomNames[roomType],
       type: 0, // Text Channel
-      parent: parentCategoryId, // ตั้ง parent เป็น 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+      parent: meguildCategory.id, // ตั้ง parent เป็น 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
       position: channelPositionMapping[roomType], // กำหนดลำดับห้อง
     });
-  
+
     // บันทึกข้อมูลห้องในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       [roomFieldMapping[roomType]]: newRoom.id,
     });
-  
+
     if (roomType === 'register') {
       await this.createRegistrationMessage(newRoom);
     }
-  
+
     return this.replySuccess(interaction, roomType);
   }
-  
+
 
 
 

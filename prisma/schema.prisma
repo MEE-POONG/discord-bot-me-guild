@@ -310,6 +310,7 @@ model ServerDB {
   guildHeadRoleId     String? // บทบาทหัวหน้ากิล (optional)
   guildCoRoleId       String? // บทบาทรองหัวหน้ากิล (optional)
   openUntilAt         DateTime @db.Date
+  meguildGroup        String?
   welcomechannel      String?
   registerChannel     String?
   newsChannel         String?

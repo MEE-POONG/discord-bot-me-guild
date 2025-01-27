@@ -127,11 +127,32 @@ export class ServerSetRoomService {
     defaultRoomNames: any,
     roomFieldMapping: any,
   ) {
+    // ตรวจสอบว่า meguildGroup มีอยู่หรือยัง
+    let meguildGroup = await this.serverRepository.getServerById(interaction.guildId);
+    if (!meguildGroup || !meguildGroup.meguildGroup) {
+      // ถ้าไม่มี meguildGroup ให้สร้างใหม่
+      const category = await interaction.guild.channels.create({
+        name: 'MeGuild Group',
+        type: 4, // Category Channel
+      });
+
+      // บันทึก ID ของ meguildGroup ลงในฐานข้อมูล
+      await this.serverRepository.updateServer(interaction.guildId, {
+        meguildGroup: category.id,
+      });
+
+      // อัปเดตข้อมูลในตัวแปร meguildGroup
+      meguildGroup.meguildGroup = category.id;
+    }
+
+    // สร้างห้องภายใต้ meguildGroup
     const newRoom = await interaction.guild.channels.create({
       name: defaultRoomNames[roomType],
-      type: 0,
+      type: 0, // Text Channel
+      parent: meguildGroup.meguildGroup, // ตั้ง parent เป็น meguildGroup
     });
 
+    // บันทึกข้อมูลห้องในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       [roomFieldMapping[roomType]]: newRoom.id,
     });
@@ -143,6 +164,7 @@ export class ServerSetRoomService {
     return this.replySuccess(interaction, roomType);
   }
 
+
   private async createGameMatchRooms(
     interaction: StringSelectMenuInteraction<CacheType>,
     defaultRoomNames: any,
@@ -152,28 +174,28 @@ export class ServerSetRoomService {
       name: '🎮 Game Center',
       type: 4, // Category Channel
     });
-  
+
     // Create game button text channel under the category
     const gameChannel = await interaction.guild.channels.create({
       name: defaultRoomNames['gamebtn'],
       type: 0, // Text Channel
       parent: gameCategory.id, // Set the category as the parent
     });
-  
+
     // Create game match text channel under the category
     const gamePositionCreate = await interaction.guild.channels.create({
       name: defaultRoomNames['gamematch'],
       type: 0, // Text Channel
       parent: gameCategory.id, // Set the category as the parent
     });
-  
+
     // Update the database with the new channels
     await this.serverRepository.updateServer(interaction.guildId, {
       gameChannel: gameChannel.id,
       gamePostChannel: gamePositionCreate.id,
       gamePositionCreate: gameCategory.id,
     });
-  
+
     // Build the embed message
     const embeds = new EmbedBuilder()
       .setTitle('𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑮𝒂𝒎𝒆𝒔 𝑪𝒆𝒏𝒕𝒆𝒓')
@@ -182,27 +204,33 @@ export class ServerSetRoomService {
         'https://media.discordapp.net/attachments/855643137716650015/1287768914490691627/DALLE_2024-09-23_20.33.10_-_A_vibrant_fantasy-themed_banner_with_the_text_Game_Center_displayed_prominently._The_background_includes_a_magical_battlefield_scene_with_elements_l.webp?ex=66f2bfc2&is=66f16e42&hm=e3f5bf29bc2d01cd93f4868ac6c2d655ee4893c90ecffa3b6bb5f01cae705147&=&animated=true&width=840&height=480',
       )
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
-  
+
     // Build the action row with buttons
     const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
       new ButtonBuilder()
         .setCustomId('game-create-room')
-        .setEmoji('🎮')
+        .setEmoji('🎮') // ไอคอนสำหรับ "สร้างการจับคู่เกม"
         .setLabel('สร้างการจับคู่เกม')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId('game-join')
-        .setEmoji('🎎')
+        .setCustomId('game-join-unrank')
+        .setEmoji('🕹️') // ไอคอนสำหรับ "เข้าร่วมเกมธรรมดา"
         .setLabel('เข้าร่วมเกมธรรมดา')
         .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('game-join-rank')
+        .setEmoji('🏆') // ไอคอนสำหรับ "เข้าร่วมเกมแรงค์"
+        .setLabel('เข้าร่วมเกมแรงค์')
+        .setStyle(ButtonStyle.Primary),
+
     );
-  
+
     // Send the embed and buttons to the game button channel
     await gameChannel.send({
       embeds: [embeds],
       components: [actionRow],
     });
-  
+
     // Reply to the interaction to confirm the creation
     return interaction.reply({
       embeds: [
@@ -216,7 +244,7 @@ export class ServerSetRoomService {
       ephemeral: true,
     });
   }
-  
+
 
   private async createRegistrationMessage(channel: TextChannel) {
     const embed = new EmbedBuilder()

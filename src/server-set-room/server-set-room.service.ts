@@ -113,11 +113,11 @@ export class ServerSetRoomService {
 
   private getDefaultRoomNames() {
     return {
-      welcome: '🚪𝒘𝒆𝒍𝒄𝒐𝒎𝒆',
-      news: 'ประกาศข่าวสาร',
-      register: '🧾︰ลงทะเบียน',
-      gamematch: '👼︰หาปาร์ตี้เล่นเกม',
-      gamebtn: '💬︰หาห้องเกม',
+      welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆 𝑯𝒂𝒍𝒍', // ห้องต้อนรับ
+      news: '📢︰𝑵𝒆𝒘𝒔 𝑪𝒐𝒓𝒏𝒆𝒓', // ห้องข่าวสาร
+      register: '🖋︰𝑹𝒆𝒈𝒊𝒔𝒕𝒓𝒂𝒕𝒊𝒐𝒏 𝑭𝒐𝒓𝒎', // ห้องลงทะเบียน
+      gamematch: '🎮︰𝑮𝒂𝒎𝒆𝒓𝒔 𝑴𝒂𝒕𝒄𝒉', // ห้องจับคู่เล่นเกม
+      gamebtn: '🕹︰𝑮𝒂𝒎𝒆 𝑪𝒐𝒏𝒕𝒓𝒐𝒍', // ห้องควบคุมเกม
     };
   }
 
@@ -128,11 +128,11 @@ export class ServerSetRoomService {
     roomFieldMapping: any,
   ) {
     const guild = interaction.guild;
-
+  
     // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
     let meguildPositionCreate = await this.serverRepository.getServerById(interaction.guildId);
     let meguildCategory = guild.channels.cache.get(meguildPositionCreate?.meguildPositionCreate || '');
-
+  
     if (!meguildCategory || meguildCategory.type !== 4) { // ตรวจสอบว่าหมวดหมู่มีอยู่และเป็น Category
       // สร้างหมวดหมู่ใหม่
       const newCategory = await guild.channels.create({
@@ -140,110 +140,98 @@ export class ServerSetRoomService {
         type: 4, // Category Channel
         position: 0,
       });
-
+  
       // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
       await this.serverRepository.updateServer(interaction.guildId, {
         meguildPositionCreate: newCategory.id,
       });
-
+  
       meguildCategory = newCategory;
     }
-
+  
     // จัดลำดับห้องใน 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
     const channelPositionMapping = {
       welcome: 0,
       news: 1,
       register: 2,
     };
-
+  
     const newRoom = await guild.channels.create({
       name: defaultRoomNames[roomType],
       type: 0, // Text Channel
       parent: meguildCategory.id, // ตั้ง parent เป็น 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
       position: channelPositionMapping[roomType], // กำหนดลำดับห้อง
     });
-
+  
     // บันทึกข้อมูลห้องในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       [roomFieldMapping[roomType]]: newRoom.id,
     });
-
+  
+    // กำหนดชื่อห้องใหม่ให้ `this.roomName`
+    this.roomName = newRoom.name;
+  
     if (roomType === 'register') {
       await this.createRegistrationMessage(newRoom);
     }
-
+  
     return this.replySuccess(interaction, roomType);
   }
-
-
-
-
+  
   private async createGameMatchRooms(
     interaction: StringSelectMenuInteraction<CacheType>,
     defaultRoomNames: any,
   ) {
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+  
+    // ตรวจสอบว่าห้อง REGISTER ถูกสร้างหรือยัง
+    const registerChannelId = server?.registerChannel;
+    const registerChannel = interaction.guild.channels.cache.get(registerChannelId);
+  
+    if (!registerChannel) {
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('❌ ไม่สามารถสร้างห้อง GameMatch ได้')
+            .setDescription('กรุณาสร้างห้อง **REGISTER** ก่อนการสร้างห้อง GameMatch')
+            .setColor(0xff0000),
+        ],
+        ephemeral: true,
+      });
+    }
+  
     // Create a category (group) for the game channels
     const gameCategory = await interaction.guild.channels.create({
       name: `〔🎮〕Game Center`,
       type: 4, // Category Channel
     });
-
+  
     // Create game button text channel under the category
     const gameChannel = await interaction.guild.channels.create({
       name: defaultRoomNames['gamebtn'],
       type: 0, // Text Channel
       parent: gameCategory.id, // Set the category as the parent
     });
-
+  
     // Create game match text channel under the category
     const gamePositionCreate = await interaction.guild.channels.create({
       name: defaultRoomNames['gamematch'],
       type: 0, // Text Channel
       parent: gameCategory.id, // Set the category as the parent
     });
-
+  
     // Update the database with the new channels
     await this.serverRepository.updateServer(interaction.guildId, {
       gameChannel: gameChannel.id,
       gamePostChannel: gamePositionCreate.id,
       gamePositionCreate: gameCategory.id,
     });
-
+  
     // Build the embed message
     const embeds = new EmbedBuilder()
       .setTitle('𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑮𝒂𝒎𝒆𝒔 𝑪𝒆𝒏𝒕𝒆𝒓')
-      .setColor(10513407)
-      .setImage(
-        'https://media.discordapp.net/attachments/855643137716650015/1287768914490691627/DALLE_2024-09-23_20.33.10_-_A_vibrant_fantasy-themed_banner_with_the_text_Game_Center_displayed_prominently._The_background_includes_a_magical_battlefield_scene_with_elements_l.webp?ex=66f2bfc2&is=66f16e42&hm=e3f5bf29bc2d01cd93f4868ac6c2d655ee4893c90ecffa3b6bb5f01cae705147&=&animated=true&width=840&height=480',
-      )
-      .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
-
-    // Build the action row with buttons
-    const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
-      new ButtonBuilder()
-        .setCustomId('game-create-room')
-        .setEmoji('🎮') // ไอคอนสำหรับ "สร้างการจับคู่เกม"
-        .setLabel('สร้างการจับคู่เกม')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('game-join-unrank')
-        .setEmoji('🕹️') // ไอคอนสำหรับ "เข้าร่วมเกมธรรมดา"
-        .setLabel('เข้าร่วมเกมธรรมดา')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('game-join-rank')
-        .setEmoji('🏆') // ไอคอนสำหรับ "เข้าร่วมเกมแรงค์"
-        .setLabel('เข้าร่วมเกมแรงค์')
-        .setStyle(ButtonStyle.Primary),
-
-    );
-
-    // Send the embed and buttons to the game button channel
-    await gameChannel.send({
-      embeds: [embeds],
-      components: [actionRow],
-    });
-
+      .setColor(10513407);
+  
     // Reply to the interaction to confirm the creation
     return interaction.reply({
       embeds: [
@@ -257,7 +245,6 @@ export class ServerSetRoomService {
       ephemeral: true,
     });
   }
-
 
   private async createRegistrationMessage(channel: TextChannel) {
     const embed = new EmbedBuilder()

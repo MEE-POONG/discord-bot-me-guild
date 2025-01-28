@@ -21,6 +21,7 @@ import {
   UserManager,
   VoiceChannel,
 } from 'discord.js';
+import { ServerRepository } from 'src/repository/server';
 
 @Injectable()
 export class GuildManageService {
@@ -31,6 +32,7 @@ export class GuildManageService {
     private readonly prisma: PrismaClient,
     private readonly users: UserManager,
     private readonly client: Client,
+    private readonly serverRepository: ServerRepository,
   ) {}
 
   async onModuleInit() {
@@ -257,9 +259,11 @@ export class GuildManageService {
   }
 
   async deleteData(guildDB: GuildDB) {
-    await this.prisma.guildDB.delete({ where: { id: guildDB.id } }).catch(() => {
-      console.log(`Failed to delete guild: ${guildDB.id}`);
-    });
+    await this.prisma.guildDB
+      .delete({ where: { id: guildDB.id } })
+      .catch(() => {
+        console.log(`Failed to delete guild: ${guildDB.id}`);
+      });
     await this.prisma.guildMembers
       .deleteMany({ where: { guildId: guildDB.id } })
       .catch(() => {
@@ -338,6 +342,64 @@ export class GuildManageService {
     }
   }
 
+  private async createGiftHouseChannel(
+    categoryId: string,
+    roles: Role,
+  ): Promise<void> {
+    try {
+      const guildServer = await this.client.guilds.fetch(
+        process.env.DISCORD_GUILD_ID,
+      );
+      if (!guildServer) {
+        this.logger.error('Failed to fetch guild');
+        return;
+      }
+
+      await guildServer.channels.create({
+        name: `🎁・เยี่ยมบ้าน`,
+        type: ChannelType.GuildVoice,
+        parent: categoryId,
+        permissionOverwrites: [
+          {
+            id: roles.id,
+            allow: ['ViewChannel', 'Connect'],
+          },
+        ],
+      });
+    } catch (error) {
+      this.logger.error('Failed to create gift house channel:', error);
+    }
+  }
+
+  private async createGuildEventChannel(
+    categoryId: string,
+    roles: Role,
+  ): Promise<void> {
+    try {
+      const guildServer = await this.client.guilds.fetch(
+        process.env.DISCORD_GUILD_ID,
+      );
+      if (!guildServer) {
+        this.logger.error('Failed to fetch guild');
+        return;
+      }
+
+      await guildServer.channels.create({
+        name: `👑・กิจกรรมกิลด์`,
+        type: ChannelType.GuildStageVoice,
+        parent: categoryId,
+        permissionOverwrites: [
+          {
+            id: roles.id,
+            allow: ['Connect', 'ViewChannel'],
+          },
+        ],
+      });
+    } catch (error) {
+      this.logger.error('Failed to create guild event channel:', error);
+    }
+  }
+
   private async createChannel(roles: Role): Promise<string> {
     try {
       const guildServer = await this.client.guilds.fetch(
@@ -348,14 +410,20 @@ export class GuildManageService {
         return 'ไม่สามารถเข้าถึงดิสกิลด์ได้';
       }
 
+      const server = await this.serverRepository.getServerById(guildServer.id);
+      if (!server) {
+        this.logger.error('Failed to fetch server');
+        return 'ไม่สามารถเข้าถึงดิสกิลด์ได้';
+      }
+
       const positionGuild = guildServer.channels.cache.get(
-        process.env.DISCORD_GUILD_CATEGORY_ID,
+        server.registerChannel,
       ) as CategoryChannel;
 
       const category = await guildServer.channels.create({
         name: roles.name,
         type: ChannelType.GuildCategory,
-        position: positionGuild ? positionGuild.position + 1 : undefined,
+        ...(positionGuild ? { position: positionGuild.position + 1 } : {}),
         permissionOverwrites: [
           {
             id: process.env.DISCORD_GUILD_ID,
@@ -395,7 +463,12 @@ export class GuildManageService {
                     allow: ['ViewChannel', 'Connect'],
                   },
                 ]
-              : undefined,
+              : [
+                  {
+                    id: guildServer.roles.everyone.id,
+                    deny: ['ViewChannel'],
+                  },
+                ],
           });
 
           return voiceChannel;
@@ -409,8 +482,8 @@ export class GuildManageService {
         createVoiceChannel('💬・แชท', 2),
         createVoiceChannel('🎤・โถงหลัก', 0),
         createVoiceChannel('🎤・โถงรอง', 0),
-        // createVoiceChannel('🎁・เยี่ยมบ้าน', 0, true),
-        // createVoiceChannel('👑・กิจกรรมกิลด์', 1, true),
+        this.createGiftHouseChannel(category.id, roles),
+        this.createGuildEventChannel(category.id, roles),
       ]);
 
       return 'success';

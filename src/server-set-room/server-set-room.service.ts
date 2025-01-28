@@ -244,15 +244,15 @@ export class ServerSetRoomService {
         .setLabel('สร้างการจับคู่เกม')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId('game-join-unrank')
+        .setCustomId('game-join')
         .setEmoji('🕹️') // ไอคอนสำหรับ "เข้าร่วมเกมธรรมดา"
-        .setLabel('เข้าร่วมเกมธรรมดา')
+        .setLabel('เข้าร่วมเกม')
         .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('game-join-rank')
-        .setEmoji('🏆') // ไอคอนสำหรับ "เข้าร่วมเกมแรงค์"
-        .setLabel('เข้าร่วมเกมแรงค์')
-        .setStyle(ButtonStyle.Primary),
+      // new ButtonBuilder()
+      //   .setCustomId('game-join-rank')
+      //   .setEmoji('🏆') // ไอคอนสำหรับ "เข้าร่วมเกมแรงค์"
+      //   .setLabel('เข้าร่วมเกมแรงค์')
+      //   .setStyle(ButtonStyle.Primary),
 
     );
 

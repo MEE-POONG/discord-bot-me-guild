@@ -77,16 +77,17 @@ export class TestCreateChannelService {
 
       if (!role) {
         // หากไม่พบ Role
-        return interaction.reply({
+        await interaction.deferReply({ ephemeral: true });
+        return interaction.editReply({
           embeds: [
             new EmbedBuilder()
               .setTitle('❌ ไม่พบ Role ที่กำหนด')
               .setDescription(`กรุณาตรวจสอบ Role ID: ${roleId}`)
               .setColor(0xff0000),
           ],
-          ephemeral: true,
         });
       }
+      await interaction.deferReply({ ephemeral: true }); // ตั้งค่ารอการตอบกลับ
 
       // สร้างหมวดหมู่
       const category = await guild.channels.create({
@@ -94,57 +95,97 @@ export class TestCreateChannelService {
         type: ChannelType.GuildCategory,
         permissionOverwrites: [
           {
-            id: guild.roles.everyone.id, // Everyone role
-            deny: ['ViewChannel'], // ปิดการเข้าถึงสำหรับ Everyone
+            id: guild.roles.everyone.id,
+            deny: ['ViewChannel'],
           },
           {
-            id: role.id, // Role ที่อนุญาต
-            allow: ['ViewChannel'], // เปิดสิทธิ์ดูสำหรับ Role นี้
+            id: role.id,
+            allow: ['ViewChannel'],
           },
         ],
       });
 
-      // สร้าง GuildStageVoice
-      const stageChannel = await guild.channels.create({
-        name: `👑・กิจกรรมกิลด์`,
-        type: ChannelType.GuildStageVoice,
+      // เรียงลำดับการสร้างห้อง
+      const textChannel = await guild.channels.create({
+        name: `💬・แชท`,
+        type: ChannelType.GuildText,
         parent: category.id,
-        permissionOverwrites: [
-          {
-            id: guild.roles.everyone.id, // Everyone role
-            deny: ['Connect'], // ปิดการเชื่อมต่อสำหรับ Everyone
-          },
-          {
-            id: role.id, // Role ที่อนุญาต
-            allow: ['Connect', 'ViewChannel'], // เปิดสิทธิ์สำหรับ Role นี้
-          },
-        ],
       });
 
-      // ตอบกลับสำเร็จ
-      return interaction.reply({
+      if (textChannel) {
+        const mainVoiceChannel = await guild.channels.create({
+          name: `🎤・โถงหลัก`,
+          type: ChannelType.GuildVoice,
+          parent: category.id,
+        });
+
+        if (mainVoiceChannel) {
+          const secondaryVoiceChannel = await guild.channels.create({
+            name: `🎤・โถงรอง`,
+            type: ChannelType.GuildVoice,
+            parent: category.id,
+          });
+
+          if (secondaryVoiceChannel) {
+            const guestRoom = await guild.channels.create({
+              name: `🎁・เยี่ยมบ้าน`,
+              type: ChannelType.GuildVoice,
+              parent: category.id,
+            });
+
+            if (guestRoom) {
+              const stageChannel = await guild.channels.create({
+                name: `👑・กิจกรรมกิลด์`,
+                type: ChannelType.GuildStageVoice,
+                parent: category.id,
+                permissionOverwrites: [
+                  {
+                    id: guild.roles.everyone.id,
+                    deny: ['Connect'],
+                  },
+                  {
+                    id: role.id,
+                    allow: ['Connect', 'ViewChannel'],
+                  },
+                ],
+              });
+              if (stageChannel) {
+                this.logger.log('✅ ทุกห้องถูกสร้างสำเร็จ');
+              } else {
+                this.logger.error('❌ ไม่สามารถสร้างห้อง Stage Room ได้');
+              }
+            } else {
+              this.logger.error('❌ ไม่สามารถสร้างห้อง Guest Room ได้');
+            }
+          } else {
+            this.logger.error('❌ ไม่สามารถสร้างห้อง Secondary Voice Channel ได้');
+          }
+        } else {
+          this.logger.error('❌ ไม่สามารถสร้างห้อง Main Voice Channel ได้');
+        }
+      } else {
+        this.logger.error('❌ ไม่สามารถสร้างห้อง Text Channel ได้');
+      }
+
+      // ตอบกลับสำเร็จเมื่อทุกห้องถูกสร้าง
+      await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('✅ การสร้างห้องสำเร็จ')
-            .setDescription(
-              `🎉 หมวดหมู่และห้อง **${stageChannel.name}** ถูกสร้างสำเร็จ!\n` +
-              `กำหนดสิทธิ์การเข้าถึงสำหรับ Role: **${role.name}**`,
-            )
+            .setDescription('🎉 ห้องทั้งหมดถูกสร้างสำเร็จ!')
             .setColor(0x00ff00),
         ],
-        ephemeral: true,
       });
 
     } catch (error: any) {
       this.logger.error(`Error creating channels: ${error.message}`);
-      return interaction.reply({
+      await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('❌ เกิดข้อผิดพลาด')
             .setDescription('ไม่สามารถสร้างห้องได้ กรุณาลองใหม่อีกครั้ง')
             .setColor(0xff0000),
         ],
-        ephemeral: true,
       });
     }
   }

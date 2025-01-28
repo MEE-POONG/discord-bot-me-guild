@@ -20,8 +20,8 @@ import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
 
 @Injectable()
-export class TestCreateChannelService {
-  private readonly logger = new Logger(TestCreateChannelService.name);
+export class TestCreateChTwoService {
+  private readonly logger = new Logger(TestCreateChTwoService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -29,11 +29,11 @@ export class TestCreateChannelService {
   ) { }
 
   public onModuleInit() {
-    this.logger.log('TestCreateChannel initialized');
+    this.logger.log('TestCreateChTwo initialized');
   }
 
   // สร้าง Modal Input
-  async TestCreateChannelSystem(interaction: any) {
+  async TestCreateChTwoSystem(interaction: any) {
     const roleCheck = 'admin'; // Required role for this command
     const validationError = await validateServerAndRole(
       interaction,
@@ -72,14 +72,6 @@ export class TestCreateChannelService {
 
     try {
       const guild = interaction.guild as Guild;
-      const newRole = await guild.roles.create({
-        name: userInput, // ใช้ชื่อที่ผู้ใช้กรอก
-        color: "#A4F1FF", // กำหนดสี (ปรับเปลี่ยนตามต้องการ)
-        permissions: [], // ไม่กำหนดสิทธิ์เพิ่มเติม (สามารถเพิ่มได้)
-        reason: `สร้างโดย ${interaction.user.tag}`, // เหตุผลในการสร้าง role
-      });
-
-      this.logger.log(`✅ Role created: ${newRole.name} (${newRole.id})`);
       const roleId = '1314455560413904982'; // Role ID สำหรับกำหนดสิทธิ์
       const role: Role | undefined = guild.roles.cache.get(roleId);
 

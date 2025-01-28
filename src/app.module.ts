@@ -30,6 +30,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
 import { GameJoinModule } from './game-join/game-join.module';
 import { TestCreateChannelModule } from './test-create-channel/test-create-channel.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
+import { TestCreateChTwoModule } from './test-create-ch-two/test-create-ch-two.module';
 
 @Global()
 @Module({
@@ -95,6 +96,7 @@ import { ServerClearModule } from './server-clear/server-clear.module';
     ServerUpdateRoleModule,
     ServerSetRoomModule,
     TestCreateChannelModule,
+    TestCreateChTwoModule,
     UserDataModule,
     WelcomeModule,
   ],

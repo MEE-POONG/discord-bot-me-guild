@@ -407,10 +407,10 @@ export class GameCreateRoomService implements OnModuleInit {
             .setMaxValues(1)
             .setMinValues(1)
             .setOptions([
-              {
-                label: 'โหมดจัดอันดับ',
-                value: 'RANKED',
-              },
+              // {
+              //   label: 'โหมดจัดอันดับ',
+              //   value: 'RANKED',
+              // },
               {
                 label: 'โหมดปกติ',
                 value: 'NORMAL',

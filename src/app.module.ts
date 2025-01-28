@@ -28,9 +28,7 @@ import { ServerUpdateRoleModule } from './server-update-role/server-update-role.
 import { ServerSetRoomModule } from './server-set-room/server-set-room.module';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { GameJoinModule } from './game-join/game-join.module';
-import { TestCreateChannelModule } from './test-create-channel/test-create-channel.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
-import { TestCreateChTwoModule } from './test-create-ch-two/test-create-ch-two.module';
 import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
 
 @Global()
@@ -97,8 +95,6 @@ import { ServerclearRoleModule } from './server-clear-role/server-clear-role.mod
     ServerclearRoleModule,
     ServerUpdateRoleModule,
     ServerSetRoomModule,
-    TestCreateChannelModule,
-    TestCreateChTwoModule,
     UserDataModule,
     WelcomeModule,
   ],

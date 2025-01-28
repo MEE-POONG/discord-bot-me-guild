@@ -4,6 +4,7 @@ import { GuildCreateDto } from './dto/length.dto';
 import {
   ActionRowBuilder,
   ButtonBuilder,
+  ButtonInteraction,
   ButtonStyle,
   CacheType,
   ChannelManager,
@@ -13,6 +14,7 @@ import {
   EmbedBuilder,
   GuildManager,
   GuildMember,
+  ModalSubmitInteraction,
   REST,
   ShardClientUtil,
   TextChannel,
@@ -57,7 +59,9 @@ export class GuildCreateService {
   }
 
   async createGuild(
-    interaction: ChatInputCommandInteraction<CacheType>,
+    interaction:
+      | ChatInputCommandInteraction<CacheType>
+      | ModalSubmitInteraction<CacheType>,
     options: GuildCreateDto,
   ) {
     let ownerData = (await this.userData.getProfile(
@@ -110,7 +114,7 @@ export class GuildCreateService {
       );
 
     await this.interactionHandler(
-      interaction,
+      interaction as ChatInputCommandInteraction<CacheType>,
       createEmbedFounded,
       createSelectMemberForFounded,
       guildName,

@@ -90,7 +90,7 @@ export class TestCreateChannelService {
 
       // สร้างหมวดหมู่
       const category = await guild.channels.create({
-        name: `${userInput} - หมวดหมู่กิจกรรม`,
+        name: `🕍 ${userInput}`,
         type: ChannelType.GuildCategory,
         permissionOverwrites: [
           {
@@ -106,7 +106,7 @@ export class TestCreateChannelService {
 
       // สร้าง GuildStageVoice
       const stageChannel = await guild.channels.create({
-        name: `${userInput} - กิจกรรม`,
+        name: `👑・กิจกรรมกิลด์`,
         type: ChannelType.GuildStageVoice,
         parent: category.id,
         permissionOverwrites: [

@@ -31,6 +31,7 @@ import { GameJoinModule } from './game-join/game-join.module';
 import { TestCreateChannelModule } from './test-create-channel/test-create-channel.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
 import { TestCreateChTwoModule } from './test-create-ch-two/test-create-ch-two.module';
+import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
 
 @Global()
 @Module({
@@ -93,6 +94,7 @@ import { TestCreateChTwoModule } from './test-create-ch-two/test-create-ch-two.m
     ServerTryItOnModule,
     ServerCreateRoleModule,
     ServerClearModule,
+    ServerclearRoleModule,
     ServerUpdateRoleModule,
     ServerSetRoomModule,
     TestCreateChannelModule,

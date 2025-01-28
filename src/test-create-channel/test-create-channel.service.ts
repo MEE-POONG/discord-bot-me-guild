@@ -51,7 +51,7 @@ export class TestCreateChannelService {
       .addComponents(
         new ActionRowBuilder<TextInputBuilder>().addComponents(
           new TextInputBuilder()
-            .setCustomId('user-input') // Custom ID สำหรับ Input
+            .setCustomId('guildName') // Custom ID สำหรับ Input
             .setLabel('ระบุชื่อ Guild') // ป้ายข้อความ
             .setStyle(TextInputStyle.Short) // รูปแบบเป็น Single-line
             .setPlaceholder('พิมพ์ข้อความที่นี่...') // ข้อความตัวอย่าง
@@ -67,39 +67,25 @@ export class TestCreateChannelService {
   async handleModalSubmission(
     @Context() [interaction]: ModalContext,
   ): Promise<any> {
-    const userInput = interaction.fields.getTextInputValue('user-input'); // รับค่าที่ผู้ใช้กรอก
-    this.logger.log(`User input: ${userInput}`); // Log ข้อความที่กรอก
+    const guildName = interaction.fields.getTextInputValue('guildName'); // รับค่าที่ผู้ใช้กรอก
+    this.logger.log(`User input: ${guildName}`); // Log ข้อความที่กรอก
 
     try {
       const guild = interaction.guild as Guild;
+      const positionRole = guild.roles.cache.get('1314456120424792108'); // ตัวอย่าง Role ID
+
       const newRole = await guild.roles.create({
-        name: userInput, // ใช้ชื่อที่ผู้ใช้กรอก
-        color: "#A4F1FF", // กำหนดสี (ปรับเปลี่ยนตามต้องการ)
-        permissions: [], // ไม่กำหนดสิทธิ์เพิ่มเติม (สามารถเพิ่มได้)
-        reason: `สร้างโดย ${interaction.user.tag}`, // เหตุผลในการสร้าง role
+        name: `🕍 ${guildName}`,
+        position: positionRole ? positionRole.position + 1 : undefined,
+        color: "#A4F1FF",
+        reason: `สร้างโดย ${interaction.user.tag}`,
       });
 
-      this.logger.log(`✅ Role created: ${newRole.name} (${newRole.id})`);
-      const roleId = '1314455560413904982'; // Role ID สำหรับกำหนดสิทธิ์
-      const role: Role | undefined = guild.roles.cache.get(roleId);
-
-      if (!role) {
-        // หากไม่พบ Role
-        await interaction.deferReply({ ephemeral: true });
-        return interaction.editReply({
-          embeds: [
-            new EmbedBuilder()
-              .setTitle('❌ ไม่พบ Role ที่กำหนด')
-              .setDescription(`กรุณาตรวจสอบ Role ID: ${roleId}`)
-              .setColor(0xff0000),
-          ],
-        });
-      }
-      await interaction.deferReply({ ephemeral: true }); // ตั้งค่ารอการตอบกลับ
+      this.logger.log(`✅ Role created successfully: ${newRole.name} (${newRole.id})`);
 
       // สร้างหมวดหมู่
       const category = await guild.channels.create({
-        name: `🕍 ${userInput}`,
+        name: `🕍 ${guildName}`,
         type: ChannelType.GuildCategory,
         permissionOverwrites: [
           {
@@ -107,7 +93,7 @@ export class TestCreateChannelService {
             deny: ['ViewChannel'],
           },
           {
-            id: role.id,
+            id: newRole.id,
             allow: ['ViewChannel'],
           },
         ],
@@ -120,62 +106,42 @@ export class TestCreateChannelService {
         parent: category.id,
       });
 
-      if (textChannel) {
-        const mainVoiceChannel = await guild.channels.create({
-          name: `🎤・โถงหลัก`,
-          type: ChannelType.GuildVoice,
-          parent: category.id,
-        });
+      const mainVoiceChannel = await guild.channels.create({
+        name: `🎤・โถงหลัก`,
+        type: ChannelType.GuildVoice,
+        parent: category.id,
+      });
 
-        if (mainVoiceChannel) {
-          const secondaryVoiceChannel = await guild.channels.create({
-            name: `🎤・โถงรอง`,
-            type: ChannelType.GuildVoice,
-            parent: category.id,
-          });
+      const secondaryVoiceChannel = await guild.channels.create({
+        name: `🎤・โถงรอง`,
+        type: ChannelType.GuildVoice,
+        parent: category.id,
+      });
 
-          if (secondaryVoiceChannel) {
-            const guestRoom = await guild.channels.create({
-              name: `🎁・เยี่ยมบ้าน`,
-              type: ChannelType.GuildVoice,
-              parent: category.id,
-            });
+      const guestRoom = await guild.channels.create({
+        name: `🎁・เยี่ยมบ้าน`,
+        type: ChannelType.GuildVoice,
+        parent: category.id,
+      });
 
-            if (guestRoom) {
-              const stageChannel = await guild.channels.create({
-                name: `👑・กิจกรรมกิลด์`,
-                type: ChannelType.GuildStageVoice,
-                parent: category.id,
-                permissionOverwrites: [
-                  {
-                    id: guild.roles.everyone.id,
-                    deny: ['Connect'],
-                  },
-                  {
-                    id: role.id,
-                    allow: ['Connect', 'ViewChannel'],
-                  },
-                ],
-              });
-              if (stageChannel) {
-                this.logger.log('✅ ทุกห้องถูกสร้างสำเร็จ');
-              } else {
-                this.logger.error('❌ ไม่สามารถสร้างห้อง Stage Room ได้');
-              }
-            } else {
-              this.logger.error('❌ ไม่สามารถสร้างห้อง Guest Room ได้');
-            }
-          } else {
-            this.logger.error('❌ ไม่สามารถสร้างห้อง Secondary Voice Channel ได้');
-          }
-        } else {
-          this.logger.error('❌ ไม่สามารถสร้างห้อง Main Voice Channel ได้');
-        }
-      } else {
-        this.logger.error('❌ ไม่สามารถสร้างห้อง Text Channel ได้');
-      }
+      const stageChannel = await guild.channels.create({
+        name: `👑・กิจกรรมกิลด์`,
+        type: ChannelType.GuildStageVoice,
+        parent: category.id,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            deny: ['Connect'],
+          },
+          {
+            id: newRole.id,
+            allow: ['Connect', 'ViewChannel'],
+          },
+        ],
+      });
 
       // ตอบกลับสำเร็จเมื่อทุกห้องถูกสร้าง
+      await interaction.deferReply({ ephemeral: true });
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -187,6 +153,7 @@ export class TestCreateChannelService {
 
     } catch (error: any) {
       this.logger.error(`Error creating channels: ${error.message}`);
+      await interaction.deferReply({ ephemeral: true });
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

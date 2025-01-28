@@ -216,6 +216,8 @@ export class GameCreateRoomService implements OnModuleInit {
       const gamePositionCreate = server.gamePositionCreate;
       const gameMacthReplyChanel = server.gamePostChannel;
 
+      console.log('gamePositionCreate: 219', gamePositionCreate);
+
       if (!gamePositionCreate) {
         return interaction.update({
           content: '❌ ไม่มีตำแหน่งที่กำหนดไว้สำหรับสร้างห้องในเซิร์ฟเวอร์นี้',
@@ -246,10 +248,12 @@ export class GameCreateRoomService implements OnModuleInit {
 
       const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : 'NORMAL'} - PARTY`;
 
+      console.log('channel_name', channel_name);
+
       const channel = await interaction.guild?.channels.create({
         name: channel_name,
         type: ChannelType.GuildVoice,
-        userLimit: limit || Number(game?.partyLimit),
+        ...(limit ? { userLimit: limit } : {}),
         parent: interaction.guild.channels.cache.get(
           gamePositionCreate,
         ) as CategoryChannel,
@@ -258,8 +262,12 @@ export class GameCreateRoomService implements OnModuleInit {
       if (channel) {
         await interaction.member.voice.setChannel(channel);
         this.party_id = channel.id;
+        console.log('this.party_id: 220', this.party_id);
+
         const channel_text =
           await this.client.channels.fetch(gameMacthReplyChanel);
+        console.log('channel_text: 220', channel_text);
+
         if (
           channel_text &&
           (channel_text instanceof TextChannel ||
@@ -302,7 +310,7 @@ export class GameCreateRoomService implements OnModuleInit {
                   },
                   {
                     name: 'ขนาดปาร์ตี้ : ',
-                    value: `${limit || Number(game?.partyLimit)}`,
+                    value: `${limit || 'ไม่จำกัด'}`,
                     inline: true,
                   },
                 )
@@ -325,7 +333,7 @@ export class GameCreateRoomService implements OnModuleInit {
               { name: 'ชื่อห้อง', value: `${channel.name}`, inline: true },
               {
                 name: 'จำนวนผู้เล่นสูงสุด',
-                value: `${limit || Number(game?.partyLimit)}`,
+                value: `${limit || 'ไม่จำกัด'}`,
                 inline: true,
               },
             )
@@ -415,6 +423,10 @@ export class GameCreateRoomService implements OnModuleInit {
                 label: 'โหมดปกติ',
                 value: 'NORMAL',
               },
+              {
+                label: 'กำหนดเอง',
+                value: 'CUSTOM',
+              },
             ]),
         ),
       ],
@@ -440,6 +452,7 @@ export class GameCreateRoomService implements OnModuleInit {
     const game_uid = this.selectedValues.find(
       (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
+
     if (check_no_range) {
       const game_name = await this.gameRepository.getGameById(game_uid);
       const room_name = ` ${game_name.game_name} `;
@@ -447,6 +460,39 @@ export class GameCreateRoomService implements OnModuleInit {
       if (game_name) {
         return this.createAndMoveToVoiceChannel(interaction, room_name);
       }
+    }
+
+    const check_custom = interaction.values[0] === 'CUSTOM';
+    if (check_custom) {
+      return interaction.update({
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            new StringSelectMenuBuilder()
+              .setCustomId('SELECT_MENU_PLAY_RANGED_MODE_CUSTOM')
+              .setPlaceholder('เลือกจำนวนผู้เล่น')
+              .setMaxValues(1)
+              .setMinValues(1)
+              .setOptions([
+                {
+                  label: '10',
+                  value: '10',
+                },
+                {
+                  label: '20',
+                  value: '20',
+                },
+                {
+                  label: '50',
+                  value: '50',
+                },
+                {
+                  label: 'ไม่จำกัด',
+                  value: 'UNLIMITED',
+                },
+              ]),
+          ),
+        ],
+      });
     }
 
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
@@ -570,6 +616,41 @@ export class GameCreateRoomService implements OnModuleInit {
         interaction,
         room_name,
         Number(game_condition_match.maxParty),
+      );
+    }
+  }
+  @StringSelect('SELECT_MENU_PLAY_RANGED_MODE_CUSTOM')
+  public async onSelectPeopleCustom(
+    @Context() [interaction]: StringSelectContext,
+  ) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
+    const user = interaction.user;
+    this.storeSelectedValues('select_menu_people', user.id, interaction.values);
+
+    const game_uid = this.selectedValues.find(
+      (value) => value.key === 'select_menu_game' && value.user === user.id,
+    )?.value;
+
+    const game_name = await this.gameRepository.getGameById(game_uid);
+
+    if (!game_name) {
+      return interaction.update({
+        components: [],
+        content: 'ไม่พบเกมส์นี้',
+      });
+    }
+    const room_name = ` ${game_name.game_name} `;
+
+    if (game_name) {
+      return this.createAndMoveToVoiceChannel(
+        interaction,
+        room_name,
+        interaction.values[0] === 'UNLIMITED'
+          ? 0
+          : Number(interaction.values[0]),
       );
     }
   }

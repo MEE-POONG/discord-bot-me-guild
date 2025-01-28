@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import {
+  Button,
+  ButtonContext,
+  Context,
+  SlashCommand,
+  SlashCommandContext,
+} from 'necord';
 import { GuildMember } from 'discord.js';
 import { NecordPaginationService } from '@necord/pagination';
 @Injectable()
 export class GameJoinCommands {
   constructor(private readonly paginationService: NecordPaginationService) {}
 
+  @Button('game-join')
   @SlashCommand({ name: 'game-join', description: 'Join Game' })
-  public async onGameJoin(@Context() [interaction]: SlashCommandContext) {
+  public async onGameJoin(
+    @Context() [interaction]: SlashCommandContext | ButtonContext,
+  ) {
     const pagination = this.paginationService.get('GAME_JOIN');
     const page = await pagination.build();
 

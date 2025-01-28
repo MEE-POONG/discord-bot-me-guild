@@ -292,6 +292,11 @@ export class ServerSetRoomService {
         .setEmoji('📝')
         .setLabel('ลงทะเบียน')
         .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+        .setCustomId('register-guild')
+        .setEmoji('📝')
+        .setLabel('ลงทะเบียนกิลล์')
+        .setStyle(ButtonStyle.Primary),
     );
 
     return channel.send({ embeds: [embed], components: [actionRow] });

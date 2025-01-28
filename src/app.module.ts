@@ -30,6 +30,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
 import { GameJoinModule } from './game-join/game-join.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
 import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
+import { BuskingModule } from './busking/busking.module';
 
 @Global()
 @Module({
@@ -97,6 +98,7 @@ import { ServerclearRoleModule } from './server-clear-role/server-clear-role.mod
     ServerSetRoomModule,
     UserDataModule,
     WelcomeModule,
+    BuskingModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

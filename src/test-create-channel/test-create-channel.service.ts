@@ -9,6 +9,10 @@ import {
   TextInputStyle,
   ActionRowBuilder,
   ModalSubmitInteraction,
+  Guild,
+  ChannelType,
+  Role,
+  OverwriteResolvable,
 } from 'discord.js';
 import { Modal, ModalContext, Context } from 'necord';
 import { PrismaService } from 'src/prisma.service';
@@ -22,7 +26,7 @@ export class TestCreateChannelService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   public onModuleInit() {
     this.logger.log('TestCreateChannel initialized');
@@ -48,8 +52,8 @@ export class TestCreateChannelService {
         new ActionRowBuilder<TextInputBuilder>().addComponents(
           new TextInputBuilder()
             .setCustomId('user-input') // Custom ID สำหรับ Input
-            .setLabel('กรอกข้อความที่ต้องการแสดง') // ป้ายข้อความ
-            .setStyle(TextInputStyle.Paragraph) // รูปแบบเป็น Paragraph
+            .setLabel('ระบุชื่อ Guild') // ป้ายข้อความ
+            .setStyle(TextInputStyle.Short) // รูปแบบเป็น Single-line
             .setPlaceholder('พิมพ์ข้อความที่นี่...') // ข้อความตัวอย่าง
             .setRequired(true), // บังคับให้กรอก
         ),
@@ -66,15 +70,82 @@ export class TestCreateChannelService {
     const userInput = interaction.fields.getTextInputValue('user-input'); // รับค่าที่ผู้ใช้กรอก
     this.logger.log(`User input: ${userInput}`); // Log ข้อความที่กรอก
 
-    // ตอบกลับข้อความ
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('✅ ข้อความของคุณถูกส่งสำเร็จ')
-          .setDescription(`📩 ข้อความที่คุณกรอก: \n"${userInput}"`) // แสดงข้อความที่กรอก
-          .setColor(0x00ff00), // สีเขียว (สำเร็จ)
-      ],
-      ephemeral: true, // แสดงเฉพาะผู้ใช้งานที่ส่ง Modal
-    });
+    try {
+      const guild = interaction.guild as Guild;
+      const roleId = '1314455560413904982'; // Role ID สำหรับกำหนดสิทธิ์
+      const role: Role | undefined = guild.roles.cache.get(roleId);
+
+      if (!role) {
+        // หากไม่พบ Role
+        return interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('❌ ไม่พบ Role ที่กำหนด')
+              .setDescription(`กรุณาตรวจสอบ Role ID: ${roleId}`)
+              .setColor(0xff0000),
+          ],
+          ephemeral: true,
+        });
+      }
+
+      // สร้างหมวดหมู่
+      const category = await guild.channels.create({
+        name: `${userInput} - หมวดหมู่กิจกรรม`,
+        type: ChannelType.GuildCategory,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // Everyone role
+            deny: ['ViewChannel'], // ปิดการเข้าถึงสำหรับ Everyone
+          },
+          {
+            id: role.id, // Role ที่อนุญาต
+            allow: ['ViewChannel'], // เปิดสิทธิ์ดูสำหรับ Role นี้
+          },
+        ],
+      });
+
+      // สร้าง GuildStageVoice
+      const stageChannel = await guild.channels.create({
+        name: `${userInput} - กิจกรรม`,
+        type: ChannelType.GuildStageVoice,
+        parent: category.id,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // Everyone role
+            deny: ['Connect'], // ปิดการเชื่อมต่อสำหรับ Everyone
+          },
+          {
+            id: role.id, // Role ที่อนุญาต
+            allow: ['Connect', 'ViewChannel'], // เปิดสิทธิ์สำหรับ Role นี้
+          },
+        ],
+      });
+
+      // ตอบกลับสำเร็จ
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('✅ การสร้างห้องสำเร็จ')
+            .setDescription(
+              `🎉 หมวดหมู่และห้อง **${stageChannel.name}** ถูกสร้างสำเร็จ!\n` +
+              `กำหนดสิทธิ์การเข้าถึงสำหรับ Role: **${role.name}**`,
+            )
+            .setColor(0x00ff00),
+        ],
+        ephemeral: true,
+      });
+
+    } catch (error: any) {
+      this.logger.error(`Error creating channels: ${error.message}`);
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('❌ เกิดข้อผิดพลาด')
+            .setDescription('ไม่สามารถสร้างห้องได้ กรุณาลองใหม่อีกครั้ง')
+            .setColor(0xff0000),
+        ],
+        ephemeral: true,
+      });
+    }
   }
 }

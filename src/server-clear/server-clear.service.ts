@@ -11,10 +11,12 @@ import { validateServerAndRole } from 'src/utils/server-validation.util';
 @Injectable()
 export class ServerclearService {
   private readonly logger = new Logger(ServerclearService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
   ) { }
+
   public onModuleInit() {
     this.logger.log('Serverclear initialized');
   }
@@ -42,9 +44,12 @@ export class ServerclearService {
       // Check if "test" channel exists
       let testChannel = channels.find(channel => channel.name === 'test' && channel.isTextBased());
 
-      // Delete all channels except "test"
+      // Channels to exclude from deletion
+      const excludeChannels = ['test', 'rules', 'moderator-only'];
+
+      // Delete all channels except excluded channels
       for (const [channelId, channel] of channels) {
-        if (channel.name === 'test') {
+        if (excludeChannels.includes(channel.name)) {
           this.logger.log(`Skipped deleting channel: ${channel.name} (${channelId})`);
           continue;
         }
@@ -69,7 +74,8 @@ export class ServerclearService {
           new EmbedBuilder()
             .setTitle('✅ ลบห้องสำเร็จ')
             .setDescription(
-              `🎉 ห้องทั้งหมดในเซิร์ฟเวอร์ถูกลบเรียบร้อยแล้ว (ยกเว้นห้อง "test")\n` +
+              `🎉 ห้องทั้งหมดในเซิร์ฟเวอร์ถูกลบเรียบร้อยแล้ว (ยกเว้นห้องที่ได้รับการยกเว้น)\n` +
+              `- ยกเว้น: "test", "rules", และ "moderator-only"\n` +
               `ห้อง "test" ถูกสร้างใหม่ถ้ายังไม่มี`,
             )
             .setColor(0x00ff00),

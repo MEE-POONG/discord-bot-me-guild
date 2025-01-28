@@ -14,10 +14,6 @@ export class TestCreateChannelCommands {
   async handleTestCreateChannel(@Context() [interaction]: SlashCommandContext) {
     try {
       await this.testcreatechannelService.TestCreateChannelSystem(interaction);
-      // return interaction.reply({
-      //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',
-      //   ephemeral: true,
-      // });
     } catch (error) {
       this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
       return interaction.reply({

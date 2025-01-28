@@ -114,7 +114,7 @@ export class ServerSetRoomService {
   private getDefaultRoomNames() {
     return {
       welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆', // ห้องต้อนรับ
-      news: '📢︰ข่าวสาน', // ห้องข่าวสาร
+      news: '📢︰ข่าวสาร', // ห้องข่าวสาร
       register: '🧾︰ลงทะเบียน', // ห้องลงทะเบียน
       gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม
       gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม

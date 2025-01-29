@@ -23,7 +23,7 @@ export class ServerSetRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   public onModuleInit() {
     this.logger.log('ServerSetRoomService initialized');
@@ -71,11 +71,6 @@ export class ServerSetRoomService {
               description: 'สร้างห้อง Register',
             },
             {
-              label: 'GameMatch Room',
-              value: 'gamematch',
-              description: 'สร้างห้อง GameMatch',
-            },
-            {
               label: 'Complaint Room',
               value: 'complaint',
               description: 'สร้างห้องแจ้งความร้องทุกข์',
@@ -86,15 +81,21 @@ export class ServerSetRoomService {
               description: 'สร้างห้องข้อเสนอแนะ',
             },
             {
+              label: 'Trade Room',
+              value: 'trade',
+              description: 'สร้างห้อง Trade',
+            },
+            {
               label: 'Busking Room',
               value: 'busking',
               description: 'สร้างหมวดหมู่และห้องแสดงความสามารถ',
             },
             {
-              label: 'Trade Room',
-              value: 'trade',
-              description: 'สร้างห้อง Trade',
+              label: 'GameMatch Room',
+              value: 'gamematch',
+              description: 'สร้างห้อง GameMatch',
             },
+
           ]),
       );
 
@@ -104,10 +105,14 @@ export class ServerSetRoomService {
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการ:\n` +
-              `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
-              `- **News Room**: ห้องสำหรับโพสต์ข่าว MeGuild\n` +
-              `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
-              `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม`,
+            `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
+            `- **News Room**: ห้องสำหรับโพสต์ข่าว MeGuild\n` +
+            `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Trade Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Complaint Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Suggestion Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม\n` +
+            `- **Busking Room**: ห้องแจ้งเตือนการจับคู่เกม`,
           )
           .setColor(0x00bfff),
       ],
@@ -140,14 +145,8 @@ export class ServerSetRoomService {
     try {
       if (roomType === 'gamematch') {
         await this.createGameMatchRooms(interaction, defaultRoomNames);
-      } else if (roomType === 'complaint') {
-        await this.createComplaintRoom(interaction);
-      } else if (roomType === 'suggestion') {
-        await this.createSuggestionRoom(interaction);
       } else if (roomType === 'busking') {
         await this.createBuskingRoom(interaction);
-      } else if (roomType === 'trade') {
-        await this.createTradeRoom(interaction);
       } else {
         await this.createSingleRoom(
           interaction,
@@ -170,6 +169,10 @@ export class ServerSetRoomService {
       welcome: 'welcomechannel',
       news: 'newsChannel',
       register: 'registerChannel',
+      trade: 'tradeChannel',
+      complaint: 'complaintChannel',
+      suggestion: 'suggestionChannel',
+      guild: 'guildChannel',
       gamematch: 'gameChannel',
       gamebtn: 'gamebtnChannel',
     };
@@ -180,6 +183,10 @@ export class ServerSetRoomService {
       welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆', // ห้องต้อนรับ
       news: '📢︰ข่าวสาร', // ห้องข่าวสาร
       register: '🧾︰ลงทะเบียน', // ห้องลงทะเบียน
+      trade: '💱︰Trade ค้าขาย',
+      complaint: '📢︰แจ้งความร้องทุกข์',
+      suggestion: '💡︰ข้อเสนอแนะ',
+      guild: '🎭︰Guild List',
       gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม
       gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม
     };
@@ -451,8 +458,6 @@ export class ServerSetRoomService {
       color: 16760137,
     });
 
-    
-
     // สร้างห้องแสดงความสามารถ
     const buskingChannel = await guild.channels.create({
       name: `〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈`,
@@ -537,8 +542,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-              `**${existingChannelName}**\n` +
-              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+            `**${existingChannelName}**\n` +
+            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],

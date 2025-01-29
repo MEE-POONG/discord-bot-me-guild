@@ -385,7 +385,6 @@ export class ServerSetRoomService {
         .setLabel('ลงทะเบียนกิลล์')
         .setStyle(ButtonStyle.Primary),
     );
-
     return channel.send({ embeds: [embed], components: [actionRow] });
   }
 

@@ -312,17 +312,17 @@ model ServerDB {
   openUntilAt           DateTime @db.Date
   meguildPositionCreate String?
   welcomechannel        String?
-  registerChannel       String?
   newsChannel           String?
-  gameChannel           String?
-  gamePostChannel       String?
-  gamePositionCreate    String?
-  guildChannel          String?
+  registerChannel       String?
   complaintChannel      String?
   suggestionChannel     String?
+  tradeChannel          String?
+  guildChannel          String?
+  gamePositionCreate    String?
+  gameChannel           String?
+  gamePostChannel       String?
   buskingPositionCreate String?
   buskingChannel        String?
-  trade                 String?
   createdAt             DateTime @db.Date
   updatedAt             DateTime @db.Date
 }

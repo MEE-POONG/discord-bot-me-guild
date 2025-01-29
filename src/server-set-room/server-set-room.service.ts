@@ -86,6 +86,11 @@ export class ServerSetRoomService {
               description: 'สร้างห้อง Trade',
             },
             {
+              label: 'Guild Room',
+              value: 'guild',
+              description: 'สร้างห้องข้อเสนอแนะ',
+            },
+            {
               label: 'Busking Room',
               value: 'busking',
               description: 'สร้างหมวดหมู่และห้องแสดงความสามารถ',
@@ -111,6 +116,7 @@ export class ServerSetRoomService {
             `- **Trade Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
             `- **Complaint Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
             `- **Suggestion Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Guild Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
             `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม\n` +
             `- **Busking Room**: ห้องแจ้งเตือนการจับคู่เกม`,
           )
@@ -183,10 +189,10 @@ export class ServerSetRoomService {
       welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆', // ห้องต้อนรับ
       news: '📢︰ข่าวสาร', // ห้องข่าวสาร
       register: '🧾︰ลงทะเบียน', // ห้องลงทะเบียน
-      trade: '💱︰Trade ค้าขาย',
+      trade: '💱︰𝑻𝒓𝒂𝒅𝒆 ค้าขาย',
       complaint: '📢︰แจ้งความร้องทุกข์',
       suggestion: '💡︰ข้อเสนอแนะ',
-      guild: '🎭︰Guild List',
+      guild: '🎭︰𝑮𝒖𝒊𝒍𝒅-𝑳𝒊𝒔𝒕',
       gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม
       gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม
     };
@@ -384,151 +390,52 @@ export class ServerSetRoomService {
     return channel.send({ embeds: [embed], components: [actionRow] });
   }
 
-  private async createComplaintRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
-    const guild = interaction.guild;
-
-    // ตรวจสอบหรือสร้างหมวดหมู่ MeGuild Center
-    const meguildCategory = await this.ensureCategory(
-      interaction,
-      'meguildPositionCreate',
-      '〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
-
-    // สร้างห้องแจ้งความร้องทุกข์
-    const complaintChannel = await guild.channels.create({
-      name: `📢︰แจ้งความร้องทุกข์`,
-      type: ChannelType.GuildText,
-      parent: meguildCategory.id,
-    });
-
-    // บันทึกข้อมูลในฐานข้อมูล
-    await this.serverRepository.updateServer(interaction.guildId, {
-      complaintChannel: complaintChannel.id,
-    });
-
-    this.roomName = complaintChannel.name;
-    return this.replySuccess(interaction, 'complaint');
-  }
-
-  private async createSuggestionRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
-    const guild = interaction.guild;
-
-    // ตรวจสอบหรือสร้างหมวดหมู่ MeGuild Center
-    const meguildCategory = await this.ensureCategory(
-      interaction,
-      'meguildPositionCreate',
-      '〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
-
-    // สร้างห้องข้อเสนอแนะ
-    const suggestionChannel = await guild.channels.create({
-      name: `💡︰ข้อเสนอแนะ`,
-      type: ChannelType.GuildText,
-      parent: meguildCategory.id,
-    });
-
-    // บันทึกข้อมูลในฐานข้อมูล
-    await this.serverRepository.updateServer(interaction.guildId, {
-      suggestionChannel: suggestionChannel.id,
-    });
-
-    this.roomName = suggestionChannel.name;
-    return this.replySuccess(interaction, 'suggestion');
-  }
-
   private async createBuskingRoom(
     interaction: StringSelectMenuInteraction<CacheType>,
   ) {
     const guild = interaction.guild;
-    const role = interaction.guild.roles;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
 
-    // ตรวจสอบหรือสร้างหมวดหมู่ Busking Center
-    const buskingCategory = await this.ensureCategory(
-      interaction,
-      'buskingPositionCreate',
-      '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
+    // ตรวจสอบหมวดหมู่ Busking Center
+    let buskingCategory = guild.channels.cache.get(server?.buskingPositionCreate || '');
 
-    await role.create({
-      name: 'Busking',
-      color: 16760137,
-    });
+    if (!buskingCategory || buskingCategory.type !== ChannelType.GuildCategory) {
+      this.logger.warn('หมวดหมู่ Busking Center ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่');
 
-    // สร้างห้องแสดงความสามารถ
+      // สร้างหมวดหมู่ใหม่
+      buskingCategory = await guild.channels.create({
+        name: '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓',
+        type: ChannelType.GuildCategory,
+      });
+
+      // อัปเดต ID หมวดหมู่ในฐานข้อมูล
+      await this.serverRepository.updateServer(interaction.guildId, {
+        buskingPositionCreate: buskingCategory.id,
+      });
+    }
+
+    // 🛑 ตรวจสอบว่าห้อง Busking มีอยู่แล้วหรือไม่
+    let existingBuskingChannel = guild.channels.cache.get(server?.buskingChannel || '');
+    if (existingBuskingChannel) {
+      return this.replyStopCreate(interaction, 'busking', existingBuskingChannel.name);
+    }
+
+    this.logger.log('สร้างห้อง Busking ใหม่');
+
+    // สร้างห้อง Busking
     const buskingChannel = await guild.channels.create({
-      name: `〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈`,
+      name: '🎩𝗘𝗻𝘁𝗲𝗿𝘁𝗮𝗶𝗻 𝗭𝗼𝗻𝗲',
       type: ChannelType.GuildText,
       parent: buskingCategory.id,
     });
 
-    // บันทึกข้อมูลในฐานข้อมูล
+    // อัปเดตข้อมูลในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       buskingChannel: buskingChannel.id,
     });
 
     this.roomName = buskingChannel.name;
     return this.replySuccess(interaction, 'busking');
-  }
-
-  private async createTradeRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
-    const guild = interaction.guild;
-
-    // ตรวจสอบหรือสร้างหมวดหมู่ MeGuild Center
-    const meguildCategory = await this.ensureCategory(
-      interaction,
-      'meguildPositionCreate',
-      '〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
-
-    // สร้างห้อง Trade
-    const tradeChannel = await guild.channels.create({
-      name: `〔💱〕Trade`,
-      type: ChannelType.GuildText,
-      parent: meguildCategory.id,
-    });
-
-    // บันทึกข้อมูลในฐานข้อมูล
-    await this.serverRepository.updateServer(interaction.guildId, {
-      tradeChannel: tradeChannel.id,
-    });
-
-    this.roomName = tradeChannel.name;
-    return this.replySuccess(interaction, 'trade');
-  }
-
-  private async ensureCategory(
-    interaction: StringSelectMenuInteraction<CacheType>,
-    field: string,
-    categoryName: string,
-  ): Promise<any> {
-    const guild = interaction.guild;
-
-    let category = guild.channels.cache.get(
-      (await this.serverRepository.getServerById(interaction.guildId)?.[
-        field
-      ]) || '',
-    );
-
-    if (!category || category.type !== ChannelType.GuildCategory) {
-      // สร้างหมวดหมู่ใหม่
-      category = await guild.channels.create({
-        name: categoryName,
-        type: ChannelType.GuildCategory,
-      });
-
-      // บันทึก ID หมวดหมู่ในฐานข้อมูล
-      await this.serverRepository.updateServer(interaction.guildId, {
-        [field]: category.id,
-      });
-    }
-
-    return category;
   }
 
   private replyStopCreate(

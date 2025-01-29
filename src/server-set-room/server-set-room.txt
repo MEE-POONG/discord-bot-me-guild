@@ -23,7 +23,7 @@ export class ServerSetRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   public onModuleInit() {
     this.logger.log('ServerSetRoomService initialized');
@@ -71,9 +71,9 @@ export class ServerSetRoomService {
               description: 'สร้างห้อง Register',
             },
             {
-              label: 'GameMatch Room',
-              value: 'gamematch',
-              description: 'สร้างห้อง GameMatch',
+              label: 'Trade Room',
+              value: 'trade',
+              description: 'สร้างห้อง Trade',
             },
             {
               label: 'Complaint Room',
@@ -86,14 +86,19 @@ export class ServerSetRoomService {
               description: 'สร้างห้องข้อเสนอแนะ',
             },
             {
+              label: 'Guild Room',
+              value: 'suggestion',
+              description: 'สร้างห้องข้อเสนอแนะ',
+            },
+            {
+              label: 'GameMatch Room',
+              value: 'gamematch',
+              description: 'สร้างห้อง GameMatch',
+            },
+            {
               label: 'Busking Room',
               value: 'busking',
               description: 'สร้างหมวดหมู่และห้องแสดงความสามารถ',
-            },
-            {
-              label: 'Trade Room',
-              value: 'trade',
-              description: 'สร้างห้อง Trade',
             },
           ]),
       );
@@ -104,10 +109,14 @@ export class ServerSetRoomService {
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการ:\n` +
-              `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
-              `- **News Room**: ห้องสำหรับโพสต์ข่าว MeGuild\n` +
-              `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
-              `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม`,
+            `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่\n` +
+            `- **News Room**: ห้องสำหรับโพสต์ข่าว MeGuild\n` +
+            `- **Register Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Trade Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Complaint Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **Suggestion Room**: ห้องสำหรับฟอร์มลงทะเบียนระบบ MeGuild\n` +
+            `- **GameMatch Room**: ห้องแจ้งเตือนการจับคู่เกม\n` +
+            `- **Busking Room**: ห้องแจ้งเตือนการจับคู่เกม`,
           )
           .setColor(0x00bfff),
       ],
@@ -140,14 +149,8 @@ export class ServerSetRoomService {
     try {
       if (roomType === 'gamematch') {
         await this.createGameMatchRooms(interaction, defaultRoomNames);
-      } else if (roomType === 'complaint') {
-        await this.createComplaintRoom(interaction);
-      } else if (roomType === 'suggestion') {
-        await this.createSuggestionRoom(interaction);
       } else if (roomType === 'busking') {
         await this.createBuskingRoom(interaction);
-      } else if (roomType === 'trade') {
-        await this.createTradeRoom(interaction);
       } else {
         await this.createSingleRoom(
           interaction,
@@ -165,23 +168,32 @@ export class ServerSetRoomService {
     }
   }
 
+  // 🗺 แผนที่ค่าชื่อห้อง -> ฟิลด์ฐานข้อมูล
   private getRoomFieldMapping() {
     return {
       welcome: 'welcomechannel',
       news: 'newsChannel',
       register: 'registerChannel',
+      trade: 'tradeChannel',
+      complaint: 'complaintChannel',
+      suggestion: 'suggestionChannel',
+      guild: 'guildChannel',
       gamematch: 'gameChannel',
       gamebtn: 'gamebtnChannel',
     };
   }
-
+  // 🔖 รายการชื่อห้องเริ่มต้น
   private getDefaultRoomNames() {
     return {
-      welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆', // ห้องต้อนรับ
-      news: '📢︰ข่าวสาร', // ห้องข่าวสาร
-      register: '🧾︰ลงทะเบียน', // ห้องลงทะเบียน
-      gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม
-      gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม
+      welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆',
+      news: '📢︰ข่าวสาร',
+      register: '🧾︰ลงทะเบียน',
+      trade: '💱︰Trade ค้าขาย',
+      complaint: '📢︰แจ้งความร้องทุกข์',
+      suggestion: '💡︰ข้อเสนอแนะ',
+      guild: '🎭︰Guild List',
+      gamematch: '👼︰หาปาร์ตี้เล่นเกม',
+      gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม    
     };
   }
 
@@ -377,124 +389,52 @@ export class ServerSetRoomService {
     return channel.send({ embeds: [embed], components: [actionRow] });
   }
 
-  private async createComplaintRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
-    const guild = interaction.guild;
-
-    // ตรวจสอบหรือสร้างหมวดหมู่ MeGuild Center
-    const meguildCategory = await this.ensureCategory(
-      interaction,
-      'meguildPositionCreate',
-      '〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
-
-    // สร้างห้องแจ้งความร้องทุกข์
-    const complaintChannel = await guild.channels.create({
-      name: `📢︰แจ้งความร้องทุกข์`,
-      type: ChannelType.GuildText,
-      parent: meguildCategory.id,
-    });
-
-    // บันทึกข้อมูลในฐานข้อมูล
-    await this.serverRepository.updateServer(interaction.guildId, {
-      complaintChannel: complaintChannel.id,
-    });
-
-    this.roomName = complaintChannel.name;
-    return this.replySuccess(interaction, 'complaint');
-  }
-
-  private async createSuggestionRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
-    const guild = interaction.guild;
-
-    // ตรวจสอบหรือสร้างหมวดหมู่ MeGuild Center
-    const meguildCategory = await this.ensureCategory(
-      interaction,
-      'meguildPositionCreate',
-      '〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
-
-    // สร้างห้องข้อเสนอแนะ
-    const suggestionChannel = await guild.channels.create({
-      name: `💡︰ข้อเสนอแนะ`,
-      type: ChannelType.GuildText,
-      parent: meguildCategory.id,
-    });
-
-    // บันทึกข้อมูลในฐานข้อมูล
-    await this.serverRepository.updateServer(interaction.guildId, {
-      suggestionChannel: suggestionChannel.id,
-    });
-
-    this.roomName = suggestionChannel.name;
-    return this.replySuccess(interaction, 'suggestion');
-  }
-
   private async createBuskingRoom(
     interaction: StringSelectMenuInteraction<CacheType>,
   ) {
     const guild = interaction.guild;
-    const role = interaction.guild.roles;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
 
-    // ตรวจสอบหรือสร้างหมวดหมู่ Busking Center
-    const buskingCategory = await this.ensureCategory(
-      interaction,
-      'buskingPositionCreate',
-      '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
+    // ตรวจสอบหมวดหมู่ Busking Center
+    let buskingCategory = guild.channels.cache.get(server?.buskingPositionCreate || '');
 
-    await role.create({
-      name: 'Busking',
-      color: 16760137,
-    });
+    if (!buskingCategory || buskingCategory.type !== ChannelType.GuildCategory) {
+      this.logger.warn('หมวดหมู่ Busking Center ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่');
 
-    
+      // สร้างหมวดหมู่ใหม่
+      buskingCategory = await guild.channels.create({
+        name: '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓',
+        type: ChannelType.GuildCategory,
+      });
 
-    // สร้างห้องแสดงความสามารถ
+      // อัปเดต ID หมวดหมู่ในฐานข้อมูล
+      await this.serverRepository.updateServer(interaction.guildId, {
+        buskingPositionCreate: buskingCategory.id,
+      });
+    }
+
+    // 🛑 ตรวจสอบว่าห้อง Busking มีอยู่แล้วหรือไม่
+    let existingBuskingChannel = guild.channels.cache.get(server?.buskingChannel || '');
+    if (existingBuskingChannel) {
+      return this.replyStopCreate(interaction, 'busking', existingBuskingChannel.name);
+    }
+
+    this.logger.log('สร้างห้อง Busking ใหม่');
+
+    // สร้างห้อง Busking
     const buskingChannel = await guild.channels.create({
-      name: `〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈`,
+      name: '〔🎩〕𝗘𝗻𝘁𝗲𝗿𝘁𝗮𝗶𝗻 𝗭𝗼𝗻𝗲',
       type: ChannelType.GuildText,
       parent: buskingCategory.id,
     });
 
-    // บันทึกข้อมูลในฐานข้อมูล
+    // อัปเดตข้อมูลในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       buskingChannel: buskingChannel.id,
     });
 
     this.roomName = buskingChannel.name;
     return this.replySuccess(interaction, 'busking');
-  }
-
-  private async createTradeRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
-    const guild = interaction.guild;
-
-    // ตรวจสอบหรือสร้างหมวดหมู่ MeGuild Center
-    const meguildCategory = await this.ensureCategory(
-      interaction,
-      'meguildPositionCreate',
-      '〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓',
-    );
-
-    // สร้างห้อง Trade
-    const tradeChannel = await guild.channels.create({
-      name: `〔💱〕Trade`,
-      type: ChannelType.GuildText,
-      parent: meguildCategory.id,
-    });
-
-    // บันทึกข้อมูลในฐานข้อมูล
-    await this.serverRepository.updateServer(interaction.guildId, {
-      trade: tradeChannel.id,
-    });
-
-    this.roomName = tradeChannel.name;
-    return this.replySuccess(interaction, 'trade');
   }
 
   private async ensureCategory(
@@ -537,8 +477,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-              `**${existingChannelName}**\n` +
-              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+            `**${existingChannelName}**\n` +
+            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],

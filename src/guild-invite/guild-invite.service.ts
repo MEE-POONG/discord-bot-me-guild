@@ -31,7 +31,7 @@ export class GuildInviteService implements OnModuleInit {
       GatewayIntentBits.GuildMessages,
     ],
   });
-  public constructor(private readonly prisma: PrismaService) {}
+  public constructor(private readonly prisma: PrismaService) { }
   public async onModuleInit() {
     this.logger.log('GuildInviteService initialized');
   }
@@ -60,7 +60,7 @@ export class GuildInviteService implements OnModuleInit {
       });
 
       // Fetch wallet data
-      let userWallet = await this.prisma.wallet.findFirst({
+      let userWallet = await this.prisma.meGuildCoinDB.findFirst({
         where: {
           userId: user.id,
         },
@@ -70,7 +70,7 @@ export class GuildInviteService implements OnModuleInit {
       return {
         ...userUserData,
         GuildMembers: userGuildMembers,
-        wallet: userWallet,
+        meGuildCoinDB: userWallet,
       } as UserProfile;
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -106,7 +106,7 @@ export class GuildInviteService implements OnModuleInit {
         },
       });
 
-      const invite = await this.prisma.inviteData.create({
+      const invite = await this.prisma.guildInviteDataDB.create({
         data: {
           guildId: owner.guildDB.id,
           userId: userData.discord_id,
@@ -262,11 +262,11 @@ export class GuildInviteService implements OnModuleInit {
         return;
       }
 
-      const inviteData = await this.prisma.inviteData.findFirst({
+      const guildInviteDataDB = await this.prisma.guildInviteDataDB.findFirst({
         where: { id: this.guildInviteId.get('INVITE_ID') },
       });
 
-      if (!inviteData) {
+      if (!guildInviteDataDB) {
         interaction.reply({
           content: 'ไม่พบคำเชิญที่คุณต้องการยอมรับ',
           ephemeral: true,
@@ -275,7 +275,7 @@ export class GuildInviteService implements OnModuleInit {
       }
 
       const guildData = await this.prisma.guildDB.findFirst({
-        where: { id: inviteData.guildId },
+        where: { id: guildInviteDataDB.guildId },
       });
 
       if (!guildData) {
@@ -287,7 +287,7 @@ export class GuildInviteService implements OnModuleInit {
       }
 
       const memberList = await this.prisma.guildMembers.findMany({
-        where: { guildId: inviteData.guildId },
+        where: { guildId: guildInviteDataDB.guildId },
       });
 
       const memberSize = memberList.length || 0;
@@ -302,7 +302,7 @@ export class GuildInviteService implements OnModuleInit {
 
       const newMember = await this.prisma.guildMembers.create({
         data: {
-          guildId: inviteData.guildId,
+          guildId: guildInviteDataDB.guildId,
           position: 'Member',
           userId: interaction.user.id,
         },
@@ -319,17 +319,17 @@ export class GuildInviteService implements OnModuleInit {
       const member = await guild.members.fetch(userId);
       await member.roles.add(guildData.guild_roleId as string);
 
-      this.prisma.inviteData
+      this.prisma.guildInviteDataDB
         .delete({
-          where: { id: inviteData.id },
+          where: { id: guildInviteDataDB.id },
         })
-        .catch(() => {});
+        .catch(() => { });
 
       interaction.message
         .edit({
           components: [],
         })
-        .catch(() => {});
+        .catch(() => { });
 
       interaction.reply({
         content: `ระบบได้เพิ่มคุณเข้าสู่กิลด์ ${guildData.guild_name} เรียบร้อยแล้วค่ะ`,

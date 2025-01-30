@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GuildMembers, PrismaClient, UserDB, Wallet } from '@prisma/client';
+import { GuildMembers, PrismaClient, UserDB, MeGuildCoinDB } from '@prisma/client';
 import { User } from 'discord.js';
 
 @Injectable()
 export class UserDataService {
   private logger = new Logger(UserDataService.name);
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
   async getProfile(user: User) {
     try {
@@ -25,7 +25,7 @@ export class UserDataService {
       });
 
       // Fetch wallet data
-      let userWallet = await this.prisma.wallet.findFirst({
+      let userWallet = await this.prisma.meGuildCoinDB.findFirst({
         where: {
           userId: user.id,
         },
@@ -35,7 +35,7 @@ export class UserDataService {
       return {
         ...userUserData,
         GuildMembers: userGuildMembers,
-        wallet: userWallet,
+        meGuildCoinDB: userWallet,
       } as UserProfile;
     } catch (error) {
       this.logger.error('Error fetching user profile:', error);
@@ -46,5 +46,5 @@ export class UserDataService {
 
 export interface UserProfile extends UserDB {
   GuildMembers: GuildMembers[];
-  wallet: Wallet | null;
+  meGuildCoinDB: MeGuildCoinDB | null;
 }

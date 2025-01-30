@@ -4,7 +4,7 @@ import {
   GuildMembers,
   PrismaClient,
   UserDB,
-  Wallet,
+  MeGuildCoinDB,
 } from '@prisma/client';
 import {
   ButtonInteraction,
@@ -496,5 +496,4 @@ export class GuildManageService {
 
 export interface UserProfile extends UserDB {
   GuildMembers: GuildMembers[];
-  wallet: Wallet | null;
-}
+  meGuildCoinDB: MeGuildCoinDB | null;}

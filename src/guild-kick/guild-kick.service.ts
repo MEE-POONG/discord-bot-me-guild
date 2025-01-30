@@ -16,7 +16,7 @@ import { GuildKickDto } from './dto/length.dto';
 @Injectable()
 export class GuildKickService implements OnModuleInit {
   private readonly logger = new Logger(GuildKickService.name);
-  public constructor(private readonly prisma: PrismaService) {}
+  public constructor(private readonly prisma: PrismaService) { }
   public async onModuleInit() {
     this.logger.log('GuildKickService initialized');
   }
@@ -155,7 +155,7 @@ export class GuildKickService implements OnModuleInit {
       });
 
       // Fetch wallet data
-      let userWallet = await this.prisma.wallet.findFirst({
+      let userWallet = await this.prisma.meGuildCoinDB.findFirst({
         where: {
           userId: user.id,
         },
@@ -165,7 +165,7 @@ export class GuildKickService implements OnModuleInit {
       return {
         ...userUserData,
         GuildMembers: userGuildMembers,
-        wallet: userWallet,
+        meGuildCoinDB: userWallet,
       } as UserProfile;
     } catch (error) {
       console.error('Error fetching user profile:', error);

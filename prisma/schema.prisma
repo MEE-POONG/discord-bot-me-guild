@@ -232,13 +232,13 @@ model ImageList {
   updatedBy String
 }
 
-model InviteData {
+model GuildInviteDataDB {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   guildId String
   userId  String
 }
 
-model InviteRequest {
+model GuildInviteRequest {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   guildId String
   userId  String
@@ -285,15 +285,15 @@ model NewsTypeNews {
 
 model NewsUpdateDB {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt   DateTime  @db.Date
-  createdBy   String?
   creditlink  String
-  deleteBy    String?
   description String
   img         String
   title       String
+  createdAt   DateTime  @db.Date
+  createdBy   String?
   updatedAt   DateTime? @db.Date
   updatedBy   String?
+  deleteBy    String?
 }
 
 model ServerDB {
@@ -359,18 +359,6 @@ model UserGameRank {
   userId     Json
 }
 
-model Wallet {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  coin_copper  BigInt
-  coin_crystal BigInt
-  coin_diamond BigInt
-  coin_gold    BigInt
-  coin_silver  BigInt
-  createdAt    DateTime @db.Date
-  updatedAt    DateTime @db.Date
-  userId       String
-}
-
 model WebDefaultDB {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   logoSquare     String? // โลโก้ที่เป็นสี่เหลี่ยม, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
@@ -390,13 +378,47 @@ model WebDefaultDB {
   deleteBy       String
 }
 
-model inviteData {
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
-  guildId String
-  userId  String
+
+model ProductRoldDB {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  roldId    String
+  roldName  String
+  createdAt DateTime  @db.Date
+  createdBy String?
+  updatedAt DateTime? @db.Date
+  updatedBy String?
+  deleteBy  String?
 }
 
-model paymentHistory {
+model SalesReport {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  adminId   String //คนเช็คสลิป
+  slip      String //สลิป
+  list      String //รายการขาย
+  productID String // สินค้าเพื่ออนาคต
+  roleID    String // ไอดีของ role ในดิส
+  price     String //ปรับแก้ให้ด้วย
+  Currency  String //สกุลเงินที่ใช้ THbath || MeGuildCoin
+  createdAt DateTime  @db.Date
+  createdBy String?
+  updatedAt DateTime? @db.Date
+  updatedBy String?
+  deleteBy  String?
+}
+
+model MeGuildCoinDB {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  coin_copper  BigInt
+  coin_crystal BigInt
+  coin_diamond BigInt
+  coin_gold    BigInt
+  coin_silver  BigInt
+  createdAt    DateTime @db.Date
+  updatedAt    DateTime @db.Date
+  userId       String
+}
+
+model PaymentHistoryDB {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   coin_copper  BigInt
   coin_crystal BigInt

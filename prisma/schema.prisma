@@ -378,11 +378,11 @@ model WebDefaultDB {
   deleteBy       String
 }
 
-
-model ProductRoldDB {
+model ProductListDB {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  roldId    String
-  roldName  String
+  name      String
+  detail    String
+  price     String
   createdAt DateTime  @db.Date
   createdBy String?
   updatedAt DateTime? @db.Date
@@ -390,13 +390,25 @@ model ProductRoldDB {
   deleteBy  String?
 }
 
-model SalesReport {
+model ProductRoldDB {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  roldId    String
+  roldName  String
+  price     String
+  createdAt DateTime  @db.Date
+  createdBy String?
+  updatedAt DateTime? @db.Date
+  updatedBy String?
+  deleteBy  String?
+}
+
+model SalesReportDB {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   adminId   String //คนเช็คสลิป
   slip      String //สลิป
   list      String //รายการขาย
-  productID String // สินค้าเพื่ออนาคต
-  roleID    String // ไอดีของ role ในดิส
+  productID String // สินค้าเพื่ออนาคต ที่ขาย
+  roleID    String // ไอดีของ role ในดิสที่ขาย
   price     String //ปรับแก้ให้ด้วย
   Currency  String //สกุลเงินที่ใช้ THbath || MeGuildCoin
   createdAt DateTime  @db.Date

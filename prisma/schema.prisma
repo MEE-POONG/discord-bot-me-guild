@@ -50,6 +50,30 @@ model BlogDB {
   deleteBy    String
 }
 
+model CheckOnlineDB {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  discord_id          String?
+  checkIn         DateTime  @default(now())
+  checkOut        DateTime?
+  totalOnlineTime Int       @default(0)
+  createdAt       DateTime  @default(now())
+  createdBy       String?
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String
+  deleteBy        String
+}
+model CommentDB {
+id        String   @id @default(auto()) @map("_id") @db.ObjectId
+name      String
+userID    String
+content   String
+createdAt DateTime @default(now())
+createdBy String?
+updatedAt DateTime @updatedAt
+updatedBy String? // Make this optional
+deleteBy  String? // Make this optional
+}
+
 model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt  DateTime @db.Date
@@ -67,12 +91,12 @@ model CustomerDB {
 
 model GameCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
   createdAt DateTime @db.Date
   createdBy String
-  deleteBy  String
-  title     String
   updatedAt DateTime @db.Date
   updatedBy String
+  deleteBy  String
 }
 
 model GameConditionMatchDB {
@@ -126,8 +150,8 @@ model GameMatchDB {
 
 model GameTypeDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  categoryId String   @db.ObjectId
   title      String
+  categoryId String   @db.ObjectId
   createdAt  DateTime @db.Date
   createdBy  String
   updatedAt  DateTime @db.Date
@@ -242,10 +266,6 @@ model GuildInviteRequest {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   guildId String
   userId  String
-}
-
-model JobQueueDB {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
 }
 
 model NewsCategoryDB {
@@ -443,4 +463,39 @@ model PaymentHistoryDB {
   updatedAt    DateTime @db.Date
   updatedBy    String
   userId       String
+}
+model RuleDB {
+id        String   @id @default(auto()) @map("_id") @db.ObjectId
+topic     String
+IssueBy   Int
+GuildID   String
+createdAt DateTime @default(now())
+createdBy String?
+updatedAt DateTime @updatedAt
+updatedBy String
+deleteBy  String
+}
+model topicDB {
+id          String   @id @default(auto()) @map("_id") @db.ObjectId
+title       String
+ruleId      Int
+description String
+createdAt   DateTime @default(now())
+createdBy   String?
+updatedAt   DateTime @updatedAt
+updatedBy   String
+deleteBy    String
+}
+
+model TeamDB {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamName   String // ชื่อทีม
+  represent  String // ทีมจากตัวแทนของ
+  members    String[] // รายชื่อสมาชิกในทีม (discord_id หรือ userId)
+  TeamLeader String? // ตัวแทนของทีม (optional)
+  createdAt  DateTime @default(now())
+  createdBy  String?
+  updatedAt  DateTime @updatedAt
+  updatedBy  String
+  deleteBy   String
 }

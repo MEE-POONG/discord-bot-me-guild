@@ -40,12 +40,12 @@ export function generateImage(member: GuildMember) {
             ctx.shadowOffsetY = 0;
 
             ctx.font = '50px "CustomFont"';
-            ctx.fillStyle = '#4de0ff';
+            ctx.fillStyle = '#fcfdf0';
             const text = `${member.user.username}`;
             const textWidth = ctx.measureText(text).width;
             const textX = (canvas.width - textWidth) / 2;
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#00838f';
             ctx.strokeText(text, textX, centerY + 150);
             ctx.fillText(text, textX, centerY + 150);
 
@@ -55,7 +55,7 @@ export function generateImage(member: GuildMember) {
             const textWidth2 = ctx.measureText(text2).width;
             const textX2 = (canvas.width - textWidth2) / 2;
             ctx.lineWidth = 5;
-            ctx.strokeStyle = 'black';
+            ctx.strokeStyle = '#00838f';
             ctx.strokeText(text2, textX2, centerY + 200);
             ctx.fillText(text2, textX2, centerY + 200);
 

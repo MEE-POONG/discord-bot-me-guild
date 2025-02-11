@@ -1,33 +1,43 @@
-# Use the official Node.js image as a base
-FROM node:22
+# Use Node.js base image
+FROM node
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (or pnpm-lock.yaml) to the working directory
-COPY package.json pnpm-lock.yaml ./
-
-# Install system dependencies for canvas
+# Install system dependencies required for 'canvas'
 RUN apt-get update && apt-get install -y \
+    build-essential \
     libcairo2-dev \
     libpango1.0-dev \
     libjpeg-dev \
     libgif-dev \
-    librsvg2-dev
+    librsvg2-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN npm install -g pnpm && pnpm install
+# Set environment to force native builds for canvas
+ENV npm_config_build_from_source=true
+ENV yarn_config_build_from_source=true
 
-# Copy the rest of the application code to the working directory
+# Copy package.json and yarn.lock to the working directory
+COPY package.json ./
+
+# Install dependencies with yarn
+RUN yarn install
+
+# Copy the application code to the working directory
 COPY . .
 
+# Generate Prisma client (if applicable)
 RUN npx prisma generate
 
 # Build the application
-RUN npm run build
+RUN yarn build
+
+# Verify that 'canvas.node' is built correctly (optional)
+# RUN ls -al node_modules/canvas/build/
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Define the command to run the application
+# Start the application
 CMD ["node", "dist/main"]

@@ -10,8 +10,7 @@ export class FormGameCommands {
 
   @SlashCommand({
     name: 'form-game',
-    description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
-    defaultMemberPermissions: '8',
+    description: 'ส่งป็อปอัพเกี่ยวกับการเล่นเกมส์',
     guilds: getGuildIdsValues,
   })
   async handleFormGame(@Context() [interaction]: SlashCommandContext) {

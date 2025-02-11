@@ -52,7 +52,7 @@ model BlogDB {
 
 model CheckOnlineDB {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  discord_id          String?
+  discord_id      String?
   checkIn         DateTime  @default(now())
   checkOut        DateTime?
   totalOnlineTime Int       @default(0)
@@ -62,16 +62,17 @@ model CheckOnlineDB {
   updatedBy       String
   deleteBy        String
 }
+
 model CommentDB {
-id        String   @id @default(auto()) @map("_id") @db.ObjectId
-name      String
-userID    String
-content   String
-createdAt DateTime @default(now())
-createdBy String?
-updatedAt DateTime @updatedAt
-updatedBy String? // Make this optional
-deleteBy  String? // Make this optional
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  userID    String
+  content   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String? // Make this optional
+  deleteBy  String? // Make this optional
 }
 
 model CustomerDB {
@@ -398,6 +399,11 @@ model WebDefaultDB {
   deleteBy       String
 }
 
+model ImgBot {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  
+}
+
 model ProductListDB {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -464,27 +470,29 @@ model PaymentHistoryDB {
   updatedBy    String
   userId       String
 }
+
 model RuleDB {
-id        String   @id @default(auto()) @map("_id") @db.ObjectId
-topic     String
-IssueBy   Int
-GuildID   String
-createdAt DateTime @default(now())
-createdBy String?
-updatedAt DateTime @updatedAt
-updatedBy String
-deleteBy  String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  topic     String
+  IssueBy   Int
+  GuildID   String
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String
+  deleteBy  String
 }
+
 model topicDB {
-id          String   @id @default(auto()) @map("_id") @db.ObjectId
-title       String
-ruleId      Int
-description String
-createdAt   DateTime @default(now())
-createdBy   String?
-updatedAt   DateTime @updatedAt
-updatedBy   String
-deleteBy    String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  ruleId      Int
+  description String
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String
+  deleteBy    String
 }
 
 model TeamDB {

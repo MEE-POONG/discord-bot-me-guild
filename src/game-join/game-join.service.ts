@@ -170,8 +170,6 @@ export class GameJoinService {
     )?.value;
     const rankMode = interaction.values[0];
 
-    console.log(gameType, rankMode);
-    
     const member = interaction.member as GuildMember;
     const user_data = await this.prisma.userDB.findFirst({
       where: {

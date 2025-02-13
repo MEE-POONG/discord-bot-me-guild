@@ -216,8 +216,6 @@ export class GameCreateRoomService implements OnModuleInit {
       const gamePositionCreate = server.gamePositionCreate;
       const gameMacthReplyChanel = server.gamePostChannel;
 
-      console.log('gamePositionCreate: 219', gamePositionCreate);
-
       if (!gamePositionCreate) {
         return interaction.update({
           content: '❌ ไม่มีตำแหน่งที่กำหนดไว้สำหรับสร้างห้องในเซิร์ฟเวอร์นี้',
@@ -248,7 +246,6 @@ export class GameCreateRoomService implements OnModuleInit {
 
       const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : 'NORMAL'} - PARTY`;
 
-      console.log('channel_name', channel_name);
 
       const channel = await interaction.guild?.channels.create({
         name: channel_name,
@@ -262,11 +259,9 @@ export class GameCreateRoomService implements OnModuleInit {
       if (channel) {
         await interaction.member.voice.setChannel(channel);
         this.party_id = channel.id;
-        console.log('this.party_id: 220', this.party_id);
 
         const channel_text =
           await this.client.channels.fetch(gameMacthReplyChanel);
-        console.log('channel_text: 220', channel_text);
 
         if (
           channel_text &&
@@ -498,7 +493,6 @@ export class GameCreateRoomService implements OnModuleInit {
     const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
 
     if (!game_rank.length) {
-      // console.log(384, " game_rank : ", game_rank, " game_rank : ", game_uid);
       return interaction.update({
         components: [],
         content: 'ไม่พบระดับการเล่นสําหรับเกมนี้',
@@ -543,7 +537,6 @@ export class GameCreateRoomService implements OnModuleInit {
       (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
 
-    // console.log('game_uid', game_uid);
 
     const gameRank = await this.gameRankRepository.getGamesRankByID(
       interaction.values[0],
@@ -588,13 +581,11 @@ export class GameCreateRoomService implements OnModuleInit {
 
     const user = interaction.user;
     this.storeSelectedValues('select_menu_people', user.id, interaction.values);
-    // console.log('this.selectedValues', this.selectedValues);
 
     const game_uid = this.selectedValues.find(
       (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
 
-    // console.log('game_uid', game_uid);
 
     const game_name = await this.gameRepository.getGameById(game_uid);
 

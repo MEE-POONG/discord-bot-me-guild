@@ -31,6 +31,7 @@ import { GameJoinModule } from './game-join/game-join.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
 import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
 import { BuskingModule } from './busking/busking.module';
+import { FormGameModule } from './form-game/form-game.module';
 
 @Global()
 @Module({
@@ -77,6 +78,7 @@ import { BuskingModule } from './busking/busking.module';
       buttonsPosition: 'end',
     }),
     BlogModule,
+    FormGameModule,
     FormRegisterModule,
     GameCreateRoomModule,
     GameRankModule,

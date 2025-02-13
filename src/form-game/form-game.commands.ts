@@ -15,7 +15,7 @@ export class FormGameCommands {
   })
   async handleFormGame(@Context() [interaction]: SlashCommandContext) {
     try {
-      await this.formGameService.createRegistrationMessage(interaction);
+      await this.formGameService.createGameMessage(interaction);
       this.logger.log('สร้างหน้าลงทะเบียนสำเร็จ');
       return interaction.reply({
         content: 'สร้างหน้าลงทะเบียนสำเร็จ',

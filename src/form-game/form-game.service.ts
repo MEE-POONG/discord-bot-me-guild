@@ -27,243 +27,71 @@ export class FormGameService {
 
   ) { }
   public onModuleInit() {
-    this.logger.log('FormGameService initialized');
+    this.logger.log('FormRegisterService initialized');
   }
 
-  async createRegistrationMessage(interaction: any) {
-    const embeds = new EmbedBuilder()
-      .setTitle('ลงทะเบียนนักผจญภัย')
-      .setDescription(
-        '- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"',
-      )
-      .setColor(16760137)
-      .setFooter({
-        text: 'ข้อมูลของคุณจะถูกเก็บเป็นความลับ',
-        iconURL: 'https://cdn-icons-png.flaticon.com/512/4104/4104800.png',
-      })
+  async createGameMessage(interaction: any) {
+    try {
+      // ดึงข้อมูลเซิร์ฟเวอร์จากฐานข้อมูล
+      const server = await this.prisma.serverDB.findUnique({
+        where: { serverId: interaction.guildId },
+      });
+
+      // ตรวจสอบว่ามี registerChannel เก่าหรือไม่
+      if (server?.registerChannel) {
+        const oldChannel = await interaction.guild?.channels.fetch(server.registerChannel).catch(() => null);
+        if (oldChannel) {
+          await oldChannel.delete().catch((e) => {
+            this.logger.warn(`ไม่สามารถลบห้องเก่าได้: ${e.message}`);
+          });
+        }
+      }
+
+      // บันทึกห้องใหม่ที่ใช้คำสั่งลง registerChannel
+      await this.prisma.serverDB.update({
+        where: { serverId: interaction.guildId },
+        data: { registerChannel: interaction.channelId },
+      });
+
+
+
+      // สร้าง Embed ข้อความลงทะเบียน
+      const embeds = new EmbedBuilder()
+      .setTitle('𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑮𝒂𝒎𝒆𝒔 𝑪𝒆𝒏𝒕𝒆𝒓')
+      .setDescription('- สร้างห้องแขทเพื่อเล่นเกมส์"')
+      .setColor(10513407)
       .setImage(
-        'https://media.discordapp.net/attachments/1222826027445653536/1222826136359276595/registerguild.webp?ex=6617a095&is=66052b95&hm=17dfd3921b25470b1e99016eb9f89dd68fb1ada3481867d145c8acf81e25cec6&=&format=webp&width=839&height=400',
+        'https://media.discordapp.net/attachments/855643137716650015/1287768914490691627/DALLE_2024-09-23_20.33.10_-_A_vibrant_fantasy-themed_banner_with_the_text_Game_Center_displayed_prominently._The_background_includes_a_magical_battlefield_scene_with_elements_l.webp?ex=66f2bfc2&is=66f16e42&hm=e3f5bf29bc2d01cd93f4868ac6c2d655ee4893c90ecffa3b6bb5f01cae705147&=&animated=true&width=840&height=480',
       )
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
 
+      // สร้างปุ่มลงทะเบียน
     const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
       new ButtonBuilder()
-        .setCustomId('register-button')
-        .setEmoji('📝')
-        .setLabel('ลงทะเบียน')
+        .setCustomId('game-create-room')
+        .setEmoji('🎮') // ไอคอนสำหรับ "สร้างการจับคู่เกม"
+        .setLabel('สร้างการจับคู่เกม')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('game-join')
+        .setEmoji('🕹️') // ไอคอนสำหรับ "เข้าร่วมเกมธรรมดา"
+        .setLabel('เข้าร่วมเกม')
         .setStyle(ButtonStyle.Primary),
     );
 
-    const channel = interaction.channel as TextChannel;
-    return channel.send({
-      embeds: [embeds],
-      components: [actionRow],
-    });
-  }
-
-  @Button('register-button')
-  async registerModal(@Context() [interaction]: ButtonContext) {
-    const checkUser = interaction.member as GuildMember;
-    const userDB = await this.prisma.userDB.findFirst({
-      where: {
-        OR: [
-          { discord_id: interaction.user.id },
-        ],
-      },
-    });
-
-    if (userDB) {
-      const server = await this.serverRepository.getServerById(interaction.guildId);
-
-      if (server.visitorRoleId) {
-        await checkUser.roles.remove(server.visitorRoleId).catch((e) => {
-        });
-      }
-
-      if (server.adventurerRoleId) {
-        await checkUser.roles.add(server.adventurerRoleId).catch((e) => {
-        });
-      }
-      // this.showProfile(interaction, userDB);
-
-      return interaction.reply({
-        content: 'ชื่อผู้ใช้งาน หรือ ข้อมูลนี้มีอยู่ในระบบแล้ว',
-        ephemeral: true,
-      });
-    }
-    try {
-      const createTextInput = (
-        customId: string,
-        label: string,
-        placeholder: string,
-        minLength: number,
-        maxLength: number,
-      ) =>
-        new TextInputBuilder()
-          .setCustomId(customId)
-          .setLabel(label)
-          .setPlaceholder(placeholder)
-          .setMinLength(minLength)
-          .setMaxLength(maxLength)
-          .setRequired(true)
-          .setStyle(TextInputStyle.Short);
-
-      const modal = new ModalBuilder()
-        .setCustomId('register-modal')
-        .setTitle('ลงทะเบียนนักผจญภัย')
-        .setComponents(
-          new ActionRowBuilder<TextInputBuilder>().setComponents(
-            createTextInput('firstname', 'ชื่อ', 'โปรดระบุชื่อของคุณ', 2, 50),
-          ),
-          new ActionRowBuilder<TextInputBuilder>().setComponents(
-            createTextInput(
-              'lastname',
-              'นามสกุล',
-              'โปรดระบุนามสกุลของคุณ',
-              2,
-              50,
-            ),
-          ),
-          new ActionRowBuilder<TextInputBuilder>().setComponents(
-            createTextInput('email', 'อีเมล', 'โปรดระบุอีเมลของคุณ', 5, 100),
-          ),
-          new ActionRowBuilder<TextInputBuilder>().setComponents(
-            createTextInput(
-              'nickname',
-              'นามแฝง',
-              'โปรดระบุนามแฝงของคุณ',
-              1,
-              20,
-            ),
-          ),
-        );
-
-      await interaction.showModal(modal);
-    } catch (error) {
-      console.error('Error displaying registration modal:', error);
-      return interaction.reply({
-        content: 'ไม่สามารถแสดงแบบฟอร์มการลงทะเบียนได้',
-        ephemeral: true,
-      });
-    }
-  }
-
-  @Modal('register-modal')
-  async registerModalSubmit(@Context() [interaction]: ModalContext) {
-    let nickname = interaction.fields.getTextInputValue('nickname');
-    let firstname = interaction.fields.getTextInputValue('firstname');
-    let lastname = interaction.fields.getTextInputValue('lastname');
-    let email = interaction.fields.getTextInputValue('email');
-    let member = interaction.member as GuildMember;
-
-    if (!isValidEmail(email)) {
-      return interaction.reply({
-        content: 'รูปแบบอีเมลไม่ถูกต้อง',
-        ephemeral: true,
-      });
-    }
-
-    try {
-      const user = await this.prisma.userDB.findFirst({
-        where: {
-          OR: [
-            { nickname: nickname },
-            { email: email },
-            { discord_id: interaction.user.id },
-          ],
-        },
-      });
-
-      if (user) {
-        return interaction.reply({
-          content: 'เกิดข้อผิดพลาด',
-          ephemeral: true,
-        });
-      }
-      const now = new Date();
-      const schema = {
-        discord_id: interaction.user.id,
-        email: email,
-        nickname: nickname,
-        birthday: new Date('01/01/1980'),
-        firstname: firstname,
-        lastname: lastname,
-        createdAt: now,
-        createdBy: 'system', // หรือ interaction.user.id
-        updatedAt: now,
-        updatedBy: 'system', // หรือ interaction.user.id
-        deleteBy: '', // ค่าเริ่มต้นเป็นค่าว่าง
-      };
-
-      const data = await this.prisma.userDB.create({
-        data: schema,
-      });
-
-      const server = await this.serverRepository.getServerById(interaction.guildId);
-      this.showProfile(interaction, data);
-      if (server.visitorRoleId) {
-        await member.roles.remove(server.visitorRoleId).catch((e) => {
-        });
-      }
-
-      if (server.adventurerRoleId) {
-        await member.roles.add(server.adventurerRoleId).catch((e) => {
-        });
-      }
-    } catch (err) {
-      this.logger.error('ไม่สามารถตรวจสอบข้อมูลสมาชิกได้', err);
-      return interaction.reply({
-        content: 'ไม่สามารถตรวจสอบข้อมูลสมาชิกได้',
-        ephemeral: true,
-      });
-    }
-  }
-
-  async showProfile(
-    interaction: ButtonInteraction | ModalSubmitInteraction,
-    profile: UserDB,
-  ) {
-    try {
-      const embeds = new EmbedBuilder()
-        .setAuthor({
-          name: `ลงทะเบียนนักผจญภัยสำเร็จ | ${interaction.guild?.name}`,
-          iconURL: interaction.guild?.iconURL() ?? undefined,
-        })
-        .setFields(
-          {
-            name: 'ชื่อ - นามสกุล',
-            value: `${profile.firstname} ${profile.lastname}`,
-            inline: true,
-          },
-          {
-            name: 'นามแฝง',
-            value: `${profile.nickname}`,
-            inline: true,
-          },
-          {
-            name: 'วันเกิด',
-            value: `${profile.birthday}`,
-            inline: true,
-          },
-          {
-            name: 'อีเมล',
-            value: `${profile.email}`,
-            inline: true,
-          },
-        )
-        .setThumbnail(interaction.user.displayAvatarURL())
-        .setColor('#a0ff71');
-
-      interaction.reply({
+      // ส่ง Embed ลงทะเบียนไปยังห้องที่ใช้คำสั่ง
+      const channel = interaction.channel as TextChannel;
+      return channel.send({
         embeds: [embeds],
-        ephemeral: true,
+        components: [actionRow],
       });
     } catch (error) {
-      interaction.reply({
-        content: 'ไม่สามารถแสดงข้อมูลสมาชิกได้',
+      this.logger.error('เกิดข้อผิดพลาดในการสร้างข้อความลงทะเบียน', error);
+      return interaction.reply({
+        content: 'เกิดข้อผิดพลาดในการสร้างข้อความลงทะเบียน',
         ephemeral: true,
       });
-      this.logger.error('ไม่สามารถแสดงข้อมูลสมาชิกได้', error);
     }
   }
+
 }

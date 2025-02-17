@@ -399,10 +399,6 @@ model WebDefaultDB {
   deleteBy       String
 }
 
-model ImgBot {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  
-}
 
 model ProductListDB {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId

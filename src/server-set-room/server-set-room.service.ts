@@ -163,10 +163,22 @@ export class ServerSetRoomService {
       }
     } catch (error) {
       this.logger.error(`Error creating room: ${error.message}`);
-      return this.replyError(
-        interaction,
-        '❌ เกิดข้อผิดพลาดระหว่างการสร้างห้อง',
-      );
+
+      let errorMessage = '❌ เกิดข้อผิดพลาดระหว่างการสร้างห้อง';
+      if (error.message === 'Missing Permissions') {
+        console.log(169, error.message === 'Missing Permissions');
+        errorMessage = '❌ กรุณาให้สิทธิ์บทบาทขั้นสูงกับ Bot';
+      }
+      return interaction.update({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('⚠️ ข้อผิดพลาด')
+            .setDescription(errorMessage)
+            .setColor(0xff0000),
+        ],
+        components: [],
+      });
+
     }
   }
 

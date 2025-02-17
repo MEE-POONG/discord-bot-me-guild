@@ -39,7 +39,7 @@ export function generateImage(member: GuildMember) {
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
 
-            ctx.font = '50px "CustomFont"';
+            ctx.font = '70px "CustomFont"';
             ctx.fillStyle = '#fcfdf0';
             const text = `${member.user.username}`;
             const textWidth = ctx.measureText(text).width;
@@ -49,7 +49,7 @@ export function generateImage(member: GuildMember) {
             ctx.strokeText(text, textX, centerY + 150);
             ctx.fillText(text, textX, centerY + 150);
 
-            ctx.font = '40px "CustomFont"';
+            ctx.font = '50px "CustomFont"';
             ctx.fillStyle = '#fbfeee';
             const text2 = 'ยินดีต้อนรับผู้มาเยือนสู่ MeGuild';
             const textWidth2 = ctx.measureText(text2).width;

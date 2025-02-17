@@ -11,6 +11,7 @@ export class FormGameCommands {
   @SlashCommand({
     name: 'form-game',
     description: 'ส่งป็อปอัพเกี่ยวกับการเล่นเกมส์',
+    defaultMemberPermissions: '8',
     guilds: getGuildIdsValues,
   })
   async handleFormGame(@Context() [interaction]: SlashCommandContext) {

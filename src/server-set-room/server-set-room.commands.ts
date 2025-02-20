@@ -14,7 +14,7 @@ export class ServerSetRoomCommands {
   })
   async handleServerSetRoom(@Context() [interaction]: SlashCommandContext) {
     try {
-      await this.ServerSetRoomService.ServerSetRoomSystem(interaction);
+      await this.ServerSetRoomService.ServerSetRoomSystem([interaction]);
     } catch (error) {
       this.logger.error('เกิดข้อผิดพลาดขณะพยายามสร้างห้อง:', error);
       return interaction.reply({

@@ -10,7 +10,12 @@ import {
   CacheType,
   ChannelType,
 } from 'discord.js';
-import { Context, StringSelect, StringSelectContext } from 'necord';
+import {
+  Context,
+  SlashCommandContext,
+  StringSelect,
+  StringSelectContext,
+} from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -23,31 +28,38 @@ export class ServerSetRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) { }
+  ) {}
 
   public onModuleInit() {
     this.logger.log('ServerSetRoomService initialized');
   }
 
-  async ServerSetRoomSystem(interaction: any) {
-    await interaction.deferReply({ ephemeral: true });
+  async ServerSetRoomSystem([interaction]: SlashCommandContext) {
+    this.logger.debug('ServerSetRoomSystem called');
+    // await interaction.deferReply({ ephemeral: true });
 
     const validationError = await validateServerAndRole(
       interaction,
       'owner',
       this.serverRepository,
     );
-    if (validationError) return validationError;
+    if (validationError) {
+      this.logger.warn('Validation error:', validationError.message);
+      return validationError;
+    }
 
     const server = await this.serverRepository.getServerById(
       interaction.guildId,
     );
     if (!server) {
+      this.logger.warn('Server not found for guildId:', interaction.guildId);
       return this.replyError(
         interaction,
         '❌ ไม่พบข้อมูลเซิร์ฟเวอร์ โปรดตรวจสอบอีกครั้ง!',
       );
     }
+
+    this.logger.debug('Server found:', server);
 
     const roomSelectionRow =
       new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -100,43 +112,57 @@ export class ServerSetRoomService {
               value: 'gamematch',
               description: 'สร้างห้อง GameMatch',
             },
-
           ]),
       );
 
-    await interaction.editReply({
+    this.logger.debug('Room selection menu created');
+
+    await interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการด้านล่าง:\n\n` +
-            `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่ของ MeGuild\n` +
-            `- **News Room**: ห้องสำหรับโพสต์ข่าวสารและอัปเดตเกี่ยวกับ MeGuild\n` +
-            `- **Register Room**: ห้องสำหรับลงทะเบียนและสมัครสมาชิกระบบ MeGuild\n` +
-            // `- **Complaint Room**: ห้องสำหรับแจ้งปัญหาและร้องเรียนเกี่ยวกับระบบ\n` +
-            // `- **Suggestion Room**: ห้องสำหรับเสนอแนะไอเดียหรือปรับปรุงระบบ MeGuild\n` +
-            // `- **Trade Room**: ห้องสำหรับการซื้อขายและแลกเปลี่ยนภายใน MeGuild\n` +
-            `- **Guild Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
-            `- **GameMatch Room**: ห้องแจ้งเตือนและจัดการจับคู่เกมสำหรับสมาชิก\n` +
-            `- **Busking Room**: ห้องแจ้งเตือนและจัดกิจกรรมการแสดงสดภายใน MeGuild`
+              `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่ของ MeGuild\n` +
+              `- **News Room**: ห้องสำหรับโพสต์ข่าวสารและอัปเดตเกี่ยวกับ MeGuild\n` +
+              `- **Register Room**: ห้องสำหรับลงทะเบียนและสมัครสมาชิกระบบ MeGuild\n` +
+              // `- **Complaint Room**: ห้องสำหรับแจ้งปัญหาและร้องเรียนเกี่ยวกับระบบ\n` +
+              // `- **Suggestion Room**: ห้องสำหรับเสนอแนะไอเดียหรือปรับปรุงระบบ MeGuild\n` +
+              // `- **Trade Room**: ห้องสำหรับการซื้อขายและแลกเปลี่ยนภายใน MeGuild\n` +
+              `- **Guild Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
+              `- **GameMatch Room**: ห้องแจ้งเตือนและจัดการจับคู่เกมสำหรับสมาชิก\n` +
+              `- **Busking Room**: ห้องแจ้งเตือนและจัดกิจกรรมการแสดงสดภายใน MeGuild`,
           )
           .setColor(0x00bfff),
       ],
       components: [roomSelectionRow],
     });
+
+    this.logger.debug('Reply sent with room selection menu');
   }
 
   @StringSelect('SELECT_MENU_ROOM_TYPE')
   public async handleRoomRegistration(
     @Context() [interaction]: StringSelectContext,
   ) {
+    this.logger.debug(
+      'handleRoomRegistration called with interaction:',
+      interaction,
+    );
+
     const server = await this.serverRepository.getServerById(
       interaction.guildId,
     );
-    if (!server)
+    if (!server) {
+      this.logger.warn('Server not found for guildId:', interaction.guildId);
       return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์');
+    }
+
+    this.logger.debug('Server found:', server);
 
     const roomType = interaction.values[0];
+    this.logger.debug('Room type selected:', roomType);
+
     const roomFieldMapping = this.getRoomFieldMapping();
     const defaultRoomNames = this.getDefaultRoomNames();
 
@@ -145,15 +171,19 @@ export class ServerSetRoomService {
     );
 
     if (existingChannel) {
+      this.logger.warn('Existing channel found:', existingChannel.name);
       return this.replyStopCreate(interaction, roomType, existingChannel.name);
     }
 
     try {
       if (roomType === 'gamematch') {
+        this.logger.debug('Creating GameMatch rooms');
         await this.createGameMatchRooms(interaction, defaultRoomNames);
       } else if (roomType === 'busking') {
+        this.logger.debug('Creating Busking room');
         await this.createBuskingRoom(interaction);
       } else {
+        this.logger.debug('Creating single room of type:', roomType);
         await this.createSingleRoom(
           interaction,
           roomType,
@@ -166,7 +196,7 @@ export class ServerSetRoomService {
 
       let errorMessage = '❌ เกิดข้อผิดพลาดระหว่างการสร้างห้อง';
       if (error.message === 'Missing Permissions') {
-        console.log(169, error.message === 'Missing Permissions');
+        this.logger.error('Missing Permissions');
         errorMessage = '❌ กรุณาให้สิทธิ์บทบาทขั้นสูงกับ Bot';
       }
       return interaction.update({
@@ -178,7 +208,6 @@ export class ServerSetRoomService {
         ],
         components: [],
       });
-
     }
   }
 
@@ -216,6 +245,8 @@ export class ServerSetRoomService {
     defaultRoomNames: any,
     roomFieldMapping: any,
   ) {
+    this.logger.debug('createSingleRoom called with roomType:', roomType);
+
     const guild = interaction.guild;
 
     // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
@@ -257,6 +288,8 @@ export class ServerSetRoomService {
       position: channelPositionMapping[roomType], // กำหนดลำดับห้อง
     });
 
+    this.logger.debug('New room created:', newRoom.name);
+
     // บันทึกข้อมูลห้องในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
       [roomFieldMapping[roomType]]: newRoom.id,
@@ -276,6 +309,8 @@ export class ServerSetRoomService {
     interaction: StringSelectMenuInteraction<CacheType>,
     defaultRoomNames: any,
   ) {
+    this.logger.debug('createGameMatchRooms called');
+
     const server = await this.serverRepository.getServerById(
       interaction.guildId,
     );
@@ -304,6 +339,8 @@ export class ServerSetRoomService {
       name: `〔🎮〕𝑮𝒂𝒎𝒆 𝑪𝒆𝒏𝒕𝒆𝒓`,
       type: 4, // Category Channel
     });
+
+    this.logger.debug('Game category created:', gameCategory.name);
 
     // Create game button text channel under the category
     const gameChannel = await interaction.guild.channels.create({
@@ -400,14 +437,25 @@ export class ServerSetRoomService {
   private async createBuskingRoom(
     interaction: StringSelectMenuInteraction<CacheType>,
   ) {
+    this.logger.debug('createBuskingRoom called');
+
     const guild = interaction.guild;
-    const server = await this.serverRepository.getServerById(interaction.guildId);
+    const server = await this.serverRepository.getServerById(
+      interaction.guildId,
+    );
 
     // ตรวจสอบหมวดหมู่ Busking Center
-    let buskingCategory = guild.channels.cache.get(server?.buskingPositionCreate || '');
+    let buskingCategory = guild.channels.cache.get(
+      server?.buskingPositionCreate || '',
+    );
 
-    if (!buskingCategory || buskingCategory.type !== ChannelType.GuildCategory) {
-      this.logger.warn('หมวดหมู่ Busking Center ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่');
+    if (
+      !buskingCategory ||
+      buskingCategory.type !== ChannelType.GuildCategory
+    ) {
+      this.logger.warn(
+        'หมวดหมู่ Busking Center ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่',
+      );
 
       // สร้างหมวดหมู่ใหม่
       buskingCategory = await guild.channels.create({
@@ -422,9 +470,15 @@ export class ServerSetRoomService {
     }
 
     // 🛑 ตรวจสอบว่าห้อง Busking มีอยู่แล้วหรือไม่
-    let existingBuskingChannel = guild.channels.cache.get(server?.buskingChannel || '');
+    let existingBuskingChannel = guild.channels.cache.get(
+      server?.buskingChannel || '',
+    );
     if (existingBuskingChannel) {
-      return this.replyStopCreate(interaction, 'busking', existingBuskingChannel.name);
+      return this.replyStopCreate(
+        interaction,
+        'busking',
+        existingBuskingChannel.name,
+      );
     }
 
     this.logger.log('สร้างห้อง Busking ใหม่');
@@ -435,6 +489,8 @@ export class ServerSetRoomService {
       type: ChannelType.GuildText,
       parent: buskingCategory.id,
     });
+
+    this.logger.debug('Busking channel created:', buskingChannel.name);
 
     // อัปเดตข้อมูลในฐานข้อมูล
     await this.serverRepository.updateServer(interaction.guildId, {
@@ -456,8 +512,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-            `**${existingChannelName}**\n` +
-            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+              `**${existingChannelName}**\n` +
+              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],

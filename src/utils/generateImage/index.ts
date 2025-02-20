@@ -6,10 +6,10 @@ export function generateImage(member: GuildMember) {
   return new Promise<Buffer>((resolve, reject) => {
    
     // Get font path dynamically
-    const fontPath = path.join(__dirname, '../assets/fonts/MyCustomFont.ttf');
+    // const fontPath = path.join(__dirname, '../../assets/fonts/MyCustomFont.ttf');
 
     // Register the font (Ensure the font exists in Docker)
-    registerFont(fontPath, { family: 'MyCustomFont' });
+    // registerFont(fontPath, { family: 'MyCustomFont' });
 
     const canvas = createCanvas(840, 480);
     const ctx = canvas.getContext('2d');
@@ -44,7 +44,7 @@ export function generateImage(member: GuildMember) {
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
 
-            ctx.font = '70px MyCustomFont';
+            ctx.font = '70px Sriracha SOV_ThonBuri FreeMono FreeSerif';
             ctx.fillStyle = '#fcfdf0';
             const text = `${member.user.username}`;
             const textWidth = ctx.measureText(text).width;
@@ -54,7 +54,7 @@ export function generateImage(member: GuildMember) {
             ctx.strokeText(text, textX, centerY + 150);
             ctx.fillText(text, textX, centerY + 150);
 
-            ctx.font = '50px MyCustomFont';
+            ctx.font = '50px Sriracha SOV_ThonBuri FreeMono FreeSerif';
             ctx.fillStyle = '#fbfeee';
             const text2 = 'ยินดีต้อนรับผู้มาเยือนสู่ MeGuild';
             const textWidth2 = ctx.measureText(text2).width;

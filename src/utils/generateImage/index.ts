@@ -3,12 +3,12 @@ import { GuildMember } from 'discord.js';
 
 export function generateImage(member: GuildMember) {
   return new Promise<Buffer>((resolve, reject) => {
-    registerFont('./SOV_ThonBuri.ttf', {
+    registerFont('./src/utils/generateImage/font.ttf', {
       family: 'CustomFont',
     });
     const canvas = createCanvas(840, 480);
     const ctx = canvas.getContext('2d');
-    const imagePath = './image.png';
+    const imagePath = './src/utils/generateImage/image.png';
     loadImage(imagePath)
       .then((image) => {
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);

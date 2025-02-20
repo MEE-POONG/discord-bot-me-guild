@@ -3,8 +3,8 @@ import { GuildMember } from 'discord.js';
 
 export function generateImage(member: GuildMember) {
   return new Promise<Buffer>((resolve, reject) => {
-    registerFont('./src/utils/generateImage/fonts/CustomFont.ttf', {
-      family: 'CustomFont',
+    registerFont('./src/utils/generateImage/fonts/Sriracha.ttf', {
+      family: 'Sriracha',
     });
     const canvas = createCanvas(840, 480);
     const ctx = canvas.getContext('2d');
@@ -39,7 +39,7 @@ export function generateImage(member: GuildMember) {
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
 
-            ctx.font = '70px "CustomFont"';
+            ctx.font = '70px Sriracha';
             ctx.fillStyle = '#fcfdf0';
             const text = `${member.user.username}`;
             const textWidth = ctx.measureText(text).width;
@@ -49,7 +49,7 @@ export function generateImage(member: GuildMember) {
             ctx.strokeText(text, textX, centerY + 150);
             ctx.fillText(text, textX, centerY + 150);
 
-            ctx.font = '50px "CustomFont"';
+            ctx.font = '50px Sriracha';
             ctx.fillStyle = '#fbfeee';
             const text2 = 'ยินดีต้อนรับผู้มาเยือนสู่ MeGuild';
             const textWidth2 = ctx.measureText(text2).width;

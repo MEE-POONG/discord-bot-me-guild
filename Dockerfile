@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libcairo2-dev \
     libpango1.0-dev \
+    fontconfig \
+    libpangocairo-1.0-0 \
     libjpeg-dev \
     libgif-dev \
     librsvg2-dev \
@@ -20,6 +22,18 @@ ENV yarn_config_build_from_source=true
 
 # Copy package.json and yarn.lock to the working directory
 COPY package.json ./
+
+# สร้างโฟลเดอร์เก็บฟอนต์
+RUN mkdir -p /usr/share/fonts/truetype/custom
+
+# คัดลอกฟอนต์ไปยัง Docker
+COPY ./src/utils/generateImage/fonts/Sriracha.ttf /usr/share/fonts/truetype/custom/Sriracha.ttf
+
+# รีเฟรช Font Cache
+RUN fc-cache -fv
+
+# ตรวจสอบว่าฟอนต์ติดตั้งแล้ว
+RUN fc-list | grep "Sriracha"
 
 # Install dependencies with yarn
 RUN yarn install

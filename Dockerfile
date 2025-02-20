@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libjpeg-dev \
     libgif-dev \
+    libfontconfig1 \
+    ttf-mscorefonts-installer \
     librsvg2-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

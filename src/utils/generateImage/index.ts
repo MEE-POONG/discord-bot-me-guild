@@ -1,11 +1,16 @@
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { GuildMember } from 'discord.js';
+import * as path from 'path';
 
 export function generateImage(member: GuildMember) {
   return new Promise<Buffer>((resolve, reject) => {
-    registerFont('./src/utils/generateImage/fonts/Sriracha.ttf', {
-      family: 'Sriracha',
-    });
+   
+    // Get font path dynamically
+    const fontPath = path.join(__dirname, '../assets/fonts/MyCustomFont.ttf');
+
+    // Register the font (Ensure the font exists in Docker)
+    registerFont(fontPath, { family: 'MyCustomFont' });
+
     const canvas = createCanvas(840, 480);
     const ctx = canvas.getContext('2d');
     const imagePath = './src/utils/generateImage/image.png';
@@ -39,7 +44,7 @@ export function generateImage(member: GuildMember) {
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
 
-            ctx.font = '70px Sriracha';
+            ctx.font = '70px MyCustomFont';
             ctx.fillStyle = '#fcfdf0';
             const text = `${member.user.username}`;
             const textWidth = ctx.measureText(text).width;
@@ -49,7 +54,7 @@ export function generateImage(member: GuildMember) {
             ctx.strokeText(text, textX, centerY + 150);
             ctx.fillText(text, textX, centerY + 150);
 
-            ctx.font = '50px Sriracha';
+            ctx.font = '50px MyCustomFont';
             ctx.fillStyle = '#fbfeee';
             const text2 = 'ยินดีต้อนรับผู้มาเยือนสู่ MeGuild';
             const textWidth2 = ctx.measureText(text2).width;

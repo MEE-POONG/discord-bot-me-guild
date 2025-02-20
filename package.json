@@ -27,7 +27,7 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^6.2.0",
-    "canvas": "2.11.0",
+    "canvas": "2.11.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "discord.js": "^14.16.3",

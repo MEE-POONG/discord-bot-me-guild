@@ -27,6 +27,9 @@ RUN yarn install
 # Copy the application code to the working directory
 COPY . .
 
+COPY --chown=104:106 fonts /usr/share/fonts/truetype/more/
+COPY --chown=104:106 fonts /opt/cool/systemplate/usr/share/fonts/truetype/more/
+
 # Generate Prisma client (if applicable)
 RUN npx prisma generate
 

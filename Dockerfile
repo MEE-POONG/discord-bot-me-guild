@@ -33,6 +33,10 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     python3 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+    
+RUN apt update && apt install -y curl build-essential
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+RUN source $HOME/.cargo/env
 
 # Set environment to force native builds for canvas and add Python path
 ENV npm_config_build_from_source=true

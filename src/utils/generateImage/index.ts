@@ -1,32 +1,16 @@
 import { createCanvas, loadImage, registerFont } from 'canvas';
 import { GuildMember } from 'discord.js';
-import path from 'path';
-import fs from 'fs';
 
 export function generateImage(member: GuildMember) {
   return new Promise<Buffer>((resolve, reject) => {
-    const fontPath = path.join(__dirname, '../fonts/CustomFont.ttf');
-
-    // Check if the font file exists
-    if (!fs.existsSync(fontPath)) {
-      console.error('Font file does not exist:', fontPath);
-      return reject(new Error('Font file not found'));
-    }
-
-    registerFont(fontPath, {
+    registerFont('./src/utils/generateImage/fonts/CustomFont.ttf', {
       family: 'CustomFont',
     });
-
-    console.log('Font registered:', fontPath);
-
     const canvas = createCanvas(840, 480);
     const ctx = canvas.getContext('2d');
-    const outputPath = path.join(__dirname, '../output/image.png');
-
-    const imagePath = outputPath;
+    const imagePath = './src/utils/generateImage/image.png';
     loadImage(imagePath)
       .then((image) => {
-        console.log('Background image loaded:', imagePath);
         ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
@@ -40,7 +24,6 @@ export function generateImage(member: GuildMember) {
 
         loadImage(member.user.displayAvatarURL({ extension: 'png' }))
           .then((innerImage) => {
-            console.log('User avatar loaded:', member.user.displayAvatarURL({ extension: 'png' }));
             ctx.drawImage(
               innerImage,
               centerX - radius,
@@ -66,8 +49,6 @@ export function generateImage(member: GuildMember) {
             ctx.strokeText(text, textX, centerY + 150);
             ctx.fillText(text, textX, centerY + 150);
 
-            console.log('Drawing username:', member.user.username);
-
             ctx.font = '50px "CustomFont"';
             ctx.fillStyle = '#fbfeee';
             const text2 = 'ยินดีต้อนรับผู้มาเยือนสู่ MeGuild';
@@ -77,8 +58,6 @@ export function generateImage(member: GuildMember) {
             ctx.strokeStyle = '#00838f';
             ctx.strokeText(text2, textX2, centerY + 200);
             ctx.fillText(text2, textX2, centerY + 200);
-
-            console.log('Drawing Thai text: ยินดีต้อนรับผู้มาเยือนสู่ MeGuild');
 
             return resolve(canvas.toBuffer('image/png'));
           })

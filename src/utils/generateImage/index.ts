@@ -6,10 +6,10 @@ export function generateImage(member: GuildMember) {
   return new Promise<Buffer>(async (resolve, reject) => {
     try {
       // ใช้ path.resolve() เพื่อให้แน่ใจว่า path ถูกต้อง
-      const fontPath = path.resolve('./src/utils/generateImage/fonts/font.ttf');
+      const fontPath = path.resolve('./src/utils/generateImage/fonts/Sriracha.ttf');
 
       // ลงทะเบียนฟอนต์ด้วย FontLibrary.use()
-      FontLibrary.use('MN Lobster', fontPath);
+      FontLibrary.use('CustomFonts', fontPath);
 
       // สร้าง Canvas
       const canvas = new Canvas(840, 480);
@@ -42,8 +42,8 @@ export function generateImage(member: GuildMember) {
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
 
-      // ใช้ฟอนต์ MN Lobster
-      ctx.font = '70px MN Lobster';
+      // ใช้ฟอนต์ CustomFonts
+      ctx.font = '70px CustomFonts';
       ctx.fillStyle = '#fcfdf0';
       const text = `${member.user.username}`;
       const textWidth = ctx.measureText(text).width;
@@ -53,7 +53,7 @@ export function generateImage(member: GuildMember) {
       ctx.strokeText(text, textX, centerY + 150);
       ctx.fillText(text, textX, centerY + 150);
 
-      ctx.font = '50px MN Lobster';
+      ctx.font = '50px CustomFonts';
       ctx.fillStyle = '#fbfeee';
       const text2 = 'ยินดีต้อนรับผู้มาเยือนสู่ MeGuild';
       const textWidth2 = ctx.measureText(text2).width;

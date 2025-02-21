@@ -183,7 +183,7 @@ model GameTypeGame {
 model GameRankDB {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
-  gameId       String        @db.ObjectId
+  gameId       String?       @db.ObjectId
   imgRank      String
   selcetShow   String
   nameRank     String
@@ -247,14 +247,14 @@ model GuildProfileDB {
 
 model ImageList {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @db.Date
-  createdBy String
-  deleteBy  String
+  nameFile  String
   imageUrl  String   @unique
   modalName String
-  nameFile  String   @unique
+  createdAt DateTime @db.Date
+  createdBy String
   updatedAt DateTime @db.Date
   updatedBy String
+  deleteBy  String
 }
 
 model GuildInviteDataDB {
@@ -365,6 +365,7 @@ model UserDB {
   deleteBy          String
   updatedAt         DateTime  @db.Date
   updatedBy         String
+  AdminDB           AdminDB[]
 }
 
 model UserGameRank {
@@ -398,7 +399,6 @@ model WebDefaultDB {
   updatedBy      String
   deleteBy       String
 }
-
 
 model ProductListDB {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -502,4 +502,83 @@ model TeamDB {
   updatedAt  DateTime @updatedAt
   updatedBy  String
   deleteBy   String
+}
+
+model AdminDB {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  username       String           @unique
+  password       String
+  name           String
+  tel            String
+  email          String
+  adminRole      AdminRoleDB?     @relation(fields: [roleId], references: [id])
+  roleId         String?          @db.ObjectId
+  UserDB         UserDB?          @relation(fields: [userDBId], references: [id])
+  userDBId       String?          @db.ObjectId
+  AdminShifts    AdminShiftDB[]
+  createdAt      DateTime         @default(now())
+  createdBy      String
+  updatedAt      DateTime         @updatedAt
+  updatedBy      String           @default("")
+  deleteBy       String
+  AdminToShiftDB AdminToShiftDB[]
+}
+
+model AdminRoleDB {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  name              String              @unique
+  description       String?
+  adminDB           AdminDB[]
+  AdminPermissionDB AdminPermissionDB[]
+}
+
+model AdminPermissionDB {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  page      String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  canView   Boolean      @default(false)
+  canCreate Boolean      @default(false)
+  canUpdate Boolean      @default(false)
+  canDelete Boolean      @default(false)
+  adminRole AdminRoleDB? @relation(fields: [roleId], references: [id])
+  roleId    String?      @db.ObjectId
+}
+
+model AdminShiftDB {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  name           String           @unique
+  startTime      DateTime
+  endTime        DateTime
+  AdminToShiftDB AdminToShiftDB[]
+  AdminDB        AdminDB?         @relation(fields: [adminDBId], references: [id])
+  adminDBId      String?          @db.ObjectId
+}
+
+model AdminToShiftDB {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  adminId      String?       @db.ObjectId
+  shiftId      String?       @db.ObjectId
+  AdminDB      AdminDB?      @relation(fields: [adminId], references: [id])
+  AdminShiftDB AdminShiftDB? @relation(fields: [shiftId], references: [id])
+  isLeader     Boolean       @default(false) // ระบุว่าเป็นหัวหน้ากะหรือไม่
+}
+
+model NavMenuItemDB {
+  id      String             @id @default(auto()) @map("_id") @db.ObjectId
+  href    String             @unique
+  text    String
+  head    Boolean            @default(false)
+  icon    String // แทน JSX.Element ด้วย icon name (เช่น "FaChartPie")
+  pageID  Boolean            @default(false)
+  manager String[]           @default([]) // เก็บรายการที่ใช้กำหนดสิทธิ์
+  submenu NavSubMenuItemDB[] @relation("MenuToSubmenu")
+}
+
+model NavSubMenuItemDB {
+  id      String        @id @default(auto()) @map("_id") @db.ObjectId
+  href    String        @unique
+  text    String
+  pageID  Boolean       @default(false)
+  manager String[]      @default([])
+  menuId  String        @db.ObjectId
+  menu    NavMenuItemDB @relation(fields: [menuId], references: [id], name: "MenuToSubmenu")
 }

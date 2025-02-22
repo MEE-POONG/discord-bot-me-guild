@@ -7,9 +7,8 @@ import {
   SlashCommandContext,
 } from 'necord';
 import { AttachmentBuilder, GuildMember, TextBasedChannel } from 'discord.js';
-import { generateImage } from '../utils/generateImage';
 import { ServerRepository } from 'src/repository/server';
-
+import axios from 'axios';
 @Injectable()
 export class WelcomeUpdate {
   private readonly logger = new Logger(WelcomeUpdate.name);
@@ -20,8 +19,16 @@ export class WelcomeUpdate {
     @Context() [member]: ContextOf<'guildMemberAdd'>,
   ) {
     try {
-      const buffer = await generateImage(member);
-      const image = new AttachmentBuilder(buffer, { name: 'welcome.png' });
+      const buffer = await axios({
+        method: 'POST',
+        url: 'http://localhost:3000/draw/image-me-guild-welcome',
+        data: {
+          displayName: member.displayName,
+          avatar: member.user.displayAvatarURL({ extension: 'png' }),
+        },
+        responseType: 'arraybuffer',
+      });
+
       const server = await this.serverRepository.getServerById(member.guild.id);
       if (!server) {
         this.logger.warn(
@@ -41,7 +48,7 @@ export class WelcomeUpdate {
       )) as TextBasedChannel;
       if (channel && channel.isTextBased() && 'send' in channel) {
         await channel.send({
-          files: [image],
+          files: [new AttachmentBuilder(buffer.data, { name: 'welcome.png' })],
           content: `🎉 ยินดีต้อนรับ ${member.toString()} เข้าสู่เซิร์ฟเวอร์!`,
         });
       } else {

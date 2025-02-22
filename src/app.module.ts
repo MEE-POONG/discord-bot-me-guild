@@ -17,7 +17,7 @@ import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
-import { PrototypemModule } from './prototype/prototype.module';
+import { PrototypeModule } from './prototype/prototype.module';
 import { ServerRegisterModule } from './server-register/server-register.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { WelcomeModule } from './welcome/welcome.module';
@@ -32,6 +32,8 @@ import { ServerClearModule } from './server-clear/server-clear.module';
 import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
 import { BuskingModule } from './busking/busking.module';
 import { FormGameModule } from './form-game/form-game.module';
+import { DonationModule } from './donation/donation.module';
+
 
 @Global()
 @Module({
@@ -78,6 +80,7 @@ import { FormGameModule } from './form-game/form-game.module';
       buttonsPosition: 'end',
     }),
     BlogModule,
+    DonationModule,
     FormGameModule,
     FormRegisterModule,
     GameCreateRoomModule,
@@ -90,7 +93,7 @@ import { FormGameModule } from './form-game/form-game.module';
     GuildKickModule,
     GuildInviteModule,
     NewsUpdateModule,
-    PrototypemModule,
+    PrototypeModule,
     ServerRegisterModule,
     ServerTryItOnModule,
     ServerCreateRoleModule,

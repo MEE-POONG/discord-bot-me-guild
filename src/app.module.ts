@@ -32,6 +32,7 @@ import { ServerClearModule } from './server-clear/server-clear.module';
 import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
 import { BuskingModule } from './busking/busking.module';
 import { FormGameModule } from './form-game/form-game.module';
+import { DonationModule } from './donation-gift/donation.module';
 
 @Global()
 @Module({
@@ -78,6 +79,7 @@ import { FormGameModule } from './form-game/form-game.module';
       buttonsPosition: 'end',
     }),
     BlogModule,
+    DonationModule,
     FormGameModule,
     FormRegisterModule,
     GameCreateRoomModule,

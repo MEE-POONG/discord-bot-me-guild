@@ -1,0 +1,29 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { Context, SlashCommand, SlashCommandContext } from 'necord';
+import { DonationService } from './donation.service';
+
+@Injectable()
+export class DonationCommands {
+  private readonly logger = new Logger(DonationCommands.name);
+  constructor(private readonly donationService: DonationService) { }
+
+  @SlashCommand({
+    name: 'donation',
+    description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
+  })
+  async handleDonation(@Context() [interaction]: SlashCommandContext) {
+    try {
+      await this.donationService.DonationSystem(interaction);
+      // return interaction.reply({
+      //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',
+      //   ephemeral: true,
+      // });
+    } catch (error) {
+      this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
+      return interaction.reply({
+        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
+        ephemeral: true,
+      });
+    }
+  }
+}

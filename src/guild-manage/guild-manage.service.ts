@@ -33,7 +33,7 @@ export class GuildManageService {
     private readonly users: UserManager,
     private readonly client: Client,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     this.logger.log('GuildManageService initialized');
@@ -77,7 +77,7 @@ export class GuildManageService {
         });
       }
 
-      interaction.message.delete().catch(() => {});
+      interaction.message.delete().catch(() => { });
       interaction.reply({
         content: 'ยกเลิกคำขอสำเร็จ',
         ephemeral: true,
@@ -90,17 +90,17 @@ export class GuildManageService {
             .send({
               content: `❌ เนื่องจากผู้ร่วมก่อตั้งกิลด์ ${report.guildName} ไม่เห็นด้วยกับคำขอของคุณ คำขอสร้างกิลด์ของคุณได้ถูกยกเลิกแล้ว`,
             })
-            .catch(() => {});
+            .catch(() => { });
         }
 
         await this.prisma.guildCreateReport
           .delete({
             where: { id: reportId },
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     } catch {
-      interaction.message.delete().catch(() => {});
+      interaction.message.delete().catch(() => { });
       interaction.reply({
         content: 'ยกเลิกคำขอสำเร็จ',
         ephemeral: true,
@@ -225,7 +225,7 @@ export class GuildManageService {
 
         await this.prisma.guildCreateReport
           .delete({ where: { id: reportId } })
-          .catch(() => {});
+          .catch(() => { });
 
         interaction.message.delete().catch(() => {
           console.log('Failed to delete interaction message');
@@ -415,7 +415,7 @@ export class GuildManageService {
         this.logger.error('Failed to fetch server');
         return 'ไม่สามารถเข้าถึงดิสกิลด์ได้';
       }
-
+      // ตำแหน่งสร้างกิลล์
       const positionGuild = guildServer.channels.cache.get(
         server.registerChannel,
       ) as CategoryChannel;
@@ -458,17 +458,17 @@ export class GuildManageService {
             name,
             permissionOverwrites: publicView
               ? [
-                  {
-                    id: process.env.DISCORD_GUILD_CATEGORY_ID_PARTY,
-                    allow: ['ViewChannel', 'Connect'],
-                  },
-                ]
+                {
+                  id: process.env.DISCORD_GUILD_CATEGORY_ID_PARTY,
+                  allow: ['ViewChannel', 'Connect'],
+                },
+              ]
               : [
-                  {
-                    id: guildServer.roles.everyone.id,
-                    deny: ['ViewChannel'],
-                  },
-                ],
+                {
+                  id: guildServer.roles.everyone.id,
+                  deny: ['ViewChannel'],
+                },
+              ],
           });
 
           return voiceChannel;
@@ -496,4 +496,5 @@ export class GuildManageService {
 
 export interface UserProfile extends UserDB {
   GuildMembers: GuildMembers[];
-  meGuildCoinDB: MeGuildCoinDB | null;}
+  meGuildCoinDB: MeGuildCoinDB | null;
+}

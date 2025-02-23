@@ -185,9 +185,9 @@ model GameRankDB {
   gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
   gameId       String?       @db.ObjectId
   imgRank      String
-  selcetShow   String
+  selcetShow   String?
   nameRank     String
-  number       BigInt
+  number       Int
   createdAt    DateTime      @db.Date
   createdBy    String
   updatedAt    DateTime      @db.Date

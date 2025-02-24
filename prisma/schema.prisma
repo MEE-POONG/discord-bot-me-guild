@@ -9,31 +9,33 @@ datasource db {
 
 model ActDetailDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt   DateTime @db.Date
-  createdBy   String
-  deleteBy    String
+  title       String
   description String
   dislink     String
   disname     String
-  enddate     String
   img         String
+  type        String
   point       String
   startdate   String
-  title       String
-  type        String
+  enddate     String
+  createdAt   DateTime @db.Date
+  createdBy   String
   updatedAt   DateTime @db.Date
   updatedBy   String
+  deleteBy    String
+  actType     ActType? @relation(fields: [actTypeId], references: [id])
+  actTypeId   String   @db.ObjectId
 }
 
 model ActType {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy String
-  deleteBy  String
-  name      String
-  updatedAt DateTime @db.Date
-  updatedBy String
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  createdAt   DateTime      @db.Date
+  createdBy   String
+  updatedAt   DateTime      @db.Date
+  updatedBy   String
+  deleteBy    String
+  ActDetailDB ActDetailDB[]
 }
 
 model BlogDB {
@@ -77,40 +79,16 @@ model CommentDB {
 
 model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  String
-  deleteBy   String
   discord_id String   @unique
+  username   String
   email      String   @unique
   password   String
   server     String   @unique
+  createdAt  DateTime @db.Date
+  createdBy  String
   updatedAt  DateTime @db.Date
   updatedBy  String
-  username   String
-}
-
-model GameCategoryDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  createdAt DateTime @db.Date
-  createdBy String
-  updatedAt DateTime @db.Date
-  updatedBy String
-  deleteBy  String
-}
-
-model GameConditionMatchDB {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  maxParty     Int
-  limitNumber  Int           @default(0)
-  gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
-  gameId       String        @db.ObjectId
-  createdAt    DateTime      @default(now())
-  createdBy    String?
-  updatedAt    DateTime      @updatedAt
-  updatedBy    String
-  deleteBy     String
+  deleteBy   String
 }
 
 model GameOnlineDB {
@@ -129,6 +107,29 @@ model GameOnlineDB {
   gameTypeGame         GameTypeGame[]         @relation("GameOnlineToGameTypeGame")
   GameRankDB           GameRankDB[]
   GameConditionMatchDB GameConditionMatchDB[]
+}
+
+model GameConditionMatchDB {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  maxParty     Int
+  limitNumber  Int           @default(0)
+  gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
+  gameId       String        @db.ObjectId
+  createdAt    DateTime      @default(now())
+  createdBy    String?
+  updatedAt    DateTime      @updatedAt
+  updatedBy    String
+  deleteBy     String
+}
+
+model GameCategoryDB {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  createdAt DateTime @db.Date
+  createdBy String
+  updatedAt DateTime @db.Date
+  updatedBy String
+  deleteBy  String
 }
 
 model GameMatchDB {

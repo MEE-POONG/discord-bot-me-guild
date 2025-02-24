@@ -282,6 +282,7 @@ model NewsUpdateDB {
   updatedBy   String?
   deleteBy    String?
 }
+
 model NewsCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
@@ -502,61 +503,64 @@ model TeamDB {
 }
 
 model AdminDB {
-  id             String           @id @default(auto()) @map("_id") @db.ObjectId
-  username       String           @unique
-  password       String
-  name           String
-  tel            String
-  email          String
-  adminRole      AdminRoleDB?     @relation(fields: [roleId], references: [id])
-  roleId         String?          @db.ObjectId
-  UserDB         UserDB?          @relation(fields: [userDBId], references: [id])
-  userDBId       String?          @db.ObjectId
-  AdminShifts    AdminShiftDB[]
-  createdAt      DateTime         @default(now())
-  createdBy      String
-  updatedAt      DateTime         @updatedAt
-  updatedBy      String           @default("")
-  deleteBy       String
-  AdminToShiftDB AdminToShiftDB[]
-}
-
-model AdminRoleDB {
-  id                String              @id @default(auto()) @map("_id") @db.ObjectId
-  name              String              @unique
-  description       String?
-  adminDB           AdminDB[]
-  AdminPermissionDB AdminPermissionDB[]
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  username                 String                     @unique
+  password                 String
+  name                     String
+  tel                      String
+  email                    String
+  position                 String?
+  UserDB                   UserDB?                    @relation(fields: [userId], references: [id])
+  userId                   String?                    @db.ObjectId
+  createdAt                DateTime                   @default(now())
+  createdBy                String
+  updatedAt                DateTime                   @updatedAt
+  updatedBy                String                     @default("")
+  deleteBy                 String
+  AdminShiftDB             AdminShiftDB?              @relation(fields: [adminShiftId], references: [id])
+  adminShiftId             String?                    @db.ObjectId
+  AdminPermissionDB        AdminPermissionDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
 model AdminPermissionDB {
-  id        String       @id @default(auto()) @map("_id") @db.ObjectId
-  page      String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  canView   Boolean      @default(false)
-  canCreate Boolean      @default(false)
-  canUpdate Boolean      @default(false)
-  canDelete Boolean      @default(false)
-  adminRole AdminRoleDB? @relation(fields: [roleId], references: [id])
-  roleId    String?      @db.ObjectId
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  AdminDB   AdminDB?   @relation(fields: [adminId], references: [id])
+  adminId   String?    @db.ObjectId
+  PageWeb   PageWebDB? @relation(fields: [pageWebId], references: [id])
+  pageWebId String?    @db.ObjectId
+  canCreate Boolean    @default(false)
+  canUpdate Boolean    @default(false)
+  canDelete Boolean    @default(false)
+}
+
+model AdminDefaultPermissionDB {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  AdminShiftDB AdminShiftDB? @relation(fields: [adminShiftId], references: [id])
+  adminShiftId String?       @db.ObjectId
+  PageWeb      PageWebDB?    @relation(fields: [pageWebId], references: [id])
+  pageWebId    String?       @db.ObjectId
+  canCreate    Boolean       @default(false)
+  canUpdate    Boolean       @default(false)
+  canDelete    Boolean       @default(false)
+  AdminDB      AdminDB?      @relation(fields: [adminDBId], references: [id])
+  adminDBId    String?       @db.ObjectId
+}
+
+model PageWebDB {
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  link                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  description              String? // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  AdminPermissionDB        AdminPermissionDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
 model AdminShiftDB {
-  id             String           @id @default(auto()) @map("_id") @db.ObjectId
-  name           String           @unique
-  startTime      DateTime
-  endTime        DateTime
-  AdminToShiftDB AdminToShiftDB[]
-  AdminDB        AdminDB?         @relation(fields: [adminDBId], references: [id])
-  adminDBId      String?          @db.ObjectId
-}
-
-model AdminToShiftDB {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  adminId      String?       @db.ObjectId
-  shiftId      String?       @db.ObjectId
-  AdminDB      AdminDB?      @relation(fields: [adminId], references: [id])
-  AdminShiftDB AdminShiftDB? @relation(fields: [shiftId], references: [id])
-  isLeader     Boolean       @default(false) // ระบุว่าเป็นหัวหน้ากะหรือไม่
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String                     @unique
+  AdminDB                  AdminDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
 model NavMenuItemDB {

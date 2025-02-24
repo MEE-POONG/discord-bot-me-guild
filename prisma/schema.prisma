@@ -270,52 +270,48 @@ model GuildInviteRequest {
   userId  String
 }
 
-model NewsCategoryDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy String
-  deleteBy  String
-  title     String
-  updatedAt DateTime @db.Date
-  updatedBy String
-}
-
-model NewsTypeDB {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  categoryId String   @db.ObjectId
-  createdAt  DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  String
-  deleteBy   String
-  title      String
-  updatedAt  DateTime @db.Date
-  updatedBy  String
-}
-
-model NewsTypeNews {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt    DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy    String
-  deleteBy     String
-  newsUpdateId String   @db.ObjectId
-  typeId       String   @db.ObjectId
-  updatedAt    DateTime @db.Date
-  updatedBy    String
-}
-
 model NewsUpdateDB {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  img         String
   creditlink  String
   description String
-  img         String
-  title       String
   createdAt   DateTime  @db.Date
   createdBy   String?
   updatedAt   DateTime? @db.Date
   updatedBy   String?
   deleteBy    String?
+}
+model NewsCategoryDB {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  createdAt DateTime @db.Date
+  createdBy String
+  updatedAt DateTime @db.Date
+  updatedBy String
+  deleteBy  String
+}
+
+model NewsTypeDB {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  categoryId String   @db.ObjectId
+  createdAt  DateTime @db.Date
+  createdBy  String
+  updatedAt  DateTime @db.Date
+  updatedBy  String
+  deleteBy   String
+}
+
+model NewsTypeNews {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  newsUpdateId String   @db.ObjectId
+  typeId       String   @db.ObjectId
+  createdAt    DateTime @db.Date
+  createdBy    String
+  updatedAt    DateTime @db.Date
+  updatedBy    String
+  deleteBy     String
 }
 
 model ServerDB {

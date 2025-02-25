@@ -1,50 +1,48 @@
+// donation.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { UserDB } from '@prisma/client';
-import {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  TextChannel,
-  ButtonInteraction,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  GuildMember,
-  ModalSubmitInteraction,
-  Guild,
-} from 'discord.js';
-import { Button, ButtonContext, Context, Modal, ModalContext } from 'necord';
-import { PrismaService } from 'src/prisma.service';
-import { ServerRepository } from 'src/repository/server';
-import { validateServerAndRole } from 'src/utils/server-validation.util';
+import { EmbedBuilder } from 'discord.js';
 
 @Injectable()
 export class DonationService {
   private readonly logger = new Logger(DonationService.name);
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly serverRepository: ServerRepository,
-  ) { } public onModuleInit() {
-    this.logger.log('Donation initialized');
+  private donations: Record<string, number> = {};
+
+  async addDonation(userId: string, amount: number): Promise<void> {
+    if (!this.donations[userId]) {
+      this.donations[userId] = 0;
+    }
+    this.donations[userId] += amount;
+    this.logger.log(`User ${userId} donated ${amount}. Total: ${this.donations[userId]}`);
   }
 
-  async DonationSystem(interaction: any) {
-    const roleCheck = 'admin'; // Required role for this command
-    const validationError = await validateServerAndRole(interaction, roleCheck, this.serverRepository);
-    if (validationError) {
-      return validationError; // Reply has already been handled
-    }
+  async getTotalDonation(userId: string): Promise<number> {
+    return this.donations[userId] || 0;
+  }
 
-    return interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('✅ ลงทะเบียนสำเร็จ') // หัวข้อ
-          .setDescription(`🎉 เซิร์ฟเวอร์ เช็ค สำเร็จ `) // รายละเอียด
-          .setColor(0x00ff00) // สีเขียว (สำเร็จ)
-      ],
-      ephemeral: true,
-    });
+  async getTopDonors(limit: number = 5): Promise<{ userId: string; amount: number }[]> {
+    return Object.entries(this.donations)
+      .map(([userId, amount]) => ({ userId, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, limit);
+  }
 
+  async generateDonationEmbed(): Promise<EmbedBuilder> {
+    const gifts = {
+      '🎉': 10,
+      '🎈': 50,
+      '💎': 100,
+      '🚀': 500,
+    };
+
+    return new EmbedBuilder()
+      .setTitle('🎁 ระบบ Donation 🎁')
+      .setDescription('เลือกของขวัญที่ต้องการส่งโดยกดอีโมจิ')
+      .addFields(
+        { name: '🎉 Party', value: '10 บาท', inline: true },
+        { name: '🎈 Balloon', value: '50 บาท', inline: true },
+        { name: '💎 Diamond', value: '100 บาท', inline: true },
+        { name: '🚀 Rocket', value: '500 บาท', inline: true }
+      )
+      .setColor('#FFD700');
   }
 }

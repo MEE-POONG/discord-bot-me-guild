@@ -9,31 +9,33 @@ datasource db {
 
 model ActDetailDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt   DateTime @db.Date
-  createdBy   String
-  deleteBy    String
+  title       String
   description String
   dislink     String
   disname     String
-  enddate     String
   img         String
+  type        String
   point       String
   startdate   String
-  title       String
-  type        String
+  enddate     String
+  createdAt   DateTime @db.Date
+  createdBy   String
   updatedAt   DateTime @db.Date
   updatedBy   String
+  deleteBy    String
+  actType     ActType? @relation(fields: [actTypeId], references: [id])
+  actTypeId   String   @db.ObjectId
 }
 
 model ActType {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy String
-  deleteBy  String
-  name      String
-  updatedAt DateTime @db.Date
-  updatedBy String
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  createdAt   DateTime      @db.Date
+  createdBy   String
+  updatedAt   DateTime      @db.Date
+  updatedBy   String
+  deleteBy    String
+  ActDetailDB ActDetailDB[]
 }
 
 model BlogDB {
@@ -77,40 +79,16 @@ model CommentDB {
 
 model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  String
-  deleteBy   String
   discord_id String   @unique
+  username   String
   email      String   @unique
   password   String
   server     String   @unique
+  createdAt  DateTime @db.Date
+  createdBy  String
   updatedAt  DateTime @db.Date
   updatedBy  String
-  username   String
-}
-
-model GameCategoryDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  createdAt DateTime @db.Date
-  createdBy String
-  updatedAt DateTime @db.Date
-  updatedBy String
-  deleteBy  String
-}
-
-model GameConditionMatchDB {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  maxParty     Int
-  limitNumber  Int           @default(0)
-  gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
-  gameId       String        @db.ObjectId
-  createdAt    DateTime      @default(now())
-  createdBy    String?
-  updatedAt    DateTime      @updatedAt
-  updatedBy    String
-  deleteBy     String
+  deleteBy   String
 }
 
 model GameOnlineDB {
@@ -129,6 +107,29 @@ model GameOnlineDB {
   gameTypeGame         GameTypeGame[]         @relation("GameOnlineToGameTypeGame")
   GameRankDB           GameRankDB[]
   GameConditionMatchDB GameConditionMatchDB[]
+}
+
+model GameConditionMatchDB {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  maxParty     Int
+  limitNumber  Int           @default(0)
+  gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
+  gameId       String        @db.ObjectId
+  createdAt    DateTime      @default(now())
+  createdBy    String?
+  updatedAt    DateTime      @updatedAt
+  updatedBy    String
+  deleteBy     String
+}
+
+model GameCategoryDB {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  createdAt DateTime @db.Date
+  createdBy String
+  updatedAt DateTime @db.Date
+  updatedBy String
+  deleteBy  String
 }
 
 model GameMatchDB {
@@ -185,9 +186,9 @@ model GameRankDB {
   gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
   gameId       String?       @db.ObjectId
   imgRank      String
-  selcetShow   String
+  selcetShow   String?
   nameRank     String
-  number       BigInt
+  number       Int
   createdAt    DateTime      @db.Date
   createdBy    String
   updatedAt    DateTime      @db.Date
@@ -269,52 +270,49 @@ model GuildInviteRequest {
   userId  String
 }
 
-model NewsCategoryDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy String
-  deleteBy  String
-  title     String
-  updatedAt DateTime @db.Date
-  updatedBy String
-}
-
-model NewsTypeDB {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  categoryId String   @db.ObjectId
-  createdAt  DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy  String
-  deleteBy   String
-  title      String
-  updatedAt  DateTime @db.Date
-  updatedBy  String
-}
-
-model NewsTypeNews {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt    DateTime @db.Date
-  /// Could not determine type: the field only had null or empty values in the sample set.
-  createdBy    String
-  deleteBy     String
-  newsUpdateId String   @db.ObjectId
-  typeId       String   @db.ObjectId
-  updatedAt    DateTime @db.Date
-  updatedBy    String
-}
-
 model NewsUpdateDB {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  img         String
   creditlink  String
   description String
-  img         String
-  title       String
   createdAt   DateTime  @db.Date
   createdBy   String?
   updatedAt   DateTime? @db.Date
   updatedBy   String?
   deleteBy    String?
+}
+
+model NewsCategoryDB {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  createdAt DateTime @db.Date
+  createdBy String
+  updatedAt DateTime @db.Date
+  updatedBy String
+  deleteBy  String
+}
+
+model NewsTypeDB {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  categoryId String   @db.ObjectId
+  createdAt  DateTime @db.Date
+  createdBy  String
+  updatedAt  DateTime @db.Date
+  updatedBy  String
+  deleteBy   String
+}
+
+model NewsTypeNews {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  newsUpdateId String   @db.ObjectId
+  typeId       String   @db.ObjectId
+  createdAt    DateTime @db.Date
+  createdBy    String
+  updatedAt    DateTime @db.Date
+  updatedBy    String
+  deleteBy     String
 }
 
 model ServerDB {
@@ -505,61 +503,64 @@ model TeamDB {
 }
 
 model AdminDB {
-  id             String           @id @default(auto()) @map("_id") @db.ObjectId
-  username       String           @unique
-  password       String
-  name           String
-  tel            String
-  email          String
-  adminRole      AdminRoleDB?     @relation(fields: [roleId], references: [id])
-  roleId         String?          @db.ObjectId
-  UserDB         UserDB?          @relation(fields: [userDBId], references: [id])
-  userDBId       String?          @db.ObjectId
-  AdminShifts    AdminShiftDB[]
-  createdAt      DateTime         @default(now())
-  createdBy      String
-  updatedAt      DateTime         @updatedAt
-  updatedBy      String           @default("")
-  deleteBy       String
-  AdminToShiftDB AdminToShiftDB[]
-}
-
-model AdminRoleDB {
-  id                String              @id @default(auto()) @map("_id") @db.ObjectId
-  name              String              @unique
-  description       String?
-  adminDB           AdminDB[]
-  AdminPermissionDB AdminPermissionDB[]
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  username                 String                     @unique
+  password                 String
+  name                     String
+  tel                      String
+  email                    String
+  position                 String?
+  UserDB                   UserDB?                    @relation(fields: [userId], references: [id])
+  userId                   String?                    @db.ObjectId
+  createdAt                DateTime                   @default(now())
+  createdBy                String
+  updatedAt                DateTime                   @updatedAt
+  updatedBy                String                     @default("")
+  deleteBy                 String
+  AdminShiftDB             AdminShiftDB?              @relation(fields: [adminShiftId], references: [id])
+  adminShiftId             String?                    @db.ObjectId
+  AdminPermissionDB        AdminPermissionDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
 model AdminPermissionDB {
-  id        String       @id @default(auto()) @map("_id") @db.ObjectId
-  page      String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  canView   Boolean      @default(false)
-  canCreate Boolean      @default(false)
-  canUpdate Boolean      @default(false)
-  canDelete Boolean      @default(false)
-  adminRole AdminRoleDB? @relation(fields: [roleId], references: [id])
-  roleId    String?      @db.ObjectId
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  AdminDB   AdminDB?   @relation(fields: [adminId], references: [id])
+  adminId   String?    @db.ObjectId
+  PageWeb   PageWebDB? @relation(fields: [pageWebId], references: [id])
+  pageWebId String?    @db.ObjectId
+  canCreate Boolean    @default(false)
+  canUpdate Boolean    @default(false)
+  canDelete Boolean    @default(false)
+}
+
+model AdminDefaultPermissionDB {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  AdminShiftDB AdminShiftDB? @relation(fields: [adminShiftId], references: [id])
+  adminShiftId String?       @db.ObjectId
+  PageWeb      PageWebDB?    @relation(fields: [pageWebId], references: [id])
+  pageWebId    String?       @db.ObjectId
+  canCreate    Boolean       @default(false)
+  canUpdate    Boolean       @default(false)
+  canDelete    Boolean       @default(false)
+  AdminDB      AdminDB?      @relation(fields: [adminDBId], references: [id])
+  adminDBId    String?       @db.ObjectId
+}
+
+model PageWebDB {
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  link                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  description              String? // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  AdminPermissionDB        AdminPermissionDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
 model AdminShiftDB {
-  id             String           @id @default(auto()) @map("_id") @db.ObjectId
-  name           String           @unique
-  startTime      DateTime
-  endTime        DateTime
-  AdminToShiftDB AdminToShiftDB[]
-  AdminDB        AdminDB?         @relation(fields: [adminDBId], references: [id])
-  adminDBId      String?          @db.ObjectId
-}
-
-model AdminToShiftDB {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  adminId      String?       @db.ObjectId
-  shiftId      String?       @db.ObjectId
-  AdminDB      AdminDB?      @relation(fields: [adminId], references: [id])
-  AdminShiftDB AdminShiftDB? @relation(fields: [shiftId], references: [id])
-  isLeader     Boolean       @default(false) // ระบุว่าเป็นหัวหน้ากะหรือไม่
+  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String                     @unique
+  AdminDB                  AdminDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
 model NavMenuItemDB {

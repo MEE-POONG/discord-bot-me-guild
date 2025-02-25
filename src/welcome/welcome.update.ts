@@ -21,7 +21,7 @@ export class WelcomeUpdate {
     try {
       const buffer = await axios({
         method: 'POST',
-        url: 'http://localhost:3000/draw/image-me-guild-welcome',
+        url: 'https://me-draw.me-prompt-technology.com/draw/image-me-guild-welcome',
         data: {
           displayName: member.displayName,
           avatar: member.user.displayAvatarURL({ extension: 'png' }),

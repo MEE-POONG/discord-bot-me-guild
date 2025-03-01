@@ -78,7 +78,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           user: ${{ secrets.SERVER_USER }}
           private_key: ${{ secrets.SSH_KEY }}
-          command: docker image prune -a -f && docker logs -f ${{ steps.string.outputs.lowercase }}
+          command: docker image prune -a -f
 
       - name: SSH Command docker logs
         uses: D3rHase/ssh-command-action@v0.2.2
@@ -86,4 +86,4 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           user: ${{ secrets.SERVER_USER }}
           private_key: ${{ secrets.SSH_KEY }}
-          command: docker logs -f ${{ steps.string.outputs.lowercase }}
+          command: docker logs --timestamps --since=1h ${{ steps.string.outputs.lowercase }}

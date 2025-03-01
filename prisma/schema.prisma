@@ -124,7 +124,7 @@ model GameConditionMatchDB {
 
 model GameCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
+  title     String   @unique
   createdAt DateTime @db.Date
   createdBy String
   updatedAt DateTime @db.Date
@@ -587,7 +587,7 @@ model NavSubMenuItemDB {
 model VoiceTime {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String
-  channelId String
+  channelId String   @default("")
   duration  Int
   timestamp DateTime @default(now())
 }

@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-me-guild",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Discord bot for me guild",
   "author": "Warayut Taekrathok (warayut.tae@gmail.com)",
   "private": true,
@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@necord/pagination": "^2.0.0",
@@ -28,6 +29,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^6.2.0",
     "axios": "^1.7.9",
+    "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "discord.js": "^14.16.3",
@@ -75,5 +77,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "prisma": {
+    "seed": "ts-node ./prisma/seed.ts"
   }
 }

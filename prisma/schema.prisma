@@ -124,7 +124,7 @@ model GameConditionMatchDB {
 
 model GameCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
+  title     String   @unique
   createdAt DateTime @db.Date
   createdBy String
   updatedAt DateTime @db.Date

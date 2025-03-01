@@ -40,10 +40,50 @@ jobs:
         with:
           string: ${{ github.event.repository.name }}
 
-      - name: SSH Command
+      - name: SSH Command docker pull
         uses: D3rHase/ssh-command-action@v0.2.2
         with:
           host: ${{ secrets.SERVER_HOST }}
           user: ${{ secrets.SERVER_USER }}
           private_key: ${{ secrets.SSH_KEY }}
-          command: docker pull chunwarayut/${{ steps.string.outputs.lowercase }}:latest && docker stop ${{ steps.string.outputs.lowercase }} && docker rm ${{ steps.string.outputs.lowercase }} && docker run --name ${{ steps.string.outputs.lowercase }} --label io.portainer.accesscontrol.teams=discord --restart=always -d -e DATABASE_URL="${{ secrets.DATABASE_URL }}" -e DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}" -e DISCORD_DEVELOPMENT_GUILD_ID="${{ secrets.DISCORD_DEVELOPMENT_GUILD_ID }}" -e DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}" -e DISCORD_GUILD_CHANEL_ID="${{ secrets.DISCORD_GUILD_CHANEL_ID }}" -e DISCORD_GUILD_CHANEL_PARTY_ID="${{ secrets.DISCORD_GUILD_CHANEL_PARTY_ID }}" --memory=512m --memory-swap=512m --cpus=1.5 --log-opt max-size=10m --log-opt max-file=3 chunwarayut/${{ steps.string.outputs.lowercase }}:latest && docker image prune -a -f && docker logs -f ${{ steps.string.outputs.lowercase }}
+          command: docker pull chunwarayut/${{ steps.string.outputs.lowercase }}:latest
+      
+      - name: SSH Command docker stop
+        uses: D3rHase/ssh-command-action@v0.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          private_key: ${{ secrets.SSH_KEY }}
+          command: docker stop ${{ steps.string.outputs.lowercase }}
+      
+      - name: SSH Command docker rm
+        uses: D3rHase/ssh-command-action@v0.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          private_key: ${{ secrets.SSH_KEY }}
+          command: docker rm ${{ steps.string.outputs.lowercase }}
+      
+      - name: SSH Command docker run
+        uses: D3rHase/ssh-command-action@v0.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          private_key: ${{ secrets.SSH_KEY }}
+          command: docker run --name ${{ steps.string.outputs.lowercase }} --label io.portainer.accesscontrol.teams=discord --restart=always -d -e DATABASE_URL="${{ secrets.DATABASE_URL }}" -e DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}" -e DISCORD_DEVELOPMENT_GUILD_ID="${{ secrets.DISCORD_DEVELOPMENT_GUILD_ID }}" -e DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}" -e DISCORD_GUILD_CHANEL_ID="${{ secrets.DISCORD_GUILD_CHANEL_ID }}" -e DISCORD_GUILD_CHANEL_PARTY_ID="${{ secrets.DISCORD_GUILD_CHANEL_PARTY_ID }}" --memory=512m --memory-swap=512m --cpus=1.5 --log-opt max-size=10m --log-opt max-file=3 chunwarayut/${{ steps.string.outputs.lowercase }}:latest
+
+      - name: SSH Command docker image prune
+        uses: D3rHase/ssh-command-action@v0.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          private_key: ${{ secrets.SSH_KEY }}
+          command: docker image prune -a -f && docker logs -f ${{ steps.string.outputs.lowercase }}
+
+      - name: SSH Command docker logs
+        uses: D3rHase/ssh-command-action@v0.2.2
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          user: ${{ secrets.SERVER_USER }}
+          private_key: ${{ secrets.SSH_KEY }}
+          command: docker logs -f ${{ steps.string.outputs.lowercase }}

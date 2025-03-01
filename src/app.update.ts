@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, On, Once, ContextOf } from 'necord';
 import { VoiceState } from 'discord.js';
+import { VoiceTimeService } from './voice-time/voice-time.service';
 
 @Injectable()
 export class AppUpdate {
   private readonly logger = new Logger(AppUpdate.name);
+  private voiceTimeTracker = new Map<string, number>();
 
-  public constructor() {}
+  constructor(
+    private readonly voiceTimeService: VoiceTimeService
+  ) {}
 
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
@@ -24,19 +28,57 @@ export class AppUpdate {
   }
 
   @On('voiceStateUpdate')
-  public async removeVoiceChannel(
+  public async handleVoiceState(
     @Context() [oldState, newState]: [VoiceState, VoiceState],
   ) {
-    if (oldState.channelId === newState.channelId) {
-      return;
+    const userId = newState.member.id;
+
+    if (!oldState.channelId && newState.channelId) {
+      this.voiceTimeTracker.set(userId, Date.now());
+    }
+    
+    if (oldState.channelId && !newState.channelId) {
+      const startTime = this.voiceTimeTracker.get(userId);
+      
+      if (startTime) {
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        
+        await this.voiceTimeService.createVoiceTime({
+          userId,
+          channelId: oldState.channelId,
+          duration,
+          timestamp: new Date(),
+        });
+        
+        this.voiceTimeTracker.delete(userId);
+      }
     }
 
-    if (oldState.channel && oldState.channel.members.size === 0) {
-      if (
-        oldState.channel.name.includes('🎮') &&
-        oldState.channel.name.includes('PARTY')
-      ) {
-        await oldState.channel.delete();
+    if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
+      const startTime = this.voiceTimeTracker.get(userId);
+      
+      if (startTime) {
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        
+        await this.voiceTimeService.createVoiceTime({
+          userId,
+          channelId: oldState.channelId,
+          duration,
+          timestamp: new Date(),
+        });
+        
+        this.voiceTimeTracker.set(userId, Date.now());
+      }
+    }
+
+    if (oldState.channelId !== newState.channelId) {
+      if (oldState.channel && oldState.channel.members.size === 0) {
+        if (
+          oldState.channel.name.includes('🎮') &&
+          oldState.channel.name.includes('PARTY')
+        ) {
+          await oldState.channel.delete();
+        }
       }
     }
   }

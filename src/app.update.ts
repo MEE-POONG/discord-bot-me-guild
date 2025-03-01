@@ -6,8 +6,11 @@ import { VoiceTimeService } from './voice-time/voice-time.service';
 @Injectable()
 export class AppUpdate {
   private readonly logger = new Logger(AppUpdate.name);
+  private voiceTimeTracker = new Map<string, number>();
 
-  constructor(private readonly voiceTimeService: VoiceTimeService) {}
+  constructor(
+    private readonly voiceTimeService: VoiceTimeService
+  ) {}
 
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
@@ -31,39 +34,40 @@ export class AppUpdate {
     const userId = newState.member.id;
 
     if (!oldState.channelId && newState.channelId) {
-      this.voiceTimeService.startTracking(userId);
+      this.voiceTimeTracker.set(userId, Date.now());
     }
-
+    
     if (oldState.channelId && !newState.channelId) {
-      const duration = this.voiceTimeService.stopTracking(userId);
-
-      if (duration) {
+      const startTime = this.voiceTimeTracker.get(userId);
+      
+      if (startTime) {
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        
         await this.voiceTimeService.createVoiceTime({
           userId,
           channelId: oldState.channelId,
           duration,
           timestamp: new Date(),
         });
+        
+        this.voiceTimeTracker.delete(userId);
       }
-      await this.voiceTimeService.deleteVoiceTime(userId);
     }
 
-    if (
-      oldState.channelId &&
-      newState.channelId &&
-      oldState.channelId !== newState.channelId
-    ) {
-      const duration = this.voiceTimeService.stopTracking(userId);
-
-      if (duration) {
+    if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
+      const startTime = this.voiceTimeTracker.get(userId);
+      
+      if (startTime) {
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        
         await this.voiceTimeService.createVoiceTime({
           userId,
           channelId: oldState.channelId,
           duration,
           timestamp: new Date(),
         });
-
-        this.voiceTimeService.resetTracking(userId);
+        
+        this.voiceTimeTracker.set(userId, Date.now());
       }
     }
 

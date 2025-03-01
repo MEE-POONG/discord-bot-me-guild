@@ -3,15 +3,7 @@ import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class VoiceTimeService {
-  private voiceTimeTracker = new Map<string, number>();
-
   constructor(private readonly prisma: PrismaService) {}
-
-  async deleteVoiceTime(userId: string) {
-    return await this.prisma.voiceTime.deleteMany({
-      where: { userId, channelId: { equals: "" }, duration: { equals: 5 } }
-    });
-  }
 
   // บันทึกเวลาใหม่
   async createVoiceTime(data: {
@@ -31,14 +23,7 @@ export class VoiceTimeService {
       where: { userId },
       _sum: { duration: true }
     });
-    
-    // รวมเวลาที่กำลังติดตามอยู่ (ถ้ามี)
-    const currentTracking = this.voiceTimeTracker.get(userId);
-    const currentDuration = currentTracking 
-      ? Math.floor((Date.now() - currentTracking) / 1000)
-      : 0;
-
-    return (voiceTimes._sum.duration || 0) + currentDuration;
+    return voiceTimes._sum.duration || 0;
   }
 
   // ดึงเวลารวมในช่วงเวลาที่กำหนด
@@ -82,23 +67,5 @@ export class VoiceTimeService {
     if (remainingSeconds > 0) parts.push(`${remainingSeconds} วินาที`);
 
     return parts.join(' ');
-  }
-
-  public startTracking(userId: string) {
-    this.voiceTimeTracker.set(userId, Date.now());
-  }
-
-  public stopTracking(userId: string): number | null {
-    const startTime = this.voiceTimeTracker.get(userId);
-    if (startTime) {
-      const duration = Math.floor((Date.now() - startTime) / 1000);
-      this.voiceTimeTracker.delete(userId);
-      return duration;
-    }
-    return null;
-  }
-
-  public resetTracking(userId: string) {
-    this.voiceTimeTracker.set(userId, Date.now());
   }
 } 

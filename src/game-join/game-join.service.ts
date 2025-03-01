@@ -96,14 +96,19 @@ export class GameJoinService {
   private async collectVoiceChannels(
     interCollect: any,
   ): Promise<VoiceChannel[]> {
-    const channelData: VoiceChannel[] = [];
-    interCollect.guild.channels.cache.forEach((channel) => {
-      if (channel instanceof VoiceChannel) {
-        channelData.push(channel);
-      }
-    });
+    try {
+      const channelData: VoiceChannel[] = [];
+      interCollect.guild.channels.cache.forEach((channel) => {
+        if (channel instanceof VoiceChannel) {
+          channelData.push(channel);
+        }
+      });
 
-    return channelData;
+      return channelData;
+    } catch (error) {
+      this.logger.error('Error collecting voice channels:', error);
+      throw error;
+    }
   }
 
   private async isUserConnectedToVoiceChannel(
@@ -126,109 +131,113 @@ export class GameJoinService {
 
   @StringSelect('GAME_JOIN_SELECT_MENU_GAME_TYPE')
   public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
-    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
-      return;
+    try {
+      if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+        return;
+      }
+
+      this.storeSelectedValues(
+        'GAME_JOIN_SELECT_MENU_GAME_TYPE',
+        interaction.user.id,
+        interaction.values,
+      );
+
+      return interaction.update({
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            new StringSelectMenuBuilder()
+              .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
+              .setPlaceholder('เลือกรูปแบบการเล่น')
+              .setMaxValues(1)
+              .setMinValues(1)
+              .setOptions([
+                {
+                  label: 'โหมดปกติ',
+                  value: 'NORMAL',
+                },
+              ]),
+          ),
+        ],
+      });
+    } catch (error) {
+      this.logger.error('Error in onSelectMenu:', error);
+      await interaction.reply({
+        content: 'เกิดข้อผิดพลาดในการเลือกประเภทเกมส์',
+        ephemeral: true,
+      });
     }
-
-    this.storeSelectedValues(
-      'GAME_JOIN_SELECT_MENU_GAME_TYPE',
-      interaction.user.id,
-      interaction.values,
-    );
-
-    return interaction.update({
-      components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
-            .setPlaceholder('เลือกรูปแบบการเล่น')
-            .setMaxValues(1)
-            .setMinValues(1)
-            .setOptions([
-              // {
-              //   label: 'โหมดจัดอันดับ',
-              //   value: 'RANKED',
-              // },
-              {
-                label: 'โหมดปกติ',
-                value: 'NORMAL',
-              },
-            ]),
-        ),
-      ],
-    });
   }
 
   @StringSelect('GAME_JOIN_SELECT_MENU_PLAY_MODE')
   public async onSelectMenuPlayMode(
     @Context() [interaction]: StringSelectContext,
   ) {
-    const gameType = this.selectedValues.find(
-      (value) =>
-        value.key === 'GAME_JOIN_SELECT_MENU_GAME_TYPE' &&
-        value.user === interaction.user.id,
-    )?.value;
-    const rankMode = interaction.values[0];
-
-    const member = interaction.member as GuildMember;
-    const user_data = await this.prisma.userDB.findFirst({
-      where: {
-        discord_id: interaction.user.id,
-      },
-    });
-
-    if (!user_data) {
-      return interaction.reply({
-        content: `กรุณาลงทะเบียน นักผจญภัยเพื่อใช้งานระบบนี้`,
-        ephemeral: true,
-      });
-    }
-
-    if (!member.voice.channel) {
-      return interaction.reply({
-        content: `กรุณาเข้าร่วมช่องเสียงเพื่อใช้คำสั่ง`,
-        ephemeral: true,
-      });
-    }
-
-    const gameInType = await this.prisma.gameTypeGame.findMany({
-      where: {
-        typeId: gameType,
-      },
-    });
-
-    const gameOnline = await this.prisma.gameOnlineDB.findMany({
-      where: {
-        id: {
-          in: gameInType.map((game) => game.gameId),
-        },
-      },
-    });
-
-    if (!gameOnline || gameOnline.length < 1) {
-      return interaction.reply({
-        content: 'ไม่พบข้อมูลเกมในประเภทนี้',
-        ephemeral: true,
-      });
-    }
-
-    const gameSelectId = `gameSelect_${await this.randomNumber(1000, 9999)}`;
-    const gameSelect =
-      new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId(gameSelectId)
-          .setMaxValues(1)
-          .setMinValues(1)
-          .setPlaceholder('กรุณาเลือกเกม')
-          .setOptions(
-            gameOnline.map((game) => ({
-              value: game.id,
-              label: game.game_name,
-            })),
-          ),
-      );
-
     try {
+      const gameType = this.selectedValues.find(
+        (value) =>
+          value.key === 'GAME_JOIN_SELECT_MENU_GAME_TYPE' &&
+          value.user === interaction.user.id,
+      )?.value;
+      const rankMode = interaction.values[0];
+
+      const member = interaction.member as GuildMember;
+      const user_data = await this.prisma.userDB.findFirst({
+        where: {
+          discord_id: interaction.user.id,
+        },
+      });
+
+      if (!user_data) {
+        return interaction.reply({
+          content: `กรุณาลงทะเบียน นักผจญภัยเพื่อใช้งานระบบนี้`,
+          ephemeral: true,
+        });
+      }
+
+      if (!member.voice.channel) {
+        return interaction.reply({
+          content: `กรุณาเข้าร่วมช่องเสียงเพื่อใช้คำสั่ง`,
+          ephemeral: true,
+        });
+      }
+
+      const gameInType = await this.prisma.gameTypeGame.findMany({
+        where: {
+          typeId: gameType,
+        },
+      });
+
+      const gameOnline = await this.prisma.gameOnlineDB.findMany({
+        where: {
+          id: {
+            in: gameInType.map((game) => game.gameId),
+          },
+        },
+      });
+
+      if (!gameOnline || gameOnline.length < 1) {
+        return interaction.reply({
+          content: 'ไม่พบข้อมูลเกมในประเภทนี้',
+          ephemeral: true,
+        });
+      }
+
+      const gameSelectId = `gameSelect_${await this.randomNumber(1000, 9999)}`;
+      const gameSelect =
+        new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId(gameSelectId)
+            .setMaxValues(1)
+            .setMinValues(1)
+            .setPlaceholder('กรุณาเลือกเกม')
+            .setOptions(
+              gameOnline.map((game) => ({
+                value: game.id,
+                label: game.game_name,
+              })),
+            ),
+        );
+
       const inter = await interaction.update({
         components: [gameSelect],
       });
@@ -289,8 +298,12 @@ export class GameJoinService {
         .on('end', () => {
           inter.delete().catch(() => {});
         });
-    } catch (err) {
-      console.log('GameJoinService: ', err);
+    } catch (error) {
+      this.logger.error('Error in onSelectMenuPlayMode:', error);
+      await interaction.reply({
+        content: 'เกิดข้อผิดพลาดในการเลือกโหมดการเล่น',
+        ephemeral: true,
+      });
     }
   }
 

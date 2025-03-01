@@ -271,16 +271,17 @@ model GuildInviteRequest {
 }
 
 model NewsUpdateDB {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  img         String
-  creditlink  String
-  description String
-  createdAt   DateTime  @db.Date
-  createdBy   String?
-  updatedAt   DateTime? @db.Date
-  updatedBy   String?
-  deleteBy    String?
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  img          String
+  creditlink   String
+  description  String
+  createdAt    DateTime       @db.Date
+  createdBy    String?
+  updatedAt    DateTime?      @db.Date
+  updatedBy    String?
+  deleteBy     String?
+  newsTypeNews NewsTypeNews[]
 }
 
 model NewsCategoryDB {
@@ -305,14 +306,16 @@ model NewsTypeDB {
 }
 
 model NewsTypeNews {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  newsUpdateId String   @db.ObjectId
-  typeId       String   @db.ObjectId
-  createdAt    DateTime @db.Date
-  createdBy    String
-  updatedAt    DateTime @db.Date
-  updatedBy    String
-  deleteBy     String
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  newsUpdateId   String        @db.ObjectId
+  typeId         String        @db.ObjectId
+  createdAt      DateTime      @db.Date
+  createdBy      String
+  updatedAt      DateTime      @db.Date
+  updatedBy      String
+  deleteBy       String
+  NewsUpdateDB   NewsUpdateDB? @relation(fields: [newsUpdateDBId], references: [id])
+  newsUpdateDBId String?       @db.ObjectId
 }
 
 model ServerDB {
@@ -582,6 +585,13 @@ model NavSubMenuItemDB {
   manager String[]      @default([])
   menuId  String        @db.ObjectId
   menu    NavMenuItemDB @relation(fields: [menuId], references: [id], name: "MenuToSubmenu")
+}
+
+model TradingofRanks {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  userID    String
+  roleID    String
+  paymentID String
 }
 
 model VoiceTime {

@@ -35,36 +35,40 @@ export class GameTypeRepository implements GameTypeRepositoryType {
     page: number;
     limit: number;
   }> {
-    const skip = (page - 1) * itemsPerPage;
+    try {
+      const skip = (page - 1) * itemsPerPage;
 
-    const category = await this.prismaService.gameCategoryDB.findFirst({
-      where: { title: categoryTitle },
-    });
+      const category = await this.prismaService.gameCategoryDB.findFirst({
+        where: { title: categoryTitle },
+      });
 
-    if (!category) {
-      throw new Error(`ไม่พบหมวดหมู่เกมที่ชื่อ "${categoryTitle}"`);
-    }
-    
-    const data = await this.prismaService.gameTypeDB.findMany({
-      where: {
-        categoryId: category.id, // กรองตาม categoryId
-        gameTypeGame: {
-          some: {}, // เงื่อนไขนี้กรองเฉพาะรายการที่มีความสัมพันธ์กับ GameTypeGame
+      if (!category) {
+        throw new Error(`ไม่พบหมวดหมู่เกมที่ชื่อ "${categoryTitle}"`);
+      }
+      
+      const data = await this.prismaService.gameTypeDB.findMany({
+        where: {
+          categoryId: category.id,
+          gameTypeGame: {
+            some: {},
+          },
         },
-      },
-      skip,
-      take: itemsPerPage,
-    });
+        skip,
+        take: itemsPerPage,
+      });
 
-    const totalItems = await this.prismaService.gameTypeDB.count({
-      where: { categoryId: category.id },
-    });
+      const totalItems = await this.prismaService.gameTypeDB.count({
+        where: { categoryId: category.id },
+      });
 
-    return {
-      data,
-      total: totalItems,
-      page: page,
-      limit: itemsPerPage,
-    };
+      return {
+        data,
+        total: totalItems,
+        page: page,
+        limit: itemsPerPage,
+      };
+    } catch (error) {
+      throw new Error(`เกิดข้อผิดพลาดในการดึงข้อมูล Game Types: ${error.message}`);
+    }
   }
 }

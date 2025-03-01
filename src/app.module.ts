@@ -33,6 +33,7 @@ import { ServerclearRoleModule } from './server-clear-role/server-clear-role.mod
 import { BuskingModule } from './busking/busking.module';
 import { FormGameModule } from './form-game/form-game.module';
 import { DonationModule } from './donation/donation.module';
+import { VoiceTimeModule } from './voice-time/voice-time.module';
 
 @Global()
 @Module({
@@ -103,6 +104,7 @@ import { DonationModule } from './donation/donation.module';
     UserDataModule,
     WelcomeModule,
     BuskingModule,
+    VoiceTimeModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

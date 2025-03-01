@@ -583,3 +583,11 @@ model NavSubMenuItemDB {
   menuId  String        @db.ObjectId
   menu    NavMenuItemDB @relation(fields: [menuId], references: [id], name: "MenuToSubmenu")
 }
+
+model VoiceTime {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  channelId String   @default("")
+  duration  Int
+  timestamp DateTime @default(now())
+}

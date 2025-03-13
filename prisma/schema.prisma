@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TransactionStatus {
+  PENDING // รอการตรวจสอบ
+  APPROVED // อนุมัติแล้ว (ห้ามสั่งซื้อซ้ำ)
+  REJECTED // ถูกปฏิเสธ (สั่งซื้อใหม่ได้)
+  CANCELLED // ถูกยกเลิก (สั่งซื้อใหม่ได้)
+}
+
 model ActDetailDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -285,37 +292,42 @@ model NewsUpdateDB {
 }
 
 model NewsCategoryDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  createdAt DateTime @db.Date
-  createdBy String
-  updatedAt DateTime @db.Date
-  updatedBy String
-  deleteBy  String
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  createdAt  DateTime     @db.Date
+  createdBy  String
+  updatedAt  DateTime     @db.Date
+  updatedBy  String
+  deleteBy   String
+  newsTypeDB NewsTypeDB[]
 }
 
 model NewsTypeDB {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
-  categoryId String   @db.ObjectId
-  createdAt  DateTime @db.Date
-  createdBy  String
-  updatedAt  DateTime @db.Date
-  updatedBy  String
-  deleteBy   String
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  categoryId       String?         @db.ObjectId
+  createdAt        DateTime        @db.Date
+  createdBy        String
+  updatedAt        DateTime        @db.Date
+  updatedBy        String
+  deleteBy         String
+  newsTypeNews     NewsTypeNews[]
+  newsCategoryDB   NewsCategoryDB? @relation(fields: [newsCategoryDBId], references: [id])
+  newsCategoryDBId String?         @db.ObjectId
 }
 
 model NewsTypeNews {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  newsUpdateId   String        @db.ObjectId
-  typeId         String        @db.ObjectId
-  createdAt      DateTime      @db.Date
-  createdBy      String
-  updatedAt      DateTime      @db.Date
-  updatedBy      String
-  deleteBy       String
-  NewsUpdateDB   NewsUpdateDB? @relation(fields: [newsUpdateDBId], references: [id])
-  newsUpdateDBId String?       @db.ObjectId
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  typeId       String?       @db.ObjectId
+  createdAt    DateTime      @db.Date
+  createdBy    String
+  updatedAt    DateTime      @db.Date
+  updatedBy    String
+  deleteBy     String
+  newsUpdateDB NewsUpdateDB? @relation(fields: [newsUpdateId], references: [id])
+  newsUpdateId String?       @db.ObjectId
+  newsTypeDB   NewsTypeDB?   @relation(fields: [newsTypeId], references: [id])
+  newsTypeId   String?       @db.ObjectId
 }
 
 model ServerDB {
@@ -371,13 +383,14 @@ model UserDB {
 
 model UserGameRank {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime @db.Date
-  deleteBy   String
   gameId     String   @db.ObjectId
   gameRankId String   @db.ObjectId
   invitation Boolean
+  createdAt  DateTime @db.Date
+  createdBy  String
   updatedAt  DateTime @db.Date
   updatedBy  String
+  deleteBy   String
   /// Multiple data types found: String: 85.7%, String (ObjectId): 14.3% out of 14 sampled entries
   userId     Json
 }
@@ -401,44 +414,41 @@ model WebDefaultDB {
   deleteBy       String
 }
 
-model ProductListDB {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  detail    String
-  price     String
-  createdAt DateTime  @db.Date
-  createdBy String?
-  updatedAt DateTime? @db.Date
-  updatedBy String?
-  deleteBy  String?
+model ProductDiscordDB {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String
+  discordServerID String
+  type            String
+  roleId          String
+  roleName        String
+  price           Float
+  createdAt       DateTime        @default(now())
+  createdBy       String?
+  updatedAt       DateTime?       @updatedAt
+  updatedBy       String?
+  deleteBy        String?
+  TransactionDB   TransactionDB[]
+
+  @@unique([discordServerID, roleId]) // ป้องกันการซ้ำของ Role ในเซิร์ฟเวอร์เดียวกัน
 }
 
-model ProductRoldDB {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  roldId    String
-  roldName  String
-  price     String
-  createdAt DateTime  @db.Date
-  createdBy String?
-  updatedAt DateTime? @db.Date
-  updatedBy String?
-  deleteBy  String?
-}
+model TransactionDB {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  buyerDiscordID   String // Discord ID ของผู้ซื้อ
+  sellerDiscordID  String // Discord ID ของผู้ขาย
+  productDiscordId String            @db.ObjectId
+  productDiscord   ProductDiscordDB  @relation(fields: [productDiscordId], references: [id])
+  paymentSlip      String // URL รูปสลิปการชำระเงิน
+  adminCheckerID   String? // Admin ID ที่ตรวจสอบการซื้อขาย
+  status           TransactionStatus @default(PENDING)
+  createdAt        DateTime          @default(now())
+  createdBy        String?
+  updatedAt        DateTime?         @updatedAt
+  updatedBy        String?
+  deleteBy         String?
 
-model SalesReportDB {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  adminId   String //คนเช็คสลิป
-  slip      String //สลิป
-  list      String //รายการขาย
-  productID String // สินค้าเพื่ออนาคต ที่ขาย
-  roleID    String // ไอดีของ role ในดิสที่ขาย
-  price     String //ปรับแก้ให้ด้วย
-  Currency  String //สกุลเงินที่ใช้ THbath || MeGuildCoin
-  createdAt DateTime  @db.Date
-  createdBy String?
-  updatedAt DateTime? @db.Date
-  updatedBy String?
-  deleteBy  String?
+  @@unique([buyerDiscordID, productDiscordId, status]) // ✅ อนุญาตให้ซื้อซ้ำได้ถ้าสถานะเป็น REJECTED หรือ CANCELLED
 }
 
 model MeGuildCoinDB {
@@ -453,19 +463,16 @@ model MeGuildCoinDB {
   userId       String
 }
 
-model PaymentHistoryDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  coin_copper  BigInt
-  coin_crystal BigInt
-  coin_diamond BigInt
-  coin_gold    BigInt
-  coin_silver  BigInt
-  createdAt    DateTime @db.Date
-  status       String
-  title        String
-  updatedAt    DateTime @db.Date
-  updatedBy    String
-  userId       String
+model PaymentDB {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  coin      BigInt
+  cash      Int
+  createdAt DateTime @db.Date
+  status    String
+  title     String
+  updatedAt DateTime @db.Date
+  updatedBy String
+  userId    String
 }
 
 model RuleDB {
@@ -506,85 +513,101 @@ model TeamDB {
 }
 
 model AdminDB {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  username          String              @unique
+  password          String
+  name              String
+  tel               String
+  email             String
+  UserDB            UserDB?             @relation(fields: [userId], references: [id])
+  userId            String?             @db.ObjectId
+  createdAt         DateTime            @default(now())
+  createdBy         String
+  updatedAt         DateTime            @updatedAt
+  updatedBy         String              @default("")
+  deleteBy          String
+  AdminPositionDB   AdminPositionDB?    @relation(fields: [adminPositionId], references: [id])
+  adminPositionId   String?             @db.ObjectId
+  AdminPermissionDB AdminPermissionDB[]
+}
+
+model AdminPermissionDB {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  AdminDB       AdminDB?       @relation(fields: [adminId], references: [id])
+  adminId       String?        @db.ObjectId
+  MenuPageWeb   MenuPageWebDB? @relation(fields: [menuPageWebId], references: [id])
+  menuPageWebId String?        @db.ObjectId
+  canCreate     Boolean        @default(false)
+  canUpdate     Boolean        @default(false)
+  canDelete     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  createdBy     String
+  updatedAt     DateTime       @updatedAt
+  updatedBy     String         @default("")
+  deleteBy      String
+}
+
+model AdminDefaultPermissionDB {
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  AdminPositionDB   AdminPositionDB? @relation(fields: [adminPositionDBId], references: [id])
+  adminPositionDBId String?          @db.ObjectId
+  MenuPageWeb       MenuPageWebDB?   @relation(fields: [menuPageWebId], references: [id])
+  menuPageWebId     String?          @db.ObjectId
+  canCreate         Boolean          @default(false)
+  canUpdate         Boolean          @default(false)
+  canDelete         Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  createdBy         String
+  updatedAt         DateTime         @updatedAt
+  updatedBy         String           @default("")
+  deleteBy          String
+}
+
+model MenuPageWebDB {
   id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
-  username                 String                     @unique
-  password                 String
-  name                     String
-  tel                      String
-  email                    String
-  position                 String?
-  UserDB                   UserDB?                    @relation(fields: [userId], references: [id])
-  userId                   String?                    @db.ObjectId
+  name                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  description              String?
+  priority                 Int?
+  head                     Boolean                    @default(false)
+  link                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
+  icon                     String? // อาจเก็บชื่อไอคอนหรือ URL ไอคอน
+  manager                  String[]                   @default([])
+  subMenu                  String[]
+  parentId                 String?                    @db.ObjectId // เก็บเป็น ObjectId ของเมนูหลัก
+  AdminPermissionDB        AdminPermissionDB[]
   createdAt                DateTime                   @default(now())
   createdBy                String
   updatedAt                DateTime                   @updatedAt
   updatedBy                String                     @default("")
   deleteBy                 String
-  AdminShiftDB             AdminShiftDB?              @relation(fields: [adminShiftId], references: [id])
-  adminShiftId             String?                    @db.ObjectId
-  AdminPermissionDB        AdminPermissionDB[]
   AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
-model AdminPermissionDB {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  AdminDB   AdminDB?   @relation(fields: [adminId], references: [id])
-  adminId   String?    @db.ObjectId
-  PageWeb   PageWebDB? @relation(fields: [pageWebId], references: [id])
-  pageWebId String?    @db.ObjectId
-  canCreate Boolean    @default(false)
-  canUpdate Boolean    @default(false)
-  canDelete Boolean    @default(false)
+model AdminDepartmentDB {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  name            String            @unique
+  managerId       String?           @db.ObjectId
+  adminPositionDB AdminPositionDB[]
+  createdAt       DateTime          @default(now())
+  createdBy       String
+  updatedAt       DateTime          @updatedAt
+  updatedBy       String            @default("")
+  deleteBy        String
 }
 
-model AdminDefaultPermissionDB {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  AdminShiftDB AdminShiftDB? @relation(fields: [adminShiftId], references: [id])
-  adminShiftId String?       @db.ObjectId
-  PageWeb      PageWebDB?    @relation(fields: [pageWebId], references: [id])
-  pageWebId    String?       @db.ObjectId
-  canCreate    Boolean       @default(false)
-  canUpdate    Boolean       @default(false)
-  canDelete    Boolean       @default(false)
-  AdminDB      AdminDB?      @relation(fields: [adminDBId], references: [id])
-  adminDBId    String?       @db.ObjectId
-}
-
-model PageWebDB {
+model AdminPositionDB {
   id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
-  name                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  link                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  description              String? // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  AdminPermissionDB        AdminPermissionDB[]
+  name                     String
+  priority                 Int
+  adminDepartmentId        String?                    @db.ObjectId
+  adminDepartmentDB        AdminDepartmentDB?         @relation(fields: [adminDepartmentId], references: [id], onDelete: Cascade)
+  adminDB                  AdminDB[]
+  createdAt                DateTime                   @default(now())
+  createdBy                String
+  updatedAt                DateTime                   @updatedAt
+  updatedBy                String                     @default("")
+  deleteBy                 String
   AdminDefaultPermissionDB AdminDefaultPermissionDB[]
-}
-
-model AdminShiftDB {
-  id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
-  name                     String                     @unique
-  AdminDB                  AdminDB[]
-  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
-}
-
-model NavMenuItemDB {
-  id      String             @id @default(auto()) @map("_id") @db.ObjectId
-  href    String             @unique
-  text    String
-  head    Boolean            @default(false)
-  icon    String // แทน JSX.Element ด้วย icon name (เช่น "FaChartPie")
-  pageID  Boolean            @default(false)
-  manager String[]           @default([]) // เก็บรายการที่ใช้กำหนดสิทธิ์
-  submenu NavSubMenuItemDB[] @relation("MenuToSubmenu")
-}
-
-model NavSubMenuItemDB {
-  id      String        @id @default(auto()) @map("_id") @db.ObjectId
-  href    String        @unique
-  text    String
-  pageID  Boolean       @default(false)
-  manager String[]      @default([])
-  menuId  String        @db.ObjectId
-  menu    NavMenuItemDB @relation(fields: [menuId], references: [id], name: "MenuToSubmenu")
 }
 
 model TradingofRanks {

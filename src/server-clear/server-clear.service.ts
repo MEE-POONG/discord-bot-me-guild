@@ -15,60 +15,73 @@ export class ServerclearService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) { }
+  ) {}
 
   public onModuleInit() {
     this.logger.log('Serverclear initialized');
   }
 
   async ServerclearSystem(interaction: any) {
-    const roleCheck = 'admin'; // Required role for this command
+    const roleCheck = 'admin';
     const validationError = await validateServerAndRole(interaction, roleCheck, this.serverRepository);
     if (validationError) {
-      return validationError; // Reply has already been handled
+      return validationError;
+    }
+
+    const guild: Guild = interaction.guild;
+
+    if (!guild) {
+      return interaction.reply({
+        content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
+        ephemeral: true,
+      });
+    }
+
+    // ✅ เพิ่มเงื่อนไขตรวจสอบเจ้าของเซิร์ฟเวอร์
+    if (guild.ownerId !== interaction.user.id) {
+      return interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
+            .setDescription('🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้น')
+            .setColor(0xff0000),
+        ],
+        ephemeral: true,
+      });
     }
 
     try {
-      const guild: Guild = interaction.guild;
-
-      if (!guild) {
-        return interaction.reply({
-          content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
-          ephemeral: true,
-        });
-      }
-
-      // Fetch all channels in the guild
       const channels = guild.channels.cache;
-
-      // Check if "test" channel exists
-      let testChannel = channels.find(channel => channel.name === 'test' && channel.isTextBased());
-
-      // Channels to exclude from deletion
       const excludeChannels = ['test', 'rules', 'moderator-only'];
 
-      // Delete all channels except excluded channels
+      let testChannel = channels.find(
+        channel => channel.name === 'test' && channel.isTextBased()
+      );
+
       for (const [channelId, channel] of channels) {
         if (excludeChannels.includes(channel.name)) {
           this.logger.log(`Skipped deleting channel: ${channel.name} (${channelId})`);
           continue;
         }
-        await channel.delete(`Deleted by ${interaction.user.tag}`);
-        this.logger.log(`Deleted channel: ${channel.name} (${channelId})`);
+
+        try {
+          await channel.delete(`Deleted by ${interaction.user.tag}`);
+          this.logger.log(`Deleted channel: ${channel.name} (${channelId})`);
+        } catch (err) {
+          this.logger.error(`❌ Failed to delete channel ${channel.name} (${channelId}): ${err.message}`);
+        }
       }
 
-      // If "test" channel does not exist, create it
       if (!testChannel) {
         testChannel = await guild.channels.create({
           name: 'test',
-          type: 0, // Text Channel
+          type: 0,
           reason: `Created by ${interaction.user.tag} after clearing other channels`,
         });
 
         this.logger.log(`Created channel: ${testChannel.name} (${testChannel.id})`);
       }
 
-      // Reply to confirm operation
       return interaction.reply({
         embeds: [
           new EmbedBuilder()

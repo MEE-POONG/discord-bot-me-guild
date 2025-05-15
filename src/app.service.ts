@@ -30,13 +30,20 @@ export class AppService {
 
   @SlashCommand({
     name: 'remove',
-    description: 'ลบคำสั่งทั้งหมด',
+    description: 'ลบคำสั่งทั้งหมดในกิลด์นี้',
   })
-  public async onHelp(@Context() [interaction]: SlashCommandContext) {
-    interaction.client.application.commands.set([]);
-    interaction.guild.commands.set([]);
+  public async onRemove(@Context() [interaction]: SlashCommandContext) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      return interaction.reply({ content: '❌ ไม่พบ Guild ID', ephemeral: true });
+    }
+
+    // ลบเฉพาะ Guild Commands
+    await interaction.client.application.commands.set([], guildId);
+
     return interaction.reply({
-      content: 'คำสั่งทั้งหมดถูกลบ',
+      content: '✅ ลบคำสั่งทั้งหมดในกิลด์นี้เรียบร้อยแล้ว!',
+      ephemeral: true,
     });
   }
 }

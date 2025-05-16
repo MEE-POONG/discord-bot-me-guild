@@ -34,7 +34,7 @@ export class GameJoinService {
     private readonly paginationService: NecordPaginationService,
     private readonly gameTypeRepository: GameTypeRepository,
     private readonly gameRepository: GameRepository,
-  ) {}
+  ) { }
 
   public async onModuleInit() {
     this.logger.log('GameCreateRoomService initialized');
@@ -152,8 +152,16 @@ export class GameJoinService {
               .setMinValues(1)
               .setOptions([
                 {
+                  label: 'โหมดจัดอันดับ',
+                  value: 'RANKED',
+                },
+                {
                   label: 'โหมดปกติ',
                   value: 'NORMAL',
+                },
+                {
+                  label: 'กำหนดเอง',
+                  value: 'CUSTOM',
                 },
               ]),
           ),
@@ -296,7 +304,7 @@ export class GameJoinService {
           }
         })
         .on('end', () => {
-          inter.delete().catch(() => {});
+          inter.delete().catch(() => { });
         });
     } catch (error) {
       this.logger.error('Error in onSelectMenuPlayMode:', error);

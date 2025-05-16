@@ -417,15 +417,36 @@ export class GameCreateRoomService implements OnModuleInit {
   }
 
   @StringSelect('SELECT_MENU_GAME')
-  public async onSelectMenuPlayMode(
-    @Context() [interaction]: StringSelectContext,
-  ) {
+  public async onSelectMenuPlayMode(@Context() [interaction]: StringSelectContext) {
     if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
       return;
     }
 
     const user = interaction.user;
     this.storeSelectedValues('select_menu_game', user.id, interaction.values);
+
+    const game_uid = interaction.values[0];
+    const game = await this.gameRepository.getGameById(game_uid);
+
+    const options = [];
+
+    if (game.ranking) {
+      options.push({
+        label: 'โหมดจัดอันดับ',
+        value: 'RANKED',
+      });
+    }
+
+    options.push(
+      {
+        label: 'โหมดปกติ',
+        value: 'NORMAL',
+      },
+      {
+        label: 'กำหนดเอง',
+        value: 'CUSTOM',
+      },
+    );
 
     return interaction.update({
       components: [
@@ -435,20 +456,7 @@ export class GameCreateRoomService implements OnModuleInit {
             .setPlaceholder('เลือกรูปแบบการเล่น')
             .setMaxValues(1)
             .setMinValues(1)
-            .setOptions([
-              {
-                label: 'โหมดจัดอันดับ',
-                value: 'RANKED',
-              },
-              {
-                label: 'โหมดปกติ',
-                value: 'NORMAL',
-              },
-              {
-                label: 'กำหนดเอง',
-                value: 'CUSTOM',
-              },
-            ]),
+            .setOptions(options),
         ),
       ],
     });

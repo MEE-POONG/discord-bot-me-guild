@@ -129,52 +129,62 @@ export class GameJoinService {
     return true;
   }
 
-  @StringSelect('GAME_JOIN_SELECT_MENU_GAME_TYPE')
-  public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
-    try {
-      if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
-        return;
-      }
+ @StringSelect('GAME_JOIN_SELECT_MENU_GAME_TYPE')
+public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
+  try {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
 
-      this.storeSelectedValues(
-        'GAME_JOIN_SELECT_MENU_GAME_TYPE',
-        interaction.user.id,
-        interaction.values,
-      );
+    const userId = interaction.user.id;
+    const gameTypeId = interaction.values[0];
 
-      return interaction.update({
-        components: [
-          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-            new StringSelectMenuBuilder()
-              .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
-              .setPlaceholder('เลือกรูปแบบการเล่น')
-              .setMaxValues(1)
-              .setMinValues(1)
-              .setOptions([
-                {
-                  label: 'โหมดจัดอันดับ',
-                  value: 'RANKED',
-                },
-                {
-                  label: 'โหมดปกติ',
-                  value: 'NORMAL',
-                },
-                {
-                  label: 'กำหนดเอง',
-                  value: 'CUSTOM',
-                },
-              ]),
-          ),
-        ],
-      });
-    } catch (error) {
-      this.logger.error('Error in onSelectMenu:', error);
-      await interaction.reply({
-        content: 'เกิดข้อผิดพลาดในการเลือกประเภทเกมส์',
-        ephemeral: true,
+    this.storeSelectedValues('GAME_JOIN_SELECT_MENU_GAME_TYPE', userId, [gameTypeId]);
+
+    // ✅ ดึงข้อมูลเกมเพื่อเช็คว่า ranking หรือไม่
+    const game = await this.gameRepository.getGameById(gameTypeId); // 👈 เปลี่ยนตรงนี้ถ้าไม่ตรงกับ schema
+
+    // ✅ สร้าง options ตาม ranking
+    const options = [];
+
+    if (game?.ranking) {
+      options.push({
+        label: 'โหมดจัดอันดับ',
+        value: 'RANKED',
       });
     }
+
+    options.push(
+      {
+        label: 'โหมดปกติ',
+        value: 'NORMAL',
+      },
+      {
+        label: 'กำหนดเอง',
+        value: 'CUSTOM',
+      }
+    );
+
+    return interaction.update({
+      components: [
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
+            .setPlaceholder('เลือกรูปแบบการเล่น')
+            .setMaxValues(1)
+            .setMinValues(1)
+            .setOptions(options),
+        ),
+      ],
+    });
+  } catch (error) {
+    this.logger.error('Error in onSelectMenu:', error);
+    await interaction.reply({
+      content: 'เกิดข้อผิดพลาดในการเลือกประเภทเกมส์',
+      ephemeral: true,
+    });
   }
+}
 
   @StringSelect('GAME_JOIN_SELECT_MENU_PLAY_MODE')
   public async onSelectMenuPlayMode(

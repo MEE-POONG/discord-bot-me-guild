@@ -422,7 +422,7 @@ export class ServerSetRoomService {
       new ButtonBuilder()
         .setCustomId('register-button')
         .setEmoji('📝')
-        .setLabel('ลงทะเบียน')
+        .setLabel('ลงทะเบียนนักผจญภัย')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId('register-guild')

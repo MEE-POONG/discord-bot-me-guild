@@ -178,6 +178,15 @@ export class FormRegisterService {
               20,
             ),
           ),
+          new ActionRowBuilder<TextInputBuilder>().setComponents(
+            createTextInput(
+              'birthday',
+              'วันเกิด (ค.ศ. ปี-เดือน-วัน เช่น 1997-03-27)',
+              'กรอกวันเกิดในรูปแบบ YYYY-MM-DD',
+              10,
+              10,
+            ),
+          ),
         );
 
       await interaction.showModal(modal);
@@ -197,6 +206,20 @@ export class FormRegisterService {
     let lastname = interaction.fields.getTextInputValue('lastname');
     let email = interaction.fields.getTextInputValue('email');
     let member = interaction.member as GuildMember;
+    let birthdayInput = interaction.fields.getTextInputValue('birthday');
+    let birthday: Date;
+
+    try {
+      birthday = new Date(birthdayInput);
+      if (isNaN(birthday.getTime())) {
+        throw new Error('Invalid date');
+      }
+    } catch {
+      return interaction.reply({
+        content: 'รูปแบบวันเกิดไม่ถูกต้อง (ควรกรอกเป็น YYYY-MM-DD เช่น 2008-03-27)',
+        ephemeral: true,
+      });
+    }
 
     if (!isValidEmail(email)) {
       return interaction.reply({
@@ -206,36 +229,60 @@ export class FormRegisterService {
     }
 
     try {
-      const user = await this.prisma.userDB.findFirst({
+      const existingUser = await this.prisma.userDB.findFirst({
         where: {
           OR: [
-            { nickname: nickname },
+            {
+              AND: [
+                { firstname: firstname },
+                { lastname: lastname },
+              ],
+            },
             { email: email },
-            { discord_id: interaction.user.id },
+            { nickname: nickname },
           ],
         },
       });
 
-      if (user) {
+      if (existingUser) {
+        let errorMessage = 'เกิดข้อผิดพลาด:';
+
+        if (
+          existingUser.firstname === firstname &&
+          existingUser.lastname === lastname
+        ) {
+          errorMessage += '\n- มีผู้ใช้งานที่ใช้ชื่อและนามสกุลนี้แล้ว';
+        }
+
+        if (existingUser.email === email) {
+          errorMessage += '\n- อีเมลนี้ถูกใช้แล้ว';
+        }
+
+        if (existingUser.nickname === nickname) {
+          errorMessage += '\n- นามแฝงนี้ถูกใช้แล้ว';
+        }
+
         return interaction.reply({
-          content: 'เกิดข้อผิดพลาด',
+          content: errorMessage,
           ephemeral: true,
         });
       }
+
       const now = new Date();
       const schema = {
         discord_id: interaction.user.id,
         email: email,
         nickname: nickname,
-        birthday: new Date('01/01/1980'),
+        birthday: birthday, // 👈 ใช้ค่าที่กรอกจริง
         firstname: firstname,
         lastname: lastname,
         createdAt: now,
-        createdBy: 'system', // หรือ interaction.user.id
+        createdBy: 'system',
         updatedAt: now,
-        updatedBy: 'system', // หรือ interaction.user.id
-        deleteBy: '', // ค่าเริ่มต้นเป็นค่าว่าง
+        updatedBy: 'system',
+        deleteBy: '',
       };
+
 
       const data = await this.prisma.userDB.create({
         data: schema,
@@ -266,9 +313,18 @@ export class FormRegisterService {
     profile: UserDB,
   ) {
     try {
+      const formattedBirthday = profile.birthday
+        ? new Date(profile.birthday).toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'Asia/Bangkok',
+        })
+        : 'ไม่ระบุ';
       const embeds = new EmbedBuilder()
         .setAuthor({
-          name: `ลงทะเบียนนักผจญภัยสำเร็จ | ${interaction.guild?.name}`,
+          name: `${interaction.guild?.name} | ข้อมูลนักผจญภัย`,
           iconURL: interaction.guild?.iconURL() ?? undefined,
         })
         .setFields(
@@ -284,7 +340,7 @@ export class FormRegisterService {
           },
           {
             name: 'วันเกิด',
-            value: `${profile.birthday}`,
+            value: `${formattedBirthday}`,
             inline: true,
           },
           {
@@ -300,6 +356,14 @@ export class FormRegisterService {
         embeds: [embeds],
         ephemeral: true,
       });
+
+      setTimeout(async () => {
+        try {
+          await interaction.deleteReply();
+        } catch (e) {
+          console.warn('ไม่สามารถลบข้อความได้:', e.message);
+        }
+      }, 10000); // 10000 ms = 10 วินาที
     } catch (error) {
       interaction.reply({
         content: 'ไม่สามารถแสดงข้อมูลสมาชิกได้',

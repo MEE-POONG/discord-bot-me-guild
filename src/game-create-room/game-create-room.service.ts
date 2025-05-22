@@ -123,13 +123,28 @@ export class GameCreateRoomService implements OnModuleInit {
     if (interaction.member instanceof GuildMember) {
       const voiceChannel = interaction.member.voice.channel;
       if (!voiceChannel) {
-        await interaction.update({
-          content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
+        await interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('❌ ไม่พบการเชื่อมต่อช่องเสียง')
+              .setDescription('คุณต้องเชื่อมต่อกับช่องเสียงก่อนจึงจะสามารถใช้งานคำสั่งนี้ได้')
+              .setColor('Red') // ✅ สีแดง
+              // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
+          ],
           components: [],
-          files: [],
-          embeds: [],
+          ephemeral: true, // 👈 ซ่อนข้อความให้เห็นเฉพาะคนกด (แนะนำ)
         });
-        return false;
+
+        // ✅ ลบข้อความหลัง 10 วินาที
+        setTimeout(async () => {
+          try {
+            await interaction.deleteReply();
+          } catch (err) {
+            console.warn('⚠️ ไม่สามารถลบข้อความ:', err.message);
+          }
+        }, 10000);
+
+        return;
       }
     }
     return true;

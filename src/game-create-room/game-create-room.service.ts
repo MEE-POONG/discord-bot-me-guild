@@ -129,7 +129,7 @@ export class GameCreateRoomService implements OnModuleInit {
               .setTitle('❌ ไม่พบการเชื่อมต่อช่องเสียง')
               .setDescription('คุณต้องเชื่อมต่อกับช่องเสียงก่อนจึงจะสามารถใช้งานคำสั่งนี้ได้')
               .setColor('Red') // ✅ สีแดง
-              // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
+            // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
           ],
           components: [],
           ephemeral: true, // 👈 ซ่อนข้อความให้เห็นเฉพาะคนกด (แนะนำ)
@@ -265,7 +265,7 @@ export class GameCreateRoomService implements OnModuleInit {
 
         const game = await this.gameRepository.getGameById(game_uid);
 
-        const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : 'NORMAL'} - PARTY`;
+        const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`;
 
 
         const channel = await interaction.guild?.channels.create({
@@ -338,7 +338,7 @@ export class GameCreateRoomService implements OnModuleInit {
         }
 
         this.logger.log('selectedValues', this.selectedValues);
-        return interaction.update({
+        await interaction.update({
           content: `✅ สร้างห้องเกมส์ **${channel.name}** เรียบร้อยแล้ว!`,
           embeds: [
             new EmbedBuilder()
@@ -358,6 +358,16 @@ export class GameCreateRoomService implements OnModuleInit {
           components: [],
           files: [],
         });
+
+        // ✅ ลบข้อความหลัง 10 วินาที
+        setTimeout(async () => {
+          try {
+            await interaction.deleteReply();
+          } catch (err) {
+            console.warn('⚠️ ไม่สามารถลบข้อความ:', err.message);
+          }
+        }, 10_000); // 10 วินาที
+
       } else {
         return interaction.update({
           content: '❌ ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้',

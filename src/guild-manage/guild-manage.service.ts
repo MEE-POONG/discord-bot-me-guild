@@ -322,15 +322,15 @@ export class GuildManageService {
       return { role: undefined, message: 'ไม่สามารถเข้าถึงดิสกิลด์ได้' };
     }
 
-    const positionRole = guildServer.roles.cache.get(
-      process.env.DISCORD_GUILD_ROLE_ID,
-    );
-    const position = positionRole ? positionRole.position - 1 : undefined;
+    // const positionRole = guildServer.roles.cache.get(
+    //   "1372551247571451934",
+    // );
+    // const position = positionRole ? positionRole.position - 1 : undefined;
 
     try {
       const role = await guildServer.roles.create({
         name: `🕍 ${guildName}`,
-        position,
+        position: 1,
         color: '#A4F1FF',
       });
 

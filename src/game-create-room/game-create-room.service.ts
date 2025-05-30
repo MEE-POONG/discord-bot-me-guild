@@ -33,7 +33,7 @@ import { GameConditionMatchRepository } from 'src/game-condition-match/game-cond
 import { ServerRepository } from 'src/repository/server';
 
 const CATEGORY_TITLE = 'แนวเกมส์';
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 20;
 const IMAGE_DELIVERY_URL = 'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA';
 
 @Injectable()
@@ -63,13 +63,13 @@ export class GameCreateRoomService implements OnModuleInit {
         1,
         ITEMS_PER_PAGE,
       );
-
       return this.paginationService.register((builder) =>
         builder
           .setCustomId('game_create_room')
           .setPagesFactory(async (page) =>
             new PageBuilder()
               .setContent(
+                // `หน้า ${page}/${gameTypes.total} / ${gameTypes.limit}`,
                 `หน้า ${page}/${Math.ceil(gameTypes.total / gameTypes.limit)}`,
               )
               .setComponents([
@@ -84,7 +84,7 @@ export class GameCreateRoomService implements OnModuleInit {
                         await this.gameTypeRepository.getGameTypesWithPagination(
                           CATEGORY_TITLE,
                           page,
-                          5,
+                          ITEMS_PER_PAGE,
                         )
                       ).data.map((gameType) => ({
                         label: gameType.title,
@@ -173,7 +173,6 @@ export class GameCreateRoomService implements OnModuleInit {
       1,
       ITEMS_PER_PAGE,
     );
-
     this.paginationService.register((builder) =>
       builder
         .setCustomId('select_menu_game')
@@ -265,7 +264,7 @@ export class GameCreateRoomService implements OnModuleInit {
 
         const game = await this.gameRepository.getGameById(game_uid);
 
-        const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - PARTY`;
+        const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - RMG`;
 
 
         const channel = await interaction.guild?.channels.create({
@@ -474,11 +473,12 @@ export class GameCreateRoomService implements OnModuleInit {
     );
 
     return interaction.update({
+      content: '',
       components: [
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
           new StringSelectMenuBuilder()
             .setCustomId('SELECT_MENU_PLAY_MODE')
-            .setPlaceholder('เลือกรูปแบบการเล่น')
+            .setPlaceholder('เลือกโหมดห้องเล่น')
             .setMaxValues(1)
             .setMinValues(1)
             .setOptions(options),

@@ -49,9 +49,6 @@ export class GameTypeRepository implements GameTypeRepositoryType {
       const data = await this.prismaService.gameTypeDB.findMany({
         where: {
           categoryId: category.id,
-          gameTypeGame: {
-            some: {},
-          },
         },
         skip,
         take: itemsPerPage,

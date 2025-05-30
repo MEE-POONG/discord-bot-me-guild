@@ -75,7 +75,7 @@ export class AppUpdate {
       if (oldState.channel && oldState.channel.members.size === 0) {
         if (
           oldState.channel.name.includes('🎮') &&
-          oldState.channel.name.includes('PARTY')
+          oldState.channel.name.includes('RMG')
         ) {
           await oldState.channel.delete();
         }

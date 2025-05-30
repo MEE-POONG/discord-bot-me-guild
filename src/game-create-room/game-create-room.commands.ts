@@ -25,7 +25,7 @@ export class GameCreateRoomCommands {
                 .setTitle('❌ ไม่พบการเชื่อมต่อช่องเสียง')
                 .setDescription('คุณต้องเชื่อมต่อกับช่องเสียงก่อนจึงจะสามารถใช้งานคำสั่งนี้ได้')
                 .setColor('Red') // ✅ สีแดง
-                // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
+              // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
             ],
             components: [],
             ephemeral: true, // 👈 ซ่อนข้อความให้เห็นเฉพาะคนกด (แนะนำ)
@@ -72,7 +72,7 @@ export class GameCreateRoomCommands {
                 .setTitle('❌ ไม่พบการเชื่อมต่อช่องเสียง')
                 .setDescription('คุณต้องเชื่อมต่อกับช่องเสียงก่อนจึงจะสามารถใช้งานคำสั่งนี้ได้')
                 .setColor('Red') // ✅ สีแดง
-                // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
+              // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
             ],
             components: [],
             ephemeral: true, // 👈 ซ่อนข้อความให้เห็นเฉพาะคนกด (แนะนำ)
@@ -91,7 +91,14 @@ export class GameCreateRoomCommands {
         }
       }
 
-      return interaction.reply({ ...page, ephemeral: true });
+      interaction.reply({ ...page, ephemeral: true });
+      setTimeout(async () => {
+        try {
+          await interaction.deleteReply();
+        } catch (e) {
+          console.warn('ไม่สามารถลบข้อความได้:', e.message);
+        }
+      }, 300000); // 5 นาที
     } catch (error) {
       console.error('Error in onGameCreateRoomButton:', error);
       return interaction.reply({

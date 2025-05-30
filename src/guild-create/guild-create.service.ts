@@ -149,7 +149,7 @@ export class GuildCreateService {
 
         const users = i.values;
         if (users.includes(interaction.user.id)) {
-          await i.editReply({
+          await interaction.editReply({
             content: 'คุณไม่สามารถเพิ่มตัวเองเข้าใน ผู้ร่วมก่อตั้งได้',
             components: [],
             embeds: [],

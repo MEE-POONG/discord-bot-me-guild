@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UserDB } from '@prisma/client';
+import axios from 'axios';
 import {
   EmbedBuilder,
   ActionRowBuilder,
@@ -24,8 +25,7 @@ export class FormRegisterService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-
-  ) { }
+  ) {}
   public onModuleInit() {
     this.logger.log('FormRegisterService initialized');
   }
@@ -39,7 +39,9 @@ export class FormRegisterService {
 
       // ตรวจสอบว่ามี registerChannel เก่าหรือไม่
       if (server?.registerChannel) {
-        const oldChannel = await interaction.guild?.channels.fetch(server.registerChannel).catch(() => null);
+        const oldChannel = await interaction.guild?.channels
+          .fetch(server.registerChannel)
+          .catch(() => null);
         if (oldChannel) {
           await oldChannel.delete().catch((e) => {
             this.logger.warn(`ไม่สามารถลบห้องเก่าได้: ${e.message}`);
@@ -56,7 +58,9 @@ export class FormRegisterService {
       // สร้าง Embed ข้อความลงทะเบียน
       const embeds = new EmbedBuilder()
         .setTitle('ห้องทะเบียนนักผจญภัย')
-        .setDescription('- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"')
+        .setDescription(
+          '- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"',
+        )
         .setColor(16760137)
         .setFooter({
           text: 'ข้อมูลของคุณจะถูกเก็บเป็นความลับ',
@@ -65,7 +69,9 @@ export class FormRegisterService {
         .setImage(
           'https://media.discordapp.net/attachments/1222826027445653536/1222826136359276595/registerguild.webp?ex=6617a095&is=66052b95&hm=17dfd3921b25470b1e99016eb9f89dd68fb1ada3481867d145c8acf81e25cec6&=&format=webp&width=839&height=400',
         )
-        .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
+        .setThumbnail(
+          'https://cdn-icons-png.flaticon.com/512/6521/6521996.png',
+        );
 
       // สร้างปุ่มลงทะเบียน
       const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
@@ -101,14 +107,14 @@ export class FormRegisterService {
     const checkUser = interaction.member as GuildMember;
     const userDB = await this.prisma.userDB.findFirst({
       where: {
-        OR: [
-          { discord_id: interaction.user.id },
-        ],
+        OR: [{ discord_id: interaction.user.id }],
       },
     });
 
     if (userDB) {
-      const server = await this.serverRepository.getServerById(interaction.guildId);
+      const server = await this.serverRepository.getServerById(
+        interaction.guildId,
+      );
       const member = interaction.member as GuildMember;
 
       // 🔍 ตรวจสอบว่าผู้ใช้มี Role อยู่หรือไม่
@@ -216,7 +222,8 @@ export class FormRegisterService {
       }
     } catch {
       return interaction.reply({
-        content: 'รูปแบบวันเกิดไม่ถูกต้อง (ควรกรอกเป็น YYYY-MM-DD เช่น 2008-03-27)',
+        content:
+          'รูปแบบวันเกิดไม่ถูกต้อง (ควรกรอกเป็น YYYY-MM-DD เช่น 2008-03-27)',
         ephemeral: true,
       });
     }
@@ -233,10 +240,7 @@ export class FormRegisterService {
         where: {
           OR: [
             {
-              AND: [
-                { firstname: firstname },
-                { lastname: lastname },
-              ],
+              AND: [{ firstname: firstname }, { lastname: lastname }],
             },
             { email: email },
             { nickname: nickname },
@@ -283,21 +287,38 @@ export class FormRegisterService {
         deleteBy: '',
       };
 
-
       const data = await this.prisma.userDB.create({
         data: schema,
       });
 
-      const server = await this.serverRepository.getServerById(interaction.guildId);
+      try {
+        await axios({
+          method: 'POST',
+          url: 'https://me-coins-wallet.me-prompt-technology.com/api/auth/register',
+          data: {
+            email: interaction.fields.getTextInputValue('email'),
+            username: interaction.user.username,
+            discord_id: interaction.user.id,
+            password: 'password123',
+          },
+        });
+      } catch (error) {
+        this.logger.error(
+          'ไม่สามารถสร้างบัญชีในเป๋าตังได้',
+          error.response.data,
+        );
+      }
+
+      const server = await this.serverRepository.getServerById(
+        interaction.guildId,
+      );
       this.showProfile(interaction, data);
       if (server.visitorRoleId) {
-        await member.roles.remove(server.visitorRoleId).catch((e) => {
-        });
+        await member.roles.remove(server.visitorRoleId).catch((e) => {});
       }
 
       if (server.adventurerRoleId) {
-        await member.roles.add(server.adventurerRoleId).catch((e) => {
-        });
+        await member.roles.add(server.adventurerRoleId).catch((e) => {});
       }
     } catch (err) {
       this.logger.error('ไม่สามารถตรวจสอบข้อมูลสมาชิกได้', err);
@@ -315,12 +336,12 @@ export class FormRegisterService {
     try {
       const formattedBirthday = profile.birthday
         ? new Date(profile.birthday).toLocaleDateString('en-GB', {
-          weekday: 'short',
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          timeZone: 'Asia/Bangkok',
-        })
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'Asia/Bangkok',
+          })
         : 'ไม่ระบุ';
       const embeds = new EmbedBuilder()
         .setAuthor({
@@ -348,6 +369,20 @@ export class FormRegisterService {
             value: `${profile.email}`,
             inline: true,
           },
+          {
+            name: 'ลิง์เป๋าตัง',
+            value: `https://me-coins-wallet.me-prompt-technology.com`,
+          },
+          {
+            name: 'username',
+            value: interaction.user.username,
+            inline: true,
+          },
+          {
+            name: 'password',
+            value: 'password123',
+            inline: true,
+          },
         )
         .setThumbnail(interaction.user.displayAvatarURL())
         .setColor('#a0ff71');
@@ -363,7 +398,7 @@ export class FormRegisterService {
         } catch (e) {
           console.warn('ไม่สามารถลบข้อความได้:', e.message);
         }
-      }, 10000); // 10000 ms = 10 วินาที
+      }, 100000); // 10000 ms = 10 วินาที
     } catch (error) {
       interaction.reply({
         content: 'ไม่สามารถแสดงข้อมูลสมาชิกได้',

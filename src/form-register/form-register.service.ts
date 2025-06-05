@@ -31,18 +31,30 @@ export class FormRegisterService {
   }
 
   async createRegistrationMessage(interaction: any) {
+    this.logger.debug(
+      `[createRegistrationMessage] Starting registration message creation for guild: ${interaction.guildId}`,
+    );
     try {
       // ดึงข้อมูลเซิร์ฟเวอร์จากฐานข้อมูล
       const server = await this.prisma.serverDB.findUnique({
         where: { serverId: interaction.guildId },
       });
+      this.logger.debug(
+        `[createRegistrationMessage] Found server data: ${JSON.stringify(server)}`,
+      );
 
       // ตรวจสอบว่ามี registerChannel เก่าหรือไม่
       if (server?.registerChannel) {
+        this.logger.debug(
+          `[createRegistrationMessage] Found existing register channel: ${server.registerChannel}`,
+        );
         const oldChannel = await interaction.guild?.channels
           .fetch(server.registerChannel)
           .catch(() => null);
         if (oldChannel) {
+          this.logger.debug(
+            `[createRegistrationMessage] Attempting to delete old channel: ${oldChannel.id}`,
+          );
           await oldChannel.delete().catch((e) => {
             this.logger.warn(`ไม่สามารถลบห้องเก่าได้: ${e.message}`);
           });
@@ -50,6 +62,9 @@ export class FormRegisterService {
       }
 
       // บันทึกห้องใหม่ที่ใช้คำสั่งลง registerChannel
+      this.logger.debug(
+        `[createRegistrationMessage] Updating server with new register channel: ${interaction.channelId}`,
+      );
       await this.prisma.serverDB.update({
         where: { serverId: interaction.guildId },
         data: { registerChannel: interaction.channelId },
@@ -104,33 +119,71 @@ export class FormRegisterService {
 
   @Button('register-button')
   async registerModal(@Context() [interaction]: ButtonContext) {
+    this.logger.debug(
+      `[registerModal] Button clicked by user: ${interaction.user.id}`,
+    );
     const checkUser = interaction.member as GuildMember;
+
     const userDB = await this.prisma.userDB.findFirst({
       where: {
         OR: [{ discord_id: interaction.user.id }],
       },
     });
+    this.logger.debug(
+      `[registerModal] User DB check result: ${JSON.stringify(userDB)}`,
+    );
 
+    try {
+      this.logger.debug(`[registerModalSubmit] Creating wallet account`);
+      await axios({
+        method: 'POST',
+        url: 'https://me-coins-wallet.me-prompt-technology.com/api/auth/register',
+          data: {
+            email: interaction.user.username.toString().toLowerCase() + '@discord.com',
+            username: interaction.user.username.toString().toLowerCase(),
+            avatar: interaction.user.displayAvatarURL(),
+            discordId: interaction.user.id,
+            password: 'password123',
+          },
+      });
+      this.logger.debug(
+        `[registerModalSubmit] Wallet account created successfully`,{
+          email: interaction.user.username.toString().toLowerCase() + '@discord.com',
+          username: interaction.user.username.toString().toLowerCase(),
+          avatar: interaction.user.displayAvatarURL(),
+          discordId: interaction.user.id,
+          password: 'password123',
+        }
+      );
+    } catch (error) {
+      this.logger.error(
+        '[registerModalSubmit] ไม่สามารถสร้างบัญชีในเป๋าตังได้',
+        error.response?.data || error,
+      );
+    }
     if (userDB) {
+      this.logger.debug(`[registerModal] Existing user found, checking roles`);
       const server = await this.serverRepository.getServerById(
         interaction.guildId,
       );
       const member = interaction.member as GuildMember;
 
       // 🔍 ตรวจสอบว่าผู้ใช้มี Role อยู่หรือไม่
-      const hasRoles = member.roles.cache.size > 1; // มากกว่า 1 เพราะทุกคนมี @everyone role
+      const hasRoles = member.roles.cache.size > 1;
+      this.logger.debug(`[registerModal] User has roles: ${hasRoles}`);
 
       // ✅ ถ้าไม่มี Role หรือออกจากเซิร์ฟแล้วกลับมาใหม่ ให้มอบ Role ที่เคยมีให้
       if (!hasRoles) {
+        this.logger.debug(`[registerModal] Adding roles to user`);
         if (server.visitorRoleId) {
           await member.roles.remove(server.visitorRoleId).catch((e) => {
-            console.log(`⚠️ ไม่สามารถลบ Visitor Role: ${e.message}`);
+            this.logger.warn(`⚠️ ไม่สามารถลบ Visitor Role: ${e.message}`);
           });
         }
 
         if (server.adventurerRoleId) {
           await member.roles.add(server.adventurerRoleId).catch((e) => {
-            console.log(`⚠️ ไม่สามารถเพิ่ม Adventurer Role: ${e.message}`);
+            this.logger.warn(`⚠️ ไม่สามารถเพิ่ม Adventurer Role: ${e.message}`);
           });
         }
       }
@@ -140,6 +193,9 @@ export class FormRegisterService {
     }
 
     try {
+      this.logger.debug(
+        `[registerModal] Creating registration modal for new user`,
+      );
       const createTextInput = (
         customId: string,
         label: string,
@@ -196,8 +252,12 @@ export class FormRegisterService {
         );
 
       await interaction.showModal(modal);
+      this.logger.debug(`[registerModal] Modal displayed successfully`);
     } catch (error) {
-      console.error('Error displaying registration modal:', error);
+      this.logger.error(
+        '[registerModal] Error displaying registration modal:',
+        error,
+      );
       return interaction.reply({
         content: 'ไม่สามารถแสดงแบบฟอร์มการลงทะเบียนได้',
         ephemeral: true,
@@ -207,6 +267,9 @@ export class FormRegisterService {
 
   @Modal('register-modal')
   async registerModalSubmit(@Context() [interaction]: ModalContext) {
+    this.logger.debug(
+      `[registerModalSubmit] Modal submitted by user: ${interaction.user.id}`,
+    );
     let nickname = interaction.fields.getTextInputValue('nickname');
     let firstname = interaction.fields.getTextInputValue('firstname');
     let lastname = interaction.fields.getTextInputValue('lastname');
@@ -215,11 +278,21 @@ export class FormRegisterService {
     let birthdayInput = interaction.fields.getTextInputValue('birthday');
     let birthday: Date;
 
+    this.logger.debug(
+      `[registerModalSubmit] Form data received - Name: ${firstname} ${lastname}, Email: ${email}, Nickname: ${nickname}`,
+    );
+
     try {
       birthday = new Date(birthdayInput);
       if (isNaN(birthday.getTime())) {
+        this.logger.warn(
+          `[registerModalSubmit] Invalid birthday format: ${birthdayInput}`,
+        );
         throw new Error('Invalid date');
       }
+      this.logger.debug(
+        `[registerModalSubmit] Birthday parsed successfully: ${birthday}`,
+      );
     } catch {
       return interaction.reply({
         content:
@@ -229,6 +302,7 @@ export class FormRegisterService {
     }
 
     if (!isValidEmail(email)) {
+      this.logger.warn(`[registerModalSubmit] Invalid email format: ${email}`);
       return interaction.reply({
         content: 'รูปแบบอีเมลไม่ถูกต้อง',
         ephemeral: true,
@@ -236,6 +310,7 @@ export class FormRegisterService {
     }
 
     try {
+      this.logger.debug(`[registerModalSubmit] Checking for existing user`);
       const existingUser = await this.prisma.userDB.findFirst({
         where: {
           OR: [
@@ -249,6 +324,9 @@ export class FormRegisterService {
       });
 
       if (existingUser) {
+        this.logger.warn(
+          `[registerModalSubmit] Found existing user: ${JSON.stringify(existingUser)}`,
+        );
         let errorMessage = 'เกิดข้อผิดพลาด:';
 
         if (
@@ -272,12 +350,13 @@ export class FormRegisterService {
         });
       }
 
+      this.logger.debug(`[registerModalSubmit] Creating new user record`);
       const now = new Date();
       const schema = {
         discord_id: interaction.user.id,
         email: email,
         nickname: nickname,
-        birthday: birthday, // 👈 ใช้ค่าที่กรอกจริง
+        birthday: birthday,
         firstname: firstname,
         lastname: lastname,
         createdAt: now,
@@ -290,38 +369,35 @@ export class FormRegisterService {
       const data = await this.prisma.userDB.create({
         data: schema,
       });
-
-      try {
-        await axios({
-          method: 'POST',
-          url: 'https://me-coins-wallet.me-prompt-technology.com/api/auth/register',
-          data: {
-            email: interaction.fields.getTextInputValue('email'),
-            username: interaction.user.username,
-            discord_id: interaction.user.id,
-            password: 'password123',
-          },
-        });
-      } catch (error) {
-        this.logger.error(
-          'ไม่สามารถสร้างบัญชีในเป๋าตังได้',
-          error.response.data,
-        );
-      }
+      this.logger.debug(
+        `[registerModalSubmit] User created successfully: ${JSON.stringify(data)}`,
+      );
 
       const server = await this.serverRepository.getServerById(
         interaction.guildId,
       );
+      this.logger.debug(`[registerModalSubmit] Updating user roles`);
       this.showProfile(interaction, data);
       if (server.visitorRoleId) {
-        await member.roles.remove(server.visitorRoleId).catch((e) => {});
+        await member.roles.remove(server.visitorRoleId).catch((e) => {
+          this.logger.warn(
+            `[registerModalSubmit] Failed to remove visitor role: ${e.message}`,
+          );
+        });
       }
 
       if (server.adventurerRoleId) {
-        await member.roles.add(server.adventurerRoleId).catch((e) => {});
+        await member.roles.add(server.adventurerRoleId).catch((e) => {
+          this.logger.warn(
+            `[registerModalSubmit] Failed to add adventurer role: ${e.message}`,
+          );
+        });
       }
     } catch (err) {
-      this.logger.error('ไม่สามารถตรวจสอบข้อมูลสมาชิกได้', err);
+      this.logger.error(
+        '[registerModalSubmit] ไม่สามารถตรวจสอบข้อมูลสมาชิกได้',
+        err,
+      );
       return interaction.reply({
         content: 'ไม่สามารถตรวจสอบข้อมูลสมาชิกได้',
         ephemeral: true,
@@ -333,6 +409,9 @@ export class FormRegisterService {
     interaction: ButtonInteraction | ModalSubmitInteraction,
     profile: UserDB,
   ) {
+    this.logger.debug(
+      `[showProfile] Showing profile for user: ${interaction.user.id}`,
+    );
     try {
       const formattedBirthday = profile.birthday
         ? new Date(profile.birthday).toLocaleDateString('en-GB', {
@@ -343,6 +422,10 @@ export class FormRegisterService {
             timeZone: 'Asia/Bangkok',
           })
         : 'ไม่ระบุ';
+      this.logger.debug(
+        `[showProfile] Formatted birthday: ${formattedBirthday}`,
+      );
+
       const embeds = new EmbedBuilder()
         .setAuthor({
           name: `${interaction.guild?.name} | ข้อมูลนักผจญภัย`,
@@ -387,6 +470,7 @@ export class FormRegisterService {
         .setThumbnail(interaction.user.displayAvatarURL())
         .setColor('#a0ff71');
 
+      this.logger.debug(`[showProfile] Sending profile embed`);
       interaction.reply({
         embeds: [embeds],
         ephemeral: true,
@@ -394,17 +478,23 @@ export class FormRegisterService {
 
       setTimeout(async () => {
         try {
+          this.logger.debug(
+            `[showProfile] Attempting to delete profile message`,
+          );
           await interaction.deleteReply();
+          this.logger.debug(
+            `[showProfile] Profile message deleted successfully`,
+          );
         } catch (e) {
-          console.warn('ไม่สามารถลบข้อความได้:', e.message);
+          this.logger.warn(`[showProfile] ไม่สามารถลบข้อความได้: ${e.message}`);
         }
-      }, 100000); // 10000 ms = 10 วินาที
+      }, 100000);
     } catch (error) {
+      this.logger.error('[showProfile] ไม่สามารถแสดงข้อมูลสมาชิกได้', error);
       interaction.reply({
         content: 'ไม่สามารถแสดงข้อมูลสมาชิกได้',
         ephemeral: true,
       });
-      this.logger.error('ไม่สามารถแสดงข้อมูลสมาชิกได้', error);
     }
   }
 }

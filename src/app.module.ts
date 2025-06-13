@@ -34,6 +34,8 @@ import { BuskingModule } from './busking/busking.module';
 import { FormGameModule } from './form-game/form-game.module';
 import { DonationModule } from './donation/donation.module';
 import { VoiceTimeModule } from './voice-time/voice-time.module';
+import { TransferModule } from './transfer/transfer.module';
+import { StageChannelModule } from './stage-channel/stage-channel.module';
 
 @Global()
 @Module({
@@ -105,6 +107,8 @@ import { VoiceTimeModule } from './voice-time/voice-time.module';
     WelcomeModule,
     BuskingModule,
     VoiceTimeModule,
+    TransferModule,
+    StageChannelModule,
   ],
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],

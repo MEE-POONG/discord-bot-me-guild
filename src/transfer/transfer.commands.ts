@@ -9,10 +9,10 @@ export class TransferCommands {
 
   constructor(private readonly transferService: TransferService) {}
 
-  @SlashCommand({
-    name: 'transfer',
-    description: 'โอนเหรียญไปยังบัญชีอื่น',
-  })
+  // @SlashCommand({
+  //   name: 'transfer',
+  //   description: 'โอนเหรียญไปยังบัญชีอื่น',
+  // })
   async handleTransfer(
     @Context() [interaction]: SlashCommandContext,
     @Options() options: TransferDto,

@@ -7,13 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum TransactionStatus {
-  PENDING // รอการตรวจสอบ
-  APPROVED // อนุมัติแล้ว (ห้ามสั่งซื้อซ้ำ)
-  REJECTED // ถูกปฏิเสธ (สั่งซื้อใหม่ได้)
-  CANCELLED // ถูกยกเลิก (สั่งซื้อใหม่ได้)
-}
-
 model ActDetailDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -331,19 +324,19 @@ model NewsTypeNews {
 }
 
 model ServerDB {
-  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
   ownerId               String
-  serverId              String   @unique
+  serverId              String    @unique
   serverName            String
-  Master                Boolean  @default(false)
-  openBot               Boolean  @default(false) // เพิ่มค่าเริ่มต้นเป็น false
+  Master                Boolean   @default(false)
+  openBot               Boolean   @default(false) // เพิ่มค่าเริ่มต้นเป็น false
   adminRoleId           String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
   userRoleId            String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
   adventurerRoleId      String?
   visitorRoleId         String?
   guildHeadRoleId       String? // บทบาทหัวหน้ากิล (optional)
   guildCoRoleId         String? // บทบาทรองหัวหน้ากิล (optional)
-  openUntilAt           DateTime @db.Date
+  openUntilAt           DateTime  @db.Date
   meguildPositionCreate String?
   welcomechannel        String?
   newsChannel           String?
@@ -357,28 +350,32 @@ model ServerDB {
   gamePostChannel       String?
   buskingPositionCreate String?
   buskingChannel        String?
-  createdAt             DateTime @db.Date
-  updatedAt             DateTime @db.Date
+  createdAt             DateTime  @db.Date
+  updatedAt             DateTime  @db.Date
+  AdminDB               AdminDB[]
 }
 
 model UserDB {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  birthday          DateTime? @db.Date
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
   username          String?
-  discord_id        String    @unique
-  email             String    @unique
+  password          String?
+  discord_id        String        @unique
+  img               String?
   firstname         String?
-  gender            String?
-  alternativeGender String?
   lastname          String?
   nickname          String?
-  password          String?
-  createdAt         DateTime  @db.Date
+  email             String        @unique
+  tel               String?
+  birthday          DateTime?     @db.Date
+  gender            String? //เพศสภาพ
+  alternativeGender String? //เพศที่เป็น
+  createdAt         DateTime      @db.Date
   createdBy         String
   deleteBy          String
-  updatedAt         DateTime  @db.Date
+  updatedAt         DateTime      @db.Date
   updatedBy         String
   AdminDB           AdminDB[]
+  OrderItemDB       OrderItemDB[]
 }
 
 model UserGameRank {
@@ -407,6 +404,7 @@ model WebDefaultDB {
   youtube        String?
   tiktok         String?
   gmail          String?
+  discordLink    String?
   createdAt      DateTime @default(now())
   createdBy      String?
   updatedAt      DateTime @updatedAt
@@ -414,41 +412,94 @@ model WebDefaultDB {
   deleteBy       String
 }
 
-model ProductDiscordDB {
-  id              String          @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  description     String
-  discordServerID String
-  type            String
-  roleId          String
-  roleName        String
-  price           Float
-  createdAt       DateTime        @default(now())
+model RoleDiscord {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  img             String?
+  name            String // ชื่อบทบาท
+  roldID          String // ไอดีบทบาทในดิส
+  discordServerID String // ไอดีดิสครอส
+  type            String? // กิจกรรม, ขาย, แจก ไม่บังคับระบุ ค่าเริ่มต้นเป็น null
+  createdAt       DateTime @default(now())
   createdBy       String?
-  updatedAt       DateTime?       @updatedAt
-  updatedBy       String?
-  deleteBy        String?
-  TransactionDB   TransactionDB[]
-
-  @@unique([discordServerID, roleId]) // ป้องกันการซ้ำของ Role ในเซิร์ฟเวอร์เดียวกัน
+  updatedAt       DateTime @updatedAt
+  updatedBy       String
+  deleteBy        String
 }
 
-model TransactionDB {
-  id               String            @id @default(auto()) @map("_id") @db.ObjectId
-  buyerDiscordID   String // Discord ID ของผู้ซื้อ
-  sellerDiscordID  String // Discord ID ของผู้ขาย
-  productDiscordId String            @db.ObjectId
-  productDiscord   ProductDiscordDB  @relation(fields: [productDiscordId], references: [id])
-  paymentSlip      String // URL รูปสลิปการชำระเงิน
-  adminCheckerID   String? // Admin ID ที่ตรวจสอบการซื้อขาย
-  status           TransactionStatus @default(PENDING)
-  createdAt        DateTime          @default(now())
-  createdBy        String?
-  updatedAt        DateTime?         @updatedAt
-  updatedBy        String?
-  deleteBy         String?
+model ProductDiscordDB {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  img             String?
+  description     String
+  discordServerID String?
+  type            String
+  singlePurchase  Boolean       @default(false) // ✅ สินค้านี้ซื้อได้แค่ 1 ชิ้น
+  roleId          String?
+  price           Float
+  createdAt       DateTime      @default(now())
+  createdBy       String?
+  updatedAt       DateTime?     @updatedAt
+  updatedBy       String?
+  deleteBy        String?
+  OrderItemDB     OrderItemDB[]
+}
 
-  @@unique([buyerDiscordID, productDiscordId, status]) // ✅ อนุญาตให้ซื้อซ้ำได้ถ้าสถานะเป็น REJECTED หรือ CANCELLED
+model OrderDB {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  buyerDiscordID String // Discord ID ของผู้ซื้อ
+  name           String // Discord ID ของผู้ซื้อ
+  email          String // Discord ID ของผู้ซื้อ
+  tel            String? // Discord ID ของผู้ซื้อ
+  totalPrice     Float // ราคาทั้งหมดของออเดอร์
+  seller         AdminDB       @relation(fields: [sellerID], references: [id])
+  sellerID       String        @db.ObjectId // ID ผู้ขาย
+  sellerName     String // ชื่อผู้ขาย
+  status         OrderStatus   @default(DRAFT) // สถานะการชำระเงิน
+  note           String? //หมายเหตุถ้ามี
+  createdAt      DateTime      @default(now())
+  createdBy      String?
+  updatedAt      DateTime?     @updatedAt
+  updatedBy      String?
+  deleteBy       String?
+  items          OrderItemDB[] // สินค้าในออเดอร์
+  payment        PaymentDB?
+}
+
+model OrderItemDB {
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  orderId      String           @db.ObjectId
+  recipient    UserDB           @relation(fields: [recipientId], references: [id])
+  recipientId  String           @db.ObjectId
+  order        OrderDB          @relation(fields: [orderId], references: [id])
+  productId    String           @db.ObjectId
+  product      ProductDiscordDB @relation(fields: [productId], references: [id])
+  quantity     Int              @default(1) // จำนวนสินค้าที่สั่งซื้อ
+  pricePerItem Float // ราคาต่อชิ้น (เก็บตอนสั่งซื้อ)
+  totalPrice   Float // ราคาทั้งหมด (quantity * pricePerItem)
+}
+
+enum OrderStatus {
+  DRAFT //แบบร่าง yellow
+  PENDING // รอชำระเงิน orange
+  PAID // ชำระเงินแล้ว green
+  WAITING // รอชำระอีกรอบ teal
+  COMPLETED // สำเร็จ emerald
+  CANCELLED // ยกเลิก red
+}
+
+model PaymentDB {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  paymentSlip   String // URL สลิปการชำระเงิน
+  paymentMethod String // วิธีการชำระเงิน (เช่น "PayPal", "TrueMoney", "Crypto")
+  auditor       AdminDB?  @relation(fields: [auditorID], references: [id])
+  auditorID     String?   @db.ObjectId //ผู้ตรวจสอบ (ถ้ามี)
+  auditorName   String? //ผู้ตรวจสอบ (ถ้ามี)
+  createdAt     DateTime  @default(now())
+  createdBy     String?
+  updatedAt     DateTime? @updatedAt
+  updatedBy     String?
+  orderDB       OrderDB?  @relation(fields: [orderId], references: [id])
+  orderId       String?   @unique @db.ObjectId
 }
 
 model MeGuildCoinDB {
@@ -461,18 +512,6 @@ model MeGuildCoinDB {
   createdAt    DateTime @db.Date
   updatedAt    DateTime @db.Date
   userId       String
-}
-
-model PaymentDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  coin      BigInt
-  cash      Int
-  createdAt DateTime @db.Date
-  status    String
-  title     String
-  updatedAt DateTime @db.Date
-  updatedBy String
-  userId    String
 }
 
 model RuleDB {
@@ -513,38 +552,25 @@ model TeamDB {
 }
 
 model AdminDB {
-  id                String              @id @default(auto()) @map("_id") @db.ObjectId
-  username          String              @unique
-  password          String
-  name              String
-  tel               String
-  email             String
-  UserDB            UserDB?             @relation(fields: [userId], references: [id])
-  userId            String?             @db.ObjectId
-  createdAt         DateTime            @default(now())
-  createdBy         String
-  updatedAt         DateTime            @updatedAt
-  updatedBy         String              @default("")
-  deleteBy          String
-  AdminPositionDB   AdminPositionDB?    @relation(fields: [adminPositionId], references: [id])
-  adminPositionId   String?             @db.ObjectId
-  AdminPermissionDB AdminPermissionDB[]
-}
-
-model AdminPermissionDB {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  AdminDB       AdminDB?       @relation(fields: [adminId], references: [id])
-  adminId       String?        @db.ObjectId
-  MenuPageWeb   MenuPageWebDB? @relation(fields: [menuPageWebId], references: [id])
-  menuPageWebId String?        @db.ObjectId
-  canCreate     Boolean        @default(false)
-  canUpdate     Boolean        @default(false)
-  canDelete     Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  createdBy     String
-  updatedAt     DateTime       @updatedAt
-  updatedBy     String         @default("")
-  deleteBy      String
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  username        String           @unique
+  password        String
+  name            String
+  tel             String
+  email           String
+  serverDB        ServerDB?        @relation(fields: [discordServerID], references: [id])
+  discordServerID String?          @db.ObjectId
+  UserDB          UserDB?          @relation(fields: [userId], references: [id])
+  userId          String?          @db.ObjectId
+  createdAt       DateTime         @default(now())
+  createdBy       String
+  updatedAt       DateTime         @updatedAt
+  updatedBy       String           @default("")
+  deleteBy        String
+  AdminPositionDB AdminPositionDB? @relation(fields: [adminPositionId], references: [id])
+  adminPositionId String?          @db.ObjectId
+  OrderDB         OrderDB[]
+  PaymentDB       PaymentDB[]
 }
 
 model AdminDefaultPermissionDB {
@@ -553,6 +579,8 @@ model AdminDefaultPermissionDB {
   adminPositionDBId String?          @db.ObjectId
   MenuPageWeb       MenuPageWebDB?   @relation(fields: [menuPageWebId], references: [id])
   menuPageWebId     String?          @db.ObjectId
+  canAdvance        Boolean          @default(false)
+  canViews          Boolean          @default(false)
   canCreate         Boolean          @default(false)
   canUpdate         Boolean          @default(false)
   canDelete         Boolean          @default(false)
@@ -567,14 +595,19 @@ model MenuPageWebDB {
   id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
   name                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
   description              String?
-  priority                 Int?
+  itOn                     Boolean                    @default(false)
+  showOrder                Int?                       @default(0)
   head                     Boolean                    @default(false)
   link                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
   icon                     String? // อาจเก็บชื่อไอคอนหรือ URL ไอคอน
-  manager                  String[]                   @default([])
-  subMenu                  String[]
+  manager                  String[]                   @default([]) //กรณีหน้านั้นมีหน้าย่อยจำเพาะ เพิม่ แก้ไข แสดง
+  subMenu                  String[] //ใช้ในการสร้างเมนูลูก โดยเช็คจาก parentId ที่แปลว่า id แม่
   parentId                 String?                    @db.ObjectId // เก็บเป็น ObjectId ของเมนูหลัก
-  AdminPermissionDB        AdminPermissionDB[]
+  canAdvance               Boolean?                   @default(false)
+  canViews                 Boolean?                   @default(false)
+  canCreate                Boolean?                   @default(false)
+  canUpdate                Boolean?                   @default(false)
+  canDelete                Boolean?                   @default(false)
   createdAt                DateTime                   @default(now())
   createdBy                String
   updatedAt                DateTime                   @updatedAt

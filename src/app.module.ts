@@ -139,38 +139,39 @@ export class AppModule {
     });
 
     this.client.login(process.env.DISCORD_BOT_TOKEN);
-    this.client.on('ready', async () => {
-      const guilds = this.client.guilds.cache;
-      const allCommands = new Map<string, any>();
+    this.client.on('ready', this.handleClientReady.bind(this));
+  }
 
-      for (const guild of guilds.values()) {
-        const commands = await guild.commands.fetch();
+  private async handleClientReady() {
+    const guilds = this.client.guilds.cache;
+    const allCommands = new Map<string, any>();
 
-        if (commands.size > 0) {
-          // Save commands to allCommands map
-          commands.forEach((command) => {
-            allCommands.set(command.name, command);
-          });
-        }
+    for (const guild of guilds.values()) {
+      const commands = await guild.commands.fetch();
 
+      if (commands.size > 0) {
         commands.forEach((command) => {
-          console.log(
-            `Guild: ${guild.name}, Command Name: ${command.name}, Command Description: ${command.description}`,
-          );
+          allCommands.set(command.name, command);
         });
       }
 
-      // Create commands for each guild
-      for (const guild of guilds.values()) {
-        allCommands.forEach((command) => {
-          guild.commands.create({
-            name: command.name,
-            description: command.description,
-            options: command.options as any,
-          });
-        });
-      }
-    });
+      commands.forEach((command) => {
+        console.log(
+          `Guild: ${guild.name}, Command Name: ${command.name}, Command Description: ${command.description}`,
+        );
+      });
+    }
 
+    await this.client.application.commands.set([]);
+
+    for (const guild of guilds.values()) {
+      allCommands.forEach((command) => {
+        guild.commands.create({
+          name: command.name,
+          description: command.description,
+          options: command.options as any,
+        });
+      });
+    }
   }
 }

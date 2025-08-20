@@ -5,11 +5,6 @@ import { ServerSetRoomService } from './server-set-room.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    ServerSetRoomCommands,
-    ServerSetRoomService,
-  ],
+  providers: [PrismaClient, ServerRepository, ServerSetRoomCommands, ServerSetRoomService],
 })
-export class ServerSetRoomModule { }
+export class ServerSetRoomModule {}

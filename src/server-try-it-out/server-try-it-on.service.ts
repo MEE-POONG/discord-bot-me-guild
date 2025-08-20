@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  EmbedBuilder,
-  ButtonInteraction,
-} from 'discord.js';
+import { EmbedBuilder, ButtonInteraction } from 'discord.js';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole, validateServerOwner } from 'src/utils/server-validation.util';
@@ -14,7 +11,7 @@ export class ServerTryItOnService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) { }
+  ) {}
 
   public onModuleInit() {
     this.logger.log('ServerTryItOn initialized');
@@ -53,7 +50,7 @@ export class ServerTryItOnService {
                 .setTitle('📋 สถานะการใช้งาน Bot')
                 .setDescription(
                   `Bot ได้เปิดใช้งานแล้ว และยังสามารถใช้งานได้อีก **${remainingDays} วัน**\n` +
-                  `**วันหมดอายุ:** ${new Date(server.openUntilAt).toLocaleDateString()}`,
+                    `**วันหมดอายุ:** ${new Date(server.openUntilAt).toLocaleDateString()}`,
                 )
                 .setColor(0x00ff00),
             ],
@@ -89,7 +86,7 @@ export class ServerTryItOnService {
             .setTitle('✅ เปิดใช้งาน Bot สำเร็จ')
             .setDescription(
               `🎉 Bot ได้ถูกเปิดใช้งานแล้วและสามารถใช้งานได้จนถึง:\n` +
-              `**วันหมดอายุ:** ${openUntilAt.toLocaleDateString()}`,
+                `**วันหมดอายุ:** ${openUntilAt.toLocaleDateString()}`,
             )
             .setColor(0x00bfff),
         ],

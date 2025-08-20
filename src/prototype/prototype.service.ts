@@ -25,13 +25,18 @@ export class PrototypeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) { } public onModuleInit() {
+  ) {}
+  public onModuleInit() {
     this.logger.log('Prototype initialized');
   }
 
   async PrototypeSystem(interaction: any) {
     const roleCheck = 'admin'; // Required role for this command
-    const validationError = await validateServerAndRole(interaction, roleCheck, this.serverRepository);
+    const validationError = await validateServerAndRole(
+      interaction,
+      roleCheck,
+      this.serverRepository,
+    );
     if (validationError) {
       return validationError; // Reply has already been handled
     }
@@ -41,10 +46,9 @@ export class PrototypeService {
         new EmbedBuilder()
           .setTitle('✅ ลงทะเบียนสำเร็จ') // หัวข้อ
           .setDescription(`🎉 เซิร์ฟเวอร์ เช็ค สำเร็จ `) // รายละเอียด
-          .setColor(0x00ff00) // สีเขียว (สำเร็จ)
+          .setColor(0x00ff00), // สีเขียว (สำเร็จ)
       ],
       ephemeral: true,
     });
-
   }
 }

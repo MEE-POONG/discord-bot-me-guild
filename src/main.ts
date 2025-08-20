@@ -1,8 +1,35 @@
 import { NestFactory } from '@nestjs/core';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 6001);
+  const logger = new Logger('Bootstrap');
+
+  // Enable global validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // Add health check endpoint
+  app.getHttpAdapter().get('/health', (_req: any, res: any) => {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'discord-bot-me-guild',
+    });
+  });
+
+  const port = process.env.PORT ?? 6001;
+  await app.listen(port);
+  logger.log(`Application is running on: http://localhost:${port}`);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('Failed to start application:', error);
+  process.exit(1);
+});

@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  EmbedBuilder,
-  Guild,
-  TextChannel,
-} from 'discord.js';
+import { EmbedBuilder, Guild, TextChannel } from 'discord.js';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -23,7 +19,11 @@ export class ServerclearService {
 
   async ServerclearSystem(interaction: any) {
     const roleCheck = 'admin';
-    const validationError = await validateServerAndRole(interaction, roleCheck, this.serverRepository);
+    const validationError = await validateServerAndRole(
+      interaction,
+      roleCheck,
+      this.serverRepository,
+    );
     if (validationError) {
       return validationError;
     }
@@ -55,7 +55,7 @@ export class ServerclearService {
       const excludeChannels = ['test', 'rules', 'moderator-only'];
 
       let testChannel = channels.find(
-        channel => channel.name === 'test' && channel.isTextBased()
+        (channel) => channel.name === 'test' && channel.isTextBased(),
       );
 
       for (const [channelId, channel] of channels) {
@@ -68,7 +68,9 @@ export class ServerclearService {
           await channel.delete(`Deleted by ${interaction.user.tag}`);
           this.logger.log(`Deleted channel: ${channel.name} (${channelId})`);
         } catch (err) {
-          this.logger.error(`❌ Failed to delete channel ${channel.name} (${channelId}): ${err.message}`);
+          this.logger.error(
+            `❌ Failed to delete channel ${channel.name} (${channelId}): ${err.message}`,
+          );
         }
       }
 
@@ -88,8 +90,8 @@ export class ServerclearService {
             .setTitle('✅ ลบห้องสำเร็จ')
             .setDescription(
               `🎉 ห้องทั้งหมดในเซิร์ฟเวอร์ถูกลบเรียบร้อยแล้ว (ยกเว้นห้องที่ได้รับการยกเว้น)\n` +
-              `- ยกเว้น: "test", "rules", และ "moderator-only"\n` +
-              `ห้อง "test" ถูกสร้างใหม่ถ้ายังไม่มี`,
+                `- ยกเว้น: "test", "rules", และ "moderator-only"\n` +
+                `ห้อง "test" ถูกสร้างใหม่ถ้ายังไม่มี`,
             )
             .setColor(0x00ff00),
         ],

@@ -11,12 +11,7 @@ import {
   SlashCommandContext,
 } from 'necord';
 import { GuildCreateDto } from './dto/length.dto';
-import {
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} from 'discord.js';
+import { ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 
 @Injectable()
 export class GuildCreateCommand {
@@ -34,9 +29,7 @@ export class GuildCreateCommand {
   }
 
   @Button('register-guild')
-  async handleRegisterGuild(
-    @Context() [interaction]: ButtonContext,
-  ): Promise<void> {
+  async handleRegisterGuild(@Context() [interaction]: ButtonContext): Promise<void> {
     const modal = new ModalBuilder()
       .setCustomId('guild-create-modal')
       .setTitle('Create Guild')
@@ -53,9 +46,7 @@ export class GuildCreateCommand {
   }
 
   @Modal('guild-create-modal')
-  async handleGuildCreateModal(
-    @Context() [interaction]: ModalContext,
-  ): Promise<void> {
+  async handleGuildCreateModal(@Context() [interaction]: ModalContext): Promise<void> {
     const guildName = interaction.fields.getTextInputValue('guild-name');
     await this.guildCreateService.createGuild(interaction, { guildName });
   }

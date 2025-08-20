@@ -3,17 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { ServerDB } from '@prisma/client';
 
 export type ServerRepositoryType = {
-  ServerRegister(
-    serverId: string,
-    serverName: string,
-    ownerId: string
-  ): Promise<ServerDB>;
+  ServerRegister(serverId: string, serverName: string, ownerId: string): Promise<ServerDB>;
 
   getServerById(serverId: string): Promise<ServerDB | null>;
 
   updateServer(
     serverId: string,
-    data: Partial<Omit<ServerDB, 'id' | 'createdAt' | 'registeredAt'>>
+    data: Partial<Omit<ServerDB, 'id' | 'createdAt' | 'registeredAt'>>,
   ): Promise<ServerDB>;
 
   deleteServer(serverId: string): Promise<ServerDB>;
@@ -21,13 +17,9 @@ export type ServerRepositoryType = {
 
 @Injectable()
 export class ServerRepository implements ServerRepositoryType {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
-  async ServerRegister(
-    serverId: string,
-    serverName: string,
-    ownerId: string,
-  ): Promise<ServerDB> {
+  async ServerRegister(serverId: string, serverName: string, ownerId: string): Promise<ServerDB> {
     const now = new Date();
     const serverSuccessfully = await this.prismaService.serverDB.create({
       data: {
@@ -50,7 +42,7 @@ export class ServerRepository implements ServerRepositoryType {
 
   async updateServer(
     serverId: string,
-    data: Partial<Omit<ServerDB, 'id' | 'createdAt' | 'registeredAt'>>
+    data: Partial<Omit<ServerDB, 'id' | 'createdAt' | 'registeredAt'>>,
   ): Promise<ServerDB> {
     return this.prismaService.serverDB.update({
       where: { serverId },
@@ -63,5 +55,4 @@ export class ServerRepository implements ServerRepositoryType {
       where: { serverId },
     });
   }
-
 }

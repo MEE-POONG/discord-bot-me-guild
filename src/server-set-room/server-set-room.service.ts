@@ -10,12 +10,7 @@ import {
   CacheType,
   ChannelType,
 } from 'discord.js';
-import {
-  Context,
-  SlashCommandContext,
-  StringSelect,
-  StringSelectContext,
-} from 'necord';
+import { Context, SlashCommandContext, StringSelect, StringSelectContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -48,72 +43,66 @@ export class ServerSetRoomService {
       return validationError;
     }
 
-    const server = await this.serverRepository.getServerById(
-      interaction.guildId,
-    );
+    const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) {
       this.logger.warn('Server not found for guildId:', interaction.guildId);
-      return this.replyError(
-        interaction,
-        '❌ ไม่พบข้อมูลเซิร์ฟเวอร์ โปรดตรวจสอบอีกครั้ง!',
-      );
+      return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์ โปรดตรวจสอบอีกครั้ง!');
     }
 
     this.logger.debug('Server found:', server);
 
-    const roomSelectionRow =
-      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId('SELECT_MENU_ROOM_TYPE')
-          .setPlaceholder('เลือกบทบาทที่ต้องการจัดการ')
-          .addOptions([
-            {
-              label: 'Welcome Room',
-              value: 'welcome',
-              description: 'สร้างห้อง Welcome',
-            },
-            {
-              label: 'News Room',
-              value: 'news',
-              description: 'สร้างห้อง News',
-            },
-            {
-              label: 'Register Room',
-              value: 'register',
-              description: 'สร้างห้อง Register',
-            },
-            // {
-            //   label: 'Complaint Room',
-            //   value: 'complaint',
-            //   description: 'สร้างห้องแจ้งความร้องทุกข์',
-            // },
-            // {
-            //   label: 'Suggestion Room',
-            //   value: 'suggestion',
-            //   description: 'สร้างห้องข้อเสนอแนะ',
-            // },
-            // {
-            //   label: 'Trade Room',
-            //   value: 'trade',
-            //   description: 'สร้างห้อง Trade',
-            // },
-            {
-              label: 'Guild Room',
-              value: 'guild',
-              description: 'สร้างห้องข้อเสนอแนะ',
-            },
-            {
-              label: 'Busking Room',
-              value: 'busking',
-              description: 'สร้างหมวดหมู่และห้องแสดงความสามารถ',
-            },
-            {
-              label: 'GameMatch Room',
-              value: 'gamematch',
-              description: 'สร้างห้อง GameMatch',
-            },
-          ]),
-      );
+    const roomSelectionRow = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('SELECT_MENU_ROOM_TYPE')
+        .setPlaceholder('เลือกบทบาทที่ต้องการจัดการ')
+        .addOptions([
+          {
+            label: 'Welcome Room',
+            value: 'welcome',
+            description: 'สร้างห้อง Welcome',
+          },
+          {
+            label: 'News Room',
+            value: 'news',
+            description: 'สร้างห้อง News',
+          },
+          {
+            label: 'Register Room',
+            value: 'register',
+            description: 'สร้างห้อง Register',
+          },
+          // {
+          //   label: 'Complaint Room',
+          //   value: 'complaint',
+          //   description: 'สร้างห้องแจ้งความร้องทุกข์',
+          // },
+          // {
+          //   label: 'Suggestion Room',
+          //   value: 'suggestion',
+          //   description: 'สร้างห้องข้อเสนอแนะ',
+          // },
+          // {
+          //   label: 'Trade Room',
+          //   value: 'trade',
+          //   description: 'สร้างห้อง Trade',
+          // },
+          {
+            label: 'Guild Room',
+            value: 'guild',
+            description: 'สร้างห้องข้อเสนอแนะ',
+          },
+          {
+            label: 'Busking Room',
+            value: 'busking',
+            description: 'สร้างหมวดหมู่และห้องแสดงความสามารถ',
+          },
+          {
+            label: 'GameMatch Room',
+            value: 'gamematch',
+            description: 'สร้างห้อง GameMatch',
+          },
+        ]),
+    );
 
     this.logger.debug('Room selection menu created');
 
@@ -142,17 +131,10 @@ export class ServerSetRoomService {
   }
 
   @StringSelect('SELECT_MENU_ROOM_TYPE')
-  public async handleRoomRegistration(
-    @Context() [interaction]: StringSelectContext,
-  ) {
-    this.logger.debug(
-      'handleRoomRegistration called with interaction:',
-      interaction,
-    );
+  public async handleRoomRegistration(@Context() [interaction]: StringSelectContext) {
+    this.logger.debug('handleRoomRegistration called with interaction:', interaction);
 
-    const server = await this.serverRepository.getServerById(
-      interaction.guildId,
-    );
+    const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) {
       this.logger.warn('Server not found for guildId:', interaction.guildId);
       return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์');
@@ -184,12 +166,7 @@ export class ServerSetRoomService {
         await this.createBuskingRoom(interaction);
       } else {
         this.logger.debug('Creating single room of type:', roomType);
-        await this.createSingleRoom(
-          interaction,
-          roomType,
-          defaultRoomNames,
-          roomFieldMapping,
-        );
+        await this.createSingleRoom(interaction, roomType, defaultRoomNames, roomFieldMapping);
       }
     } catch (error) {
       this.logger.error(`Error creating room: ${error.message}`);
@@ -250,9 +227,7 @@ export class ServerSetRoomService {
     const guild = interaction.guild;
 
     // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
-    let meguildPositionCreate = await this.serverRepository.getServerById(
-      interaction.guildId,
-    );
+    const meguildPositionCreate = await this.serverRepository.getServerById(interaction.guildId);
     let meguildCategory = guild.channels.cache.get(
       meguildPositionCreate?.meguildPositionCreate || '',
     );
@@ -311,23 +286,18 @@ export class ServerSetRoomService {
   ) {
     this.logger.debug('createGameMatchRooms called');
 
-    const server = await this.serverRepository.getServerById(
-      interaction.guildId,
-    );
+    const server = await this.serverRepository.getServerById(interaction.guildId);
 
     // ตรวจสอบว่าห้อง REGISTER ถูกสร้างหรือยัง
     const registerChannelId = server?.registerChannel;
-    const registerChannel =
-      interaction.guild.channels.cache.get(registerChannelId);
+    const registerChannel = interaction.guild.channels.cache.get(registerChannelId);
 
     if (!registerChannel) {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setTitle('❌ ไม่สามารถสร้างห้อง GameMatch ได้')
-            .setDescription(
-              'กรุณาสร้างห้อง **REGISTER** ก่อนการสร้างห้อง GameMatch',
-            )
+            .setDescription('กรุณาสร้างห้อง **REGISTER** ก่อนการสร้างห้อง GameMatch')
             .setColor(0xff0000),
         ],
         ephemeral: true,
@@ -408,9 +378,7 @@ export class ServerSetRoomService {
   private async createRegistrationMessage(channel: TextChannel) {
     const embed = new EmbedBuilder()
       .setTitle('ลงทะเบียนนักผจญภัย')
-      .setDescription(
-        '- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"',
-      )
+      .setDescription('- กรอกข้อมูลเพื่อนสร้างโปรไฟล์นักผจญภัยของคุณ คลิก "ลงทะเบียน"')
       .setColor(16760137)
       .setFooter({ text: 'ข้อมูลของคุณจะถูกเก็บเป็นความลับ' })
       .setImage(
@@ -434,28 +402,17 @@ export class ServerSetRoomService {
     return channel.send({ embeds: [embed], components: [actionRow] });
   }
 
-  private async createBuskingRoom(
-    interaction: StringSelectMenuInteraction<CacheType>,
-  ) {
+  private async createBuskingRoom(interaction: StringSelectMenuInteraction<CacheType>) {
     this.logger.debug('createBuskingRoom called');
 
     const guild = interaction.guild;
-    const server = await this.serverRepository.getServerById(
-      interaction.guildId,
-    );
+    const server = await this.serverRepository.getServerById(interaction.guildId);
 
     // ตรวจสอบหมวดหมู่ Busking Center
-    let buskingCategory = guild.channels.cache.get(
-      server?.buskingPositionCreate || '',
-    );
+    let buskingCategory = guild.channels.cache.get(server?.buskingPositionCreate || '');
 
-    if (
-      !buskingCategory ||
-      buskingCategory.type !== ChannelType.GuildCategory
-    ) {
-      this.logger.warn(
-        'หมวดหมู่ Busking Center ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่',
-      );
+    if (!buskingCategory || buskingCategory.type !== ChannelType.GuildCategory) {
+      this.logger.warn('หมวดหมู่ Busking Center ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่');
 
       // สร้างหมวดหมู่ใหม่
       buskingCategory = await guild.channels.create({
@@ -470,15 +427,9 @@ export class ServerSetRoomService {
     }
 
     // 🛑 ตรวจสอบว่าห้อง Busking มีอยู่แล้วหรือไม่
-    let existingBuskingChannel = guild.channels.cache.get(
-      server?.buskingChannel || '',
-    );
+    const existingBuskingChannel = guild.channels.cache.get(server?.buskingChannel || '');
     if (existingBuskingChannel) {
-      return this.replyStopCreate(
-        interaction,
-        'busking',
-        existingBuskingChannel.name,
-      );
+      return this.replyStopCreate(interaction, 'busking', existingBuskingChannel.name);
     }
 
     this.logger.log('สร้างห้อง Busking ใหม่');
@@ -524,19 +475,13 @@ export class ServerSetRoomService {
   private replyError(interaction: any, message: string) {
     return interaction.reply({
       embeds: [
-        new EmbedBuilder()
-          .setTitle('❌ เกิดข้อผิดพลาด')
-          .setDescription(message)
-          .setColor(0xff0000),
+        new EmbedBuilder().setTitle('❌ เกิดข้อผิดพลาด').setDescription(message).setColor(0xff0000),
       ],
       ephemeral: true,
     });
   }
 
-  private replySuccess(
-    interaction: StringSelectMenuInteraction<CacheType>,
-    roomType: string,
-  ) {
+  private replySuccess(interaction: StringSelectMenuInteraction<CacheType>, roomType: string) {
     return interaction.update({
       embeds: [
         new EmbedBuilder()

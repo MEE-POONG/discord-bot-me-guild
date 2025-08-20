@@ -5,7 +5,7 @@ import { ServerSetRoomService } from './server-set-room.service';
 @Injectable()
 export class ServerSetRoomCommands {
   private readonly logger = new Logger(ServerSetRoomCommands.name);
-  constructor(private readonly ServerSetRoomService: ServerSetRoomService) { }
+  constructor(private readonly ServerSetRoomService: ServerSetRoomService) {}
 
   @SlashCommand({
     name: 'server-set-room',

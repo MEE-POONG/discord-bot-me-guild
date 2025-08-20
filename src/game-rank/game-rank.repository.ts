@@ -8,7 +8,7 @@ export type GameRankRepositoryType = {
 
 @Injectable()
 export class GameRankRepository implements GameRankRepositoryType {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async getGamesRank(gameId: string): Promise<GameRankDB[]> {
     return await this.prismaService.gameRankDB.findMany({
@@ -16,8 +16,8 @@ export class GameRankRepository implements GameRankRepositoryType {
         gameId,
       },
       orderBy: {
-        number: `asc`
-      }
+        number: `asc`,
+      },
     });
   }
   async getGamesRankByID(id: string): Promise<GameRankDB> {
@@ -25,7 +25,6 @@ export class GameRankRepository implements GameRankRepositoryType {
       where: {
         id,
       },
-
     });
   }
 }

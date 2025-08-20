@@ -5,11 +5,6 @@ import { PrototypeService } from './prototype.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    PrototypeCommands,
-    PrototypeService,
-  ],
+  providers: [PrismaClient, ServerRepository, PrototypeCommands, PrototypeService],
 })
-export class PrototypeModule { }
+export class PrototypeModule {}

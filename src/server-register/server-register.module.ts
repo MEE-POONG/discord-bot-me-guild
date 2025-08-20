@@ -5,11 +5,6 @@ import { ServerRegisterService } from './server-register.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    ServerRegisterCommands,
-    ServerRegisterService,
-  ],
+  providers: [PrismaClient, ServerRepository, ServerRegisterCommands, ServerRegisterService],
 })
-export class ServerRegisterModule { }
+export class ServerRegisterModule {}

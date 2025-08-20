@@ -22,18 +22,9 @@ import {
   UserSelectMenuBuilder,
   WebSocketManager,
 } from 'discord.js';
-import {
-  GuildManageService,
-  UserProfile,
-} from 'src/guild-manage/guild-manage.service';
+import { GuildManageService, UserProfile } from 'src/guild-manage/guild-manage.service';
 import { UserDataService } from 'src/user-data/user-data.service';
-import {
-  Button,
-  ButtonContext,
-  Context,
-  On,
-  StringSelectContext,
-} from 'necord';
+import { Button, ButtonContext, Context, On, StringSelectContext } from 'necord';
 
 @Injectable()
 export class GuildCreateService {
@@ -59,14 +50,10 @@ export class GuildCreateService {
   }
 
   async createGuild(
-    interaction:
-      | ChatInputCommandInteraction<CacheType>
-      | ModalSubmitInteraction<CacheType>,
+    interaction: ChatInputCommandInteraction<CacheType> | ModalSubmitInteraction<CacheType>,
     options: GuildCreateDto,
   ) {
-    let ownerData = (await this.userData.getProfile(
-      interaction.user,
-    )) as UserProfile;
+    const ownerData = (await this.userData.getProfile(interaction.user)) as UserProfile;
 
     if (!ownerData)
       return interaction.reply({
@@ -74,7 +61,7 @@ export class GuildCreateService {
         ephemeral: true,
       });
 
-    let guildName = options.guildName;
+    const guildName = options.guildName;
     if (guildName.length < 4 || guildName.length > 16)
       return interaction.reply({
         content: `ชื่อกิลด์ของคุณต้องมีความยาวระหว่าง 4-16 ตัวอักษร`,
@@ -87,7 +74,7 @@ export class GuildCreateService {
         ephemeral: true,
       });
 
-    let time = `<t:${(Date.now() / 1000 + 600).toFixed(0)}:R>`;
+    const time = `<t:${(Date.now() / 1000 + 600).toFixed(0)}:R>`;
 
     if (await this.guildManage.checkGuild(ownerData))
       return interaction.reply({
@@ -95,7 +82,7 @@ export class GuildCreateService {
         ephemeral: true,
       });
 
-    let createEmbedFounded = new EmbedBuilder({
+    const createEmbedFounded = new EmbedBuilder({
       title: 'เลือกผู้ร่วมก่อตั้งสมาชิกของคุณ (1/4) คน',
       description: `- คุณจำเป็นที่จะต้องมีผู้ร่วมก่อตั้งกิลด์ 4 คน เพื่อทำการสร้างกิลด์\n- ระยะเวลาในการยอมรับ ${time}`,
       color: 9304831,
@@ -104,7 +91,7 @@ export class GuildCreateService {
       },
     });
 
-    let createSelectMemberForFounded =
+    const createSelectMemberForFounded =
       new ActionRowBuilder<UserSelectMenuBuilder>().setComponents(
         new UserSelectMenuBuilder()
           .setCustomId(`select_founded_id_${interaction.user.id}`)
@@ -165,19 +152,14 @@ export class GuildCreateService {
           return;
         }
 
-        const createAcceptGuildEmbeds =
-          this.createGuildProgressEmbed(guildName);
+        const createAcceptGuildEmbeds = this.createGuildProgressEmbed(guildName);
         const channel = interaction.channel as TextChannel;
         const msg = await channel.send({
           content: `${interaction.member?.toString()}`,
           embeds: [createAcceptGuildEmbeds],
         });
 
-        const guildReport = await this.createGuildReport(
-          interaction,
-          msg,
-          guildName,
-        );
+        const guildReport = await this.createGuildReport(interaction, msg, guildName);
 
         await interaction.deleteReply();
 
@@ -259,19 +241,18 @@ export class GuildCreateService {
     inviter: string,
   ) {
     this.guildReportId = guildReportId;
-    const createActionAccept =
-      new ActionRowBuilder<ButtonBuilder>().setComponents(
-        new ButtonBuilder()
-          .setCustomId(`cancel_guild_invite_`)
-          .setLabel('ปฏิเสธ')
-          .setEmoji('✖')
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId(`accept_guild_invite_`)
-          .setLabel('ยอมรับ')
-          .setEmoji('✅')
-          .setStyle(ButtonStyle.Success),
-      );
+    const createActionAccept = new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setCustomId(`cancel_guild_invite_`)
+        .setLabel('ปฏิเสธ')
+        .setEmoji('✖')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId(`accept_guild_invite_`)
+        .setLabel('ยอมรับ')
+        .setEmoji('✅')
+        .setStyle(ButtonStyle.Success),
+    );
     for (const userId of users) {
       try {
         const user = await this.users.fetch(userId);
@@ -280,24 +261,20 @@ export class GuildCreateService {
           content: `คุณได้ถูกเชิญช่วยให้เป็นผู้ร่วมก่อตั้งกิลด์ ${guildName} โดย ${inviter}`,
         });
       } catch (error) {
-        console.log('error', error);
+        this.logger.error('Error sending DM to user', error);
       }
     }
   }
 
   @Button('accept_guild_invite_')
-  async acceptGuildInvite(
-    @Context() [interaction]: ButtonContext,
-  ): Promise<void> {
-    console.log('acceptGuildInvite');
+  async acceptGuildInvite(@Context() [interaction]: ButtonContext): Promise<void> {
+    this.logger.debug('Processing accept guild invite request');
 
     await this.guildManage.acceptInviteCreate(interaction, this.guildReportId);
   }
 
   @Button('cancel_guild_invite_')
-  async cancelGuildInvite(
-    @Context() [interaction]: ButtonContext,
-  ): Promise<void> {
+  async cancelGuildInvite(@Context() [interaction]: ButtonContext): Promise<void> {
     await this.guildManage.cancelInviteCreate(interaction, this.guildReportId);
   }
 }

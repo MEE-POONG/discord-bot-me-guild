@@ -5,12 +5,6 @@ import { GameTypeRepository } from 'src/game-type/game-type.repository';
 import { GameRepository } from 'src/game/game.repository';
 
 @Module({
-  providers: [
-    GameJoinService,
-    GameJoinCommands,
-    GameTypeRepository,
-    GameRepository,
-  ],
+  providers: [GameJoinService, GameJoinCommands, GameTypeRepository, GameRepository],
 })
 export class GameJoinModule {}
-

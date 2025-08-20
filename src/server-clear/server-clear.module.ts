@@ -5,11 +5,6 @@ import { ServerclearService } from './server-clear.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    ServerclearCommands,
-    ServerclearService,
-  ],
+  providers: [PrismaClient, ServerRepository, ServerclearCommands, ServerclearService],
 })
-export class ServerClearModule { }
+export class ServerClearModule {}

@@ -6,16 +6,19 @@ import { ServerCreateRoleNameDto } from './dto/length.dto';
 @Injectable()
 export class ServerCreateRoleCommands {
   private readonly logger = new Logger(ServerCreateRoleCommands.name);
-  constructor(private readonly ServerCreateRoleService: ServerCreateRoleService) { }
+  constructor(private readonly ServerCreateRoleService: ServerCreateRoleService) {}
 
   @SlashCommand({
     name: 'server-create-role',
     description: 'ลงทะเบียนโลใช้งาน',
     defaultMemberPermissions: '8',
   })
-  async handleServerCreateRole(@Context() [interaction]: SlashCommandContext, @Options() options: ServerCreateRoleNameDto) {
+  async handleServerCreateRole(
+    @Context() [interaction]: SlashCommandContext,
+    @Options() options: ServerCreateRoleNameDto,
+  ) {
     try {
-      await this.ServerCreateRoleService.ServerCreateRoleSystem(interaction,options);
+      await this.ServerCreateRoleService.ServerCreateRoleSystem(interaction, options);
 
       // return interaction.reply({
       //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',

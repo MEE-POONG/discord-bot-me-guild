@@ -5,7 +5,7 @@ import { ServerclearRoleService } from './server-clear-role.service';
 @Injectable()
 export class ServerclearRoleCommands {
   private readonly logger = new Logger(ServerclearRoleCommands.name);
-  constructor(private readonly serverclearroleService: ServerclearRoleService) { }
+  constructor(private readonly serverclearroleService: ServerclearRoleService) {}
 
   @SlashCommand({
     name: 'server-clear-role',

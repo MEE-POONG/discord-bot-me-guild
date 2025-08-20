@@ -7,4 +7,4 @@ import { ServerRepository } from 'src/repository/server';
 @Module({
   providers: [FormRegisterService, FormRegisterCommands, PrismaService, ServerRepository],
 })
-export class FormRegisterModule { }
+export class FormRegisterModule {}

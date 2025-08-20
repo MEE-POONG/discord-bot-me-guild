@@ -5,11 +5,6 @@ import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    NewsUpdateCommands,
-    NewsUpdateService,
-    PrismaService,
-    ServerRepository,
-  ],
+  providers: [NewsUpdateCommands, NewsUpdateService, PrismaService, ServerRepository],
 })
-export class NewsUpdateModule { }
+export class NewsUpdateModule {}

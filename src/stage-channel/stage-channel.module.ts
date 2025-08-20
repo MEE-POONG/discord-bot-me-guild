@@ -6,4 +6,4 @@ import { StageChannelCleanupService } from './stage-channel-cleanup.service';
 @Module({
   providers: [StageChannelService, StageChannelCommands, StageChannelCleanupService],
 })
-export class StageChannelModule {} 
+export class StageChannelModule {}

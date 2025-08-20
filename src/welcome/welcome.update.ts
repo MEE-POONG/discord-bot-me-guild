@@ -1,11 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  Context,
-  On,
-  ContextOf,
-  SlashCommand,
-  SlashCommandContext,
-} from 'necord';
+import { Context, On, ContextOf, SlashCommand, SlashCommandContext } from 'necord';
 import { AttachmentBuilder, GuildMember, TextBasedChannel } from 'discord.js';
 import { ServerRepository } from 'src/repository/server';
 import axios from 'axios';
@@ -15,9 +9,7 @@ export class WelcomeUpdate {
   constructor(private readonly serverRepository: ServerRepository) {}
 
   @On('guildMemberAdd')
-  public async onGuildMemberAdd(
-    @Context() [member]: ContextOf<'guildMemberAdd'>,
-  ) {
+  public async onGuildMemberAdd(@Context() [member]: ContextOf<'guildMemberAdd'>) {
     try {
       const buffer = await axios({
         method: 'POST',
@@ -31,16 +23,12 @@ export class WelcomeUpdate {
 
       const server = await this.serverRepository.getServerById(member.guild.id);
       if (!server) {
-        this.logger.warn(
-          `Server with ID ${member.guild.id} is not registered in the database.`,
-        );
+        this.logger.warn(`Server with ID ${member.guild.id} is not registered in the database.`);
         return;
       }
 
       if (!server.welcomechannel) {
-        this.logger.warn(
-          `No welcome channel configured for server ID ${member.guild.id}`,
-        );
+        this.logger.warn(`No welcome channel configured for server ID ${member.guild.id}`);
         return;
       }
       const channel = (await member.guild.channels.fetch(
@@ -52,9 +40,7 @@ export class WelcomeUpdate {
           content: `🎉 ยินดีต้อนรับ ${member.toString()} เข้าสู่เซิร์ฟเวอร์!`,
         });
       } else {
-        this.logger.warn(
-          `The channel is not text-based or does not support sending messages.`,
-        );
+        this.logger.warn(`The channel is not text-based or does not support sending messages.`);
       }
     } catch (error) {
       this.logger.error('Failed to send welcome message', error);

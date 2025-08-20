@@ -5,11 +5,6 @@ import { ServerTryItOnService } from './server-try-it-on.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerTryItOnCommands,
-    ServerTryItOnService,
-    ServerRepository,
-  ],
+  providers: [PrismaClient, ServerTryItOnCommands, ServerTryItOnService, ServerRepository],
 })
-export class ServerTryItOnModule { }
+export class ServerTryItOnModule {}

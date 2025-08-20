@@ -19,7 +19,7 @@ export class StageChannelCommands {
     @Options() options: CreateStageDto,
   ) {
     const member = interaction.member as GuildMember;
-    const voiceChannel = member.voice.channel as VoiceBasedChannel;
+    const voiceChannel = member.voice.channel;
     if (!voiceChannel) {
       await interaction.reply({
         content: '❌ คุณต้องอยู่ในห้องเสียงก่อนจึงจะสามารถเข้าร่วมห้องได้',
@@ -29,12 +29,12 @@ export class StageChannelCommands {
       return;
     }
     if (!options.topic) {
-        await interaction.reply({
-            content: '❌ หัวข้อเวทีไม่สามารถว่างได้',
-            ephemeral: true,
-            fetchReply: true,
-        });
-        return;
+      await interaction.reply({
+        content: '❌ หัวข้อเวทีไม่สามารถว่างได้',
+        ephemeral: true,
+        fetchReply: true,
+      });
+      return;
     }
 
     try {

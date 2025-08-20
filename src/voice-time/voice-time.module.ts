@@ -5,12 +5,7 @@ import { VoiceTimeCommands } from './voice-time.commands';
 import { VoiceTimeController } from './voice-time.controller';
 
 @Module({
-  providers: [
-    VoiceTimeController,
-    VoiceTimeCommands,
-    VoiceTimeService,
-    PrismaService,
-  ],
+  providers: [VoiceTimeController, VoiceTimeCommands, VoiceTimeService, PrismaService],
   exports: [VoiceTimeService],
 })
 export class VoiceTimeModule {}

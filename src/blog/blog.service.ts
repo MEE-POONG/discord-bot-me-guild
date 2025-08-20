@@ -30,7 +30,7 @@ export class BlogService {
     const cacheKey = `blogs:${limit}`;
     if (this.cache.has(cacheKey)) {
       this.logger.log(`ดึงข้อมูลบทความจากแคช: ${cacheKey}`);
-      return this.cache.get(cacheKey)!;
+      return this.cache.get(cacheKey);
     }
 
     const blogs = await this.prisma.blogDB.findMany({
@@ -73,7 +73,7 @@ export class BlogService {
       return new EmbedBuilder()
         .setTitle(blog.title)
         .setDescription(
-          `${blog.description.substring(0, 100)}...\n[อ่านเพิ่มเติม](${blog.creditlink})`
+          `${blog.description.substring(0, 100)}...\n[อ่านเพิ่มเติม](${blog.creditlink})`,
         )
         .setImage(imageUrl) // แสดงรูปภาพ
         .setColor(0x00ae86)

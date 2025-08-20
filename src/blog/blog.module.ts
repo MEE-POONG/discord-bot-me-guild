@@ -5,11 +5,6 @@ import { BlogService } from './blog.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    BlogCommands,
-    BlogService,
-    PrismaService,
-    ServerRepository,
-  ],
+  providers: [BlogCommands, BlogService, PrismaService, ServerRepository],
 })
-export class BlogModule { }
+export class BlogModule {}

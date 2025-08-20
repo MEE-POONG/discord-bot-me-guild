@@ -34,7 +34,7 @@ export class GameJoinService {
     private readonly paginationService: NecordPaginationService,
     private readonly gameTypeRepository: GameTypeRepository,
     private readonly gameRepository: GameRepository,
-  ) { }
+  ) {}
 
   public async onModuleInit() {
     this.logger.log('GameCreateRoomService initialized');
@@ -49,9 +49,7 @@ export class GameJoinService {
         .setCustomId('GAME_JOIN')
         .setPagesFactory(async (page) =>
           new PageBuilder()
-            .setContent(
-              `หน้า ${page}/${Math.ceil(gameTypes.total / gameTypes.limit)}`,
-            )
+            .setContent(`หน้า ${page}/${Math.ceil(gameTypes.total / gameTypes.limit)}`)
             .setComponents([
               new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
                 new StringSelectMenuBuilder()
@@ -93,9 +91,7 @@ export class GameJoinService {
     }
   }
 
-  private async collectVoiceChannels(
-    interCollect: any,
-  ): Promise<VoiceChannel[]> {
+  private async collectVoiceChannels(interCollect: any): Promise<VoiceChannel[]> {
     try {
       const channelData: VoiceChannel[] = [];
       interCollect.guild.channels.cache.forEach((channel) => {
@@ -129,72 +125,69 @@ export class GameJoinService {
     return true;
   }
 
- @StringSelect('GAME_JOIN_SELECT_MENU_GAME_TYPE')
-public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
-  try {
-    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
-      return;
-    }
+  @StringSelect('GAME_JOIN_SELECT_MENU_GAME_TYPE')
+  public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
+    try {
+      if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+        return;
+      }
 
-    const userId = interaction.user.id;
-    const gameTypeId = interaction.values[0];
+      const userId = interaction.user.id;
+      const gameTypeId = interaction.values[0];
 
-    this.storeSelectedValues('GAME_JOIN_SELECT_MENU_GAME_TYPE', userId, [gameTypeId]);
+      this.storeSelectedValues('GAME_JOIN_SELECT_MENU_GAME_TYPE', userId, [gameTypeId]);
 
-    // ✅ ดึงข้อมูลเกมเพื่อเช็คว่า ranking หรือไม่
-    const game = await this.gameRepository.getGameById(gameTypeId); // 👈 เปลี่ยนตรงนี้ถ้าไม่ตรงกับ schema
+      // ✅ ดึงข้อมูลเกมเพื่อเช็คว่า ranking หรือไม่
+      const game = await this.gameRepository.getGameById(gameTypeId); // 👈 เปลี่ยนตรงนี้ถ้าไม่ตรงกับ schema
 
-    // ✅ สร้าง options ตาม ranking
-    const options = [];
+      // ✅ สร้าง options ตาม ranking
+      const options = [];
 
-    if (game?.ranking) {
-      options.push({
-        label: 'โหมดจัดอันดับ',
-        value: 'RANKED',
+      if (game?.ranking) {
+        options.push({
+          label: 'โหมดจัดอันดับ',
+          value: 'RANKED',
+        });
+      }
+
+      options.push(
+        {
+          label: 'โหมดปกติ',
+          value: 'NORMAL',
+        },
+        {
+          label: 'กำหนดเอง',
+          value: 'CUSTOM',
+        },
+      );
+
+      return interaction.update({
+        components: [
+          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            new StringSelectMenuBuilder()
+              .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
+              .setPlaceholder('เลือกรูปแบบการเล่น')
+              .setMaxValues(1)
+              .setMinValues(1)
+              .setOptions(options),
+          ),
+        ],
+      });
+    } catch (error) {
+      this.logger.error('Error in onSelectMenu:', error);
+      await interaction.reply({
+        content: 'เกิดข้อผิดพลาดในการเลือกประเภทเกมส์',
+        ephemeral: true,
       });
     }
-
-    options.push(
-      {
-        label: 'โหมดปกติ',
-        value: 'NORMAL',
-      },
-      {
-        label: 'กำหนดเอง',
-        value: 'CUSTOM',
-      }
-    );
-
-    return interaction.update({
-      components: [
-        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
-            .setPlaceholder('เลือกรูปแบบการเล่น')
-            .setMaxValues(1)
-            .setMinValues(1)
-            .setOptions(options),
-        ),
-      ],
-    });
-  } catch (error) {
-    this.logger.error('Error in onSelectMenu:', error);
-    await interaction.reply({
-      content: 'เกิดข้อผิดพลาดในการเลือกประเภทเกมส์',
-      ephemeral: true,
-    });
   }
-}
 
   @StringSelect('GAME_JOIN_SELECT_MENU_PLAY_MODE')
-  public async onSelectMenuPlayMode(
-    @Context() [interaction]: StringSelectContext,
-  ) {
+  public async onSelectMenuPlayMode(@Context() [interaction]: StringSelectContext) {
     try {
       const gameType = this.selectedValues.find(
         (value) =>
-          value.key === 'GAME_JOIN_SELECT_MENU_GAME_TYPE' &&
-          value.user === interaction.user.id,
+          value.key === 'GAME_JOIN_SELECT_MENU_GAME_TYPE' && value.user === interaction.user.id,
       )?.value;
       const rankMode = interaction.values[0];
 
@@ -241,28 +234,26 @@ public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
       }
 
       const gameSelectId = `gameSelect_${await this.randomNumber(1000, 9999)}`;
-      const gameSelect =
-        new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
-          new StringSelectMenuBuilder()
-            .setCustomId(gameSelectId)
-            .setMaxValues(1)
-            .setMinValues(1)
-            .setPlaceholder('กรุณาเลือกเกม')
-            .setOptions(
-              gameOnline.map((game) => ({
-                value: game.id,
-                label: game.game_name,
-              })),
-            ),
-        );
+      const gameSelect = new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId(gameSelectId)
+          .setMaxValues(1)
+          .setMinValues(1)
+          .setPlaceholder('กรุณาเลือกเกม')
+          .setOptions(
+            gameOnline.map((game) => ({
+              value: game.id,
+              label: game.game_name,
+            })),
+          ),
+      );
 
       const inter = await interaction.update({
         components: [gameSelect],
       });
       inter
         .createMessageComponentCollector({
-          filter: (i) =>
-            i.user.id === interaction.user.id && i.customId === gameSelectId,
+          filter: (i) => i.user.id === interaction.user.id && i.customId === gameSelectId,
           max: 1,
           time: 60 * 1000 * 5,
         })
@@ -297,8 +288,7 @@ public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
                 });
               }
 
-              const selectedChannel =
-                gameChannel[Math.floor(Math.random() * gameChannel.length)];
+              const selectedChannel = gameChannel[Math.floor(Math.random() * gameChannel.length)];
               await member.voice.setChannel(selectedChannel);
               await interCollect.reply({
                 content: `เข้าร่วมห้องเกมส์ ${selectedChannel.name} แล้ว`,
@@ -314,7 +304,7 @@ public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
           }
         })
         .on('end', () => {
-          inter.delete().catch(() => { });
+          inter.delete().catch(() => {});
         });
     } catch (error) {
       this.logger.error('Error in onSelectMenuPlayMode:', error);
@@ -346,11 +336,7 @@ public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
     return embed;
   }
 
-  async createActionRow(
-    currentIndex: number,
-    game_id: string,
-    rooms: VoiceChannel[],
-  ) {
+  async createActionRow(currentIndex: number, game_id: string, rooms: VoiceChannel[]) {
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId(`previous_${currentIndex}_${game_id}`)
@@ -363,9 +349,7 @@ public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
         .setDisabled(false)
         .setEmoji('✅')
         .setLabel('เข้าร่วม')
-        .setDisabled(
-          rooms[currentIndex].members.size === rooms[currentIndex].members.size,
-        )
+        .setDisabled(rooms[currentIndex].members.size === rooms[currentIndex].members.size)
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId(`next_${currentIndex}_${game_id}`)

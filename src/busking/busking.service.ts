@@ -1,14 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  CacheType,
   ChannelType,
-  ChatInputCommandInteraction,
   GuildMember,
-  StringSelectMenuInteraction,
 } from 'discord.js';
 import { SlashCommandContext } from 'necord';
 @Injectable()
 export class BuskingService {
+  private readonly logger = new Logger(BuskingService.name);
   async createBuskingChannel([interaction]: SlashCommandContext) {
     if (interaction.member instanceof GuildMember) {
       const voiceChannel = interaction.member.voice.channel;
@@ -22,9 +20,11 @@ export class BuskingService {
     }
 
     const guild = interaction.guild;
-    const roleBusking = guild.roles.cache.find(
-      (role) => role.name === 'Busking',
-    );
+    if (!guild) {
+      return interaction.reply({ content: '❌ ไม่สามารถเข้าถึงเซิร์ฟเวอร์ได้', ephemeral: true });
+    }
+
+    const roleBusking = guild.roles.cache.find((role) => role.name === 'Busking');
 
     if (!roleBusking) {
       return interaction.reply({
@@ -36,6 +36,10 @@ export class BuskingService {
     const buskingCenter = guild.channels.cache.find(
       (channel) => channel.name === '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓',
     );
+
+    if (!buskingCenter) {
+      return interaction.reply({ content: '❌ ไม่พบหมวดหมู่ Busking Center', ephemeral: true });
+    }
 
     const channel = await guild.channels.create({
       name: 'busking',
@@ -52,7 +56,7 @@ export class BuskingService {
     try {
       await member.voice.setChannel(channel.id);
     } catch (error) {
-      console.log('error', error);
+      this.logger.error('Error moving user to voice channel', error);
     }
 
     try {
@@ -61,7 +65,7 @@ export class BuskingService {
         await member.voice.setSuppressed(false);
       }
     } catch (error) {
-      console.log('error', error);
+      this.logger.error('Error moving user to voice channel', error);
     }
 
     return interaction.reply({

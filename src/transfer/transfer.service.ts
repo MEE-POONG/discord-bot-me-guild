@@ -10,14 +10,11 @@ export class TransferService {
 
   async transfer(interaction: CommandInteraction, options: TransferDto) {
     try {
-      const response = await axios.post(
-        `${this.API_URL}/${interaction.user.id}`,
-        {
-          receiverAccountNumber: options.receiverAccountNumber,
-          amount: options.amount,
-          comment: options.comment,
-        },
-      );
+      const response = await axios.post(`${this.API_URL}/${interaction.user.id}`, {
+        receiverAccountNumber: options.receiverAccountNumber,
+        amount: options.amount,
+        comment: options.comment,
+      });
 
       return response.data;
     } catch (error) {
@@ -25,4 +22,4 @@ export class TransferService {
       throw error;
     }
   }
-} 
+}

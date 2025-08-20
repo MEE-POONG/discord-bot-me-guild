@@ -12,7 +12,7 @@ export class VoiceTimeController {
     return {
       userId,
       totalSeconds,
-      formattedDuration: this.voiceTimeService.formatDuration(totalSeconds)
+      formattedDuration: this.voiceTimeService.formatDuration(totalSeconds),
     };
   }
 
@@ -21,15 +21,15 @@ export class VoiceTimeController {
   async getTimeRange(
     @Param('userId') userId: string,
     @Query('start') start: string,
-    @Query('end') end: string
+    @Query('end') end: string,
   ) {
     const startDate = new Date(start);
     const endDate = new Date(end);
-    
+
     const totalSeconds = await this.voiceTimeService.getVoiceTimeInRange(
       userId,
       startDate,
-      endDate
+      endDate,
     );
 
     return {
@@ -37,7 +37,7 @@ export class VoiceTimeController {
       startDate,
       endDate,
       totalSeconds,
-      formattedDuration: this.voiceTimeService.formatDuration(totalSeconds)
+      formattedDuration: this.voiceTimeService.formatDuration(totalSeconds),
     };
   }
 
@@ -45,9 +45,9 @@ export class VoiceTimeController {
   @Get(':userId/channels')
   async getTimeByChannel(@Param('userId') userId: string) {
     const channelTimes = await this.voiceTimeService.getVoiceTimeByChannel(userId);
-    return channelTimes.map(ct => ({
+    return channelTimes.map((ct) => ({
       ...ct,
-      formattedDuration: this.voiceTimeService.formatDuration(ct.totalDuration)
+      formattedDuration: this.voiceTimeService.formatDuration(ct.totalDuration),
     }));
   }
-} 
+}

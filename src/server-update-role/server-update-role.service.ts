@@ -21,7 +21,7 @@ export class ServerUpdateRoleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) { }
+  ) {}
 
   public onModuleInit() {
     this.logger.log('ServerUpdateRoleService initialized');
@@ -61,10 +61,10 @@ export class ServerUpdateRoleService {
           .setTitle('📋 จัดการบทบาทเซิร์ฟเวอร์')
           .setDescription(
             `กรุณาเลือกบทบาทที่คุณต้องการสร้างหรือจัดการจากรายการด้านล่าง:\n` +
-            `- Admin: สำหรับจัดการเซิร์ฟเวอร์\n` +
-            `- User: สำหรับผู้ใช้งานทั่วไป\n` +
-            `- Head: สำหรับหัวหน้ากลุ่ม\n` +
-            `- Co: สำหรับผู้ช่วยหรือผู้ร่วมกลุ่ม`,
+              `- Admin: สำหรับจัดการเซิร์ฟเวอร์\n` +
+              `- User: สำหรับผู้ใช้งานทั่วไป\n` +
+              `- Head: สำหรับหัวหน้ากลุ่ม\n` +
+              `- Co: สำหรับผู้ช่วยหรือผู้ร่วมกลุ่ม`,
           )
           .setColor(0x00bfff),
       ],
@@ -86,7 +86,7 @@ export class ServerUpdateRoleService {
       head: 'guildHeadRoleId',
       co: 'guildCoRoleId',
     };
-    
+
     await interaction.guild.roles.delete(server[roleFieldMapping[roleType]]);
 
     try {
@@ -107,7 +107,7 @@ export class ServerUpdateRoleService {
           .setTitle('❌ ไม่สามารถสร้างบทบาทใหม่ได้')
           .setDescription(
             `บทบาท **${roleType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์\n` +
-            `หากต้องการแก้ไข โปรดใช้คำสั่ง \`/server-update-role\``,
+              `หากต้องการแก้ไข โปรดใช้คำสั่ง \`/server-update-role\``,
           )
           .setColor(0xffa500),
       ],
@@ -118,10 +118,7 @@ export class ServerUpdateRoleService {
   private replyError(interaction: any, message: string) {
     return interaction.reply({
       embeds: [
-        new EmbedBuilder()
-          .setTitle('❌ เกิดข้อผิดพลาด')
-          .setDescription(message)
-          .setColor(0xff0000),
+        new EmbedBuilder().setTitle('❌ เกิดข้อผิดพลาด').setDescription(message).setColor(0xff0000),
       ],
       ephemeral: true,
     });

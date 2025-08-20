@@ -1,11 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Button,
-  ButtonContext,
-  Context,
-  SlashCommand,
-  SlashCommandContext,
-} from 'necord';
+import { Button, ButtonContext, Context, SlashCommand, SlashCommandContext } from 'necord';
 import { GuildMember } from 'discord.js';
 import { NecordPaginationService } from '@necord/pagination';
 @Injectable()
@@ -14,9 +8,7 @@ export class GameJoinCommands {
 
   @Button('game-join')
   @SlashCommand({ name: 'game-join', description: 'Join Game' })
-  public async onGameJoin(
-    @Context() [interaction]: SlashCommandContext | ButtonContext,
-  ) {
+  public async onGameJoin(@Context() [interaction]: SlashCommandContext | ButtonContext) {
     try {
       const pagination = this.paginationService.get('GAME_JOIN');
       const page = await pagination.build();

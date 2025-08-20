@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { BlogService } from './blog.service';
 
-
 @Injectable()
 export class BlogCommands {
   private readonly logger = new Logger(BlogCommands.name);

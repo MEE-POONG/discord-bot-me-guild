@@ -31,7 +31,7 @@ export class GuildInviteService implements OnModuleInit {
       GatewayIntentBits.GuildMessages,
     ],
   });
-  public constructor(private readonly prisma: PrismaService) { }
+  public constructor(private readonly prisma: PrismaService) {}
   public async onModuleInit() {
     this.logger.log('GuildInviteService initialized');
   }
@@ -47,20 +47,20 @@ export class GuildInviteService implements OnModuleInit {
 
   async getProfile(user: GuildMember | { id: string }) {
     try {
-      let userUserData = await this.prisma.userDB.findFirst({
+      const userUserData = await this.prisma.userDB.findFirst({
         where: {
           discord_id: user.id,
         },
       });
 
-      let userGuildMembers = await this.prisma.guildMembers.findMany({
+      const userGuildMembers = await this.prisma.guildMembers.findMany({
         where: {
           userId: user.id,
         },
       });
 
       // Fetch wallet data
-      let userWallet = await this.prisma.meGuildCoinDB.findFirst({
+      const userWallet = await this.prisma.meGuildCoinDB.findFirst({
         where: {
           userId: user.id,
         },
@@ -119,7 +119,7 @@ export class GuildInviteService implements OnModuleInit {
         inviteId: invite.id,
       };
     } catch (error) {
-      console.log(error);
+      this.logger.error('Error in guild invite operation', error);
       return {
         status: 'fail',
         message: 'ไม่สามารถสร้างคำเชิญได้',
@@ -134,7 +134,7 @@ export class GuildInviteService implements OnModuleInit {
   ) {
     this.logger.log('Inviting member');
     const checkPermission = await this.checkPermission(interaction);
-    let target = options?.member as GuildMember;
+    let target = options?.member;
     target = await interaction.guild?.members.fetch(target.id);
     const targetProfile = await this.getProfile(target);
     const isSelf = target.id == interaction.user.id;
@@ -197,7 +197,7 @@ export class GuildInviteService implements OnModuleInit {
     this.DISCORD_GUILD_MEMBER.set(target.id, options?.member);
     this.DISCORD_GUILD.set(target.id, interaction.guild);
 
-    let embeds = new EmbedBuilder()
+    const embeds = new EmbedBuilder()
       .setAuthor({
         name: `มีคำเชิญเข้าร่วมกิลด์จาก ${interaction.user.toString()}`,
       })
@@ -218,8 +218,7 @@ export class GuildInviteService implements OnModuleInit {
       });
     } catch (error) {
       return interaction.reply({
-        content:
-          'ไม่สามารถส่งข้อความไปยังสมาชิกได้เนื่องจาก สมาชิกปิดรับข้อความ',
+        content: 'ไม่สามารถส่งข้อความไปยังสมาชิกได้เนื่องจาก สมาชิกปิดรับข้อความ',
         ephemeral: true,
       });
     }
@@ -293,8 +292,7 @@ export class GuildInviteService implements OnModuleInit {
       const memberSize = memberList.length || 0;
       if (memberSize >= guildData.guild_size) {
         interaction.reply({
-          content:
-            'คุณไม่สามารถเข้าร่วมกิลด์ได้เนื่องจาก สมาชิกในกิลด์นี้ถึงขีดจำกัดแล้ว',
+          content: 'คุณไม่สามารถเข้าร่วมกิลด์ได้เนื่องจาก สมาชิกในกิลด์นี้ถึงขีดจำกัดแล้ว',
           ephemeral: true,
         });
         return;
@@ -317,27 +315,26 @@ export class GuildInviteService implements OnModuleInit {
       }
 
       const member = await guild.members.fetch(userId);
-      await member.roles.add(guildData.guild_roleId as string);
+      await member.roles.add(guildData.guild_roleId);
 
       this.prisma.guildInviteDataDB
         .delete({
           where: { id: guildInviteDataDB.id },
         })
-        .catch(() => { });
+        .catch(() => {});
 
       interaction.message
         .edit({
           components: [],
         })
-        .catch(() => { });
+        .catch(() => {});
 
       interaction.reply({
         content: `ระบบได้เพิ่มคุณเข้าสู่กิลด์ ${guildData.guild_name} เรียบร้อยแล้วค่ะ`,
         ephemeral: true,
       });
     } catch (error) {
-      this.logger.error(error);
-      console.log(error);
+      this.logger.error('Error in acceptInvitation', error);
       interaction.update({
         content: 'เกิดข้อผิดพลาดในการดำเนินการ',
         components: [],

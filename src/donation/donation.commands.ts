@@ -7,7 +7,7 @@ import { PermissionFlagsBits } from 'discord.js';
 export class DonationCommands {
   private readonly logger = new Logger(DonationCommands.name);
 
-  constructor(private readonly donationService: DonationService) { }
+  constructor(private readonly donationService: DonationService) {}
 
   @SlashCommand({
     name: 'donate',

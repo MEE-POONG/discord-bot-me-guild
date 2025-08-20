@@ -6,26 +6,26 @@ import { User } from 'discord.js';
 export class UserDataService {
   private logger = new Logger(UserDataService.name);
 
-  constructor(private readonly prisma: PrismaClient) { }
+  constructor(private readonly prisma: PrismaClient) {}
 
   async getProfile(user: User) {
     try {
       // Fetch user data
-      let userUserData = await this.prisma.userDB.findFirst({
+      const userUserData = await this.prisma.userDB.findFirst({
         where: {
           discord_id: user.id,
         },
       });
 
       // Fetch guild members data
-      let userGuildMembers = await this.prisma.guildMembers.findMany({
+      const userGuildMembers = await this.prisma.guildMembers.findMany({
         where: {
           userId: user.id,
         },
       });
 
       // Fetch wallet data
-      let userWallet = await this.prisma.meGuildCoinDB.findFirst({
+      const userWallet = await this.prisma.meGuildCoinDB.findFirst({
         where: {
           userId: user.id,
         },

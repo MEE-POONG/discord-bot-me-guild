@@ -1,12 +1,5 @@
 import { NecordPaginationService, PageBuilder } from '@necord/pagination';
-import {
-  Button,
-  ButtonContext,
-  ContextOf,
-  On,
-  StringSelect,
-  StringSelectContext,
-} from 'necord';
+import { Button, ButtonContext, ContextOf, On, StringSelect, StringSelectContext } from 'necord';
 import { Context } from 'necord';
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import {
@@ -128,7 +121,7 @@ export class GameCreateRoomService implements OnModuleInit {
             new EmbedBuilder()
               .setTitle('❌ ไม่พบการเชื่อมต่อช่องเสียง')
               .setDescription('คุณต้องเชื่อมต่อกับช่องเสียงก่อนจึงจะสามารถใช้งานคำสั่งนี้ได้')
-              .setColor('Red') // ✅ สีแดง
+              .setColor('Red'), // ✅ สีแดง
             // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
           ],
           components: [],
@@ -164,9 +157,7 @@ export class GameCreateRoomService implements OnModuleInit {
     this.storeSelectedValues('user_display_name', user.id, [user.displayName]);
     this.storeSelectedValues('user_tag', user.id, [user.tag]);
     this.storeSelectedValues('user_avatar', user.id, [user.avatarURL()]);
-    this.storeSelectedValues('user_created_at', user.id, [
-      user.createdAt.toISOString(),
-    ]);
+    this.storeSelectedValues('user_created_at', user.id, [user.createdAt.toISOString()]);
 
     const games = await this.gameRepository.getGamesByType(
       interaction.values[0],
@@ -225,9 +216,7 @@ export class GameCreateRoomService implements OnModuleInit {
             content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
           });
         }
-        const server = await this.serverRepository.getServerById(
-          interaction.guildId,
-        );
+        const server = await this.serverRepository.getServerById(interaction.guildId);
         if (!server) {
           return interaction.update({
             content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
@@ -243,8 +232,7 @@ export class GameCreateRoomService implements OnModuleInit {
         }
         if (!gameMacthReplyChanel) {
           return interaction.update({
-            content:
-              '❌ ไม่มีตำแหน่งที่กำหนดสำหรับแจ้งเตือนการสร้างห้องเล่นเกมส์',
+            content: '❌ ไม่มีตำแหน่งที่กำหนดสำหรับแจ้งเตือนการสร้างห้องเล่นเกมส์',
           });
         }
 
@@ -253,9 +241,7 @@ export class GameCreateRoomService implements OnModuleInit {
         )?.value;
 
         const game_rank_id = this.selectedValues.find(
-          (value) =>
-            value.key === 'select_menu_play_ranged_mode' &&
-            value.user === user.id,
+          (value) => value.key === 'select_menu_play_ranged_mode' && value.user === user.id,
         )?.value;
 
         const game_rank = game_rank_id
@@ -266,22 +252,18 @@ export class GameCreateRoomService implements OnModuleInit {
 
         const channel_name = `🎮・${gameName} ${game_rank ? `- ${game_rank.nameRank}` : ''} - RMG`;
 
-
         const channel = await interaction.guild?.channels.create({
           name: channel_name,
           type: ChannelType.GuildVoice,
           ...(limit ? { userLimit: limit } : {}),
-          parent: interaction.guild.channels.cache.get(
-            gamePositionCreate,
-          ) as CategoryChannel,
+          parent: interaction.guild.channels.cache.get(gamePositionCreate) as CategoryChannel,
         });
 
         if (channel) {
           await interaction.member.voice.setChannel(channel);
           this.party_id = channel.id;
 
-          const channel_text =
-            await this.client.channels.fetch(gameMacthReplyChanel);
+          const channel_text = await this.client.channels.fetch(gameMacthReplyChanel);
 
           if (
             channel_text &&
@@ -366,16 +348,13 @@ export class GameCreateRoomService implements OnModuleInit {
             console.warn('⚠️ ไม่สามารถลบข้อความ:', err.message);
           }
         }, 10_000); // 10 วินาที
-
       } else {
         return interaction.update({
           content: '❌ ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้',
           embeds: [
             new EmbedBuilder()
               .setTitle('⚠️ ข้อผิดพลาด')
-              .setDescription(
-                'ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้ กรุณาลองอีกครั้ง',
-              )
+              .setDescription('ไม่สามารถตั้งค่าช่องเสียงสำหรับสมาชิกนี้ได้ กรุณาลองอีกครั้ง')
               .setColor('Red'),
           ],
           components: [],
@@ -413,9 +392,7 @@ export class GameCreateRoomService implements OnModuleInit {
           return;
         }
 
-        const channel = (await this.client.channels.fetch(
-          channelId,
-        )) as VoiceChannel;
+        const channel = (await this.client.channels.fetch(channelId)) as VoiceChannel;
 
         if (channel) {
           await interaction.member.voice.setChannel(channel);
@@ -488,19 +465,13 @@ export class GameCreateRoomService implements OnModuleInit {
   }
 
   @StringSelect('SELECT_MENU_PLAY_MODE')
-  public async onSelectMenuPlayRangedMode(
-    @Context() [interaction]: StringSelectContext,
-  ) {
+  public async onSelectMenuPlayRangedMode(@Context() [interaction]: StringSelectContext) {
     if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
       return;
     }
 
     const user = interaction.user;
-    this.storeSelectedValues(
-      'select_menu_play_mode',
-      user.id,
-      interaction.values,
-    );
+    this.storeSelectedValues('select_menu_play_mode', user.id, interaction.values);
 
     const check_no_range = interaction.values[0] === 'NORMAL';
     const game_uid = this.selectedValues.find(
@@ -578,28 +549,19 @@ export class GameCreateRoomService implements OnModuleInit {
   }
 
   @StringSelect('SELECT_MENU_PLAY_RANGED_MODE')
-  public async onSelectMenuManyPeoplePlay(
-    @Context() [interaction]: StringSelectContext,
-  ) {
+  public async onSelectMenuManyPeoplePlay(@Context() [interaction]: StringSelectContext) {
     if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
       return;
     }
 
     const user = interaction.user;
-    this.storeSelectedValues(
-      'select_menu_play_ranged_mode',
-      user.id,
-      interaction.values,
-    );
+    this.storeSelectedValues('select_menu_play_ranged_mode', user.id, interaction.values);
 
     const game_uid = this.selectedValues.find(
       (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
 
-
-    const gameRank = await this.gameRankRepository.getGamesRankByID(
-      interaction.values[0],
-    );
+    const gameRank = await this.gameRankRepository.getGamesRankByID(interaction.values[0]);
     const game_condition_match =
       await this.gameConditionMatchRepository.getGamesConditionMatchByGameId(
         game_uid,
@@ -645,7 +607,6 @@ export class GameCreateRoomService implements OnModuleInit {
       (value) => value.key === 'select_menu_game' && value.user === user.id,
     )?.value;
 
-
     const game_name = await this.gameRepository.getGameById(game_uid);
 
     if (!game_name) {
@@ -656,10 +617,9 @@ export class GameCreateRoomService implements OnModuleInit {
     }
     const room_name = ` ${game_name.game_name} `;
 
-    const game_condition_match =
-      await this.gameConditionMatchRepository.getGamesConditionMatchById(
-        interaction.values[0],
-      );
+    const game_condition_match = await this.gameConditionMatchRepository.getGamesConditionMatchById(
+      interaction.values[0],
+    );
 
     if (game_name) {
       return this.createAndMoveToVoiceChannel(
@@ -670,9 +630,7 @@ export class GameCreateRoomService implements OnModuleInit {
     }
   }
   @StringSelect('SELECT_MENU_PLAY_RANGED_MODE_CUSTOM')
-  public async onSelectPeopleCustom(
-    @Context() [interaction]: StringSelectContext,
-  ) {
+  public async onSelectPeopleCustom(@Context() [interaction]: StringSelectContext) {
     if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
       return;
     }
@@ -698,9 +656,7 @@ export class GameCreateRoomService implements OnModuleInit {
       return this.createAndMoveToVoiceChannel(
         interaction,
         room_name,
-        interaction.values[0] === 'UNLIMITED'
-          ? 0
-          : Number(interaction.values[0]),
+        interaction.values[0] === 'UNLIMITED' ? 0 : Number(interaction.values[0]),
       );
     }
   }

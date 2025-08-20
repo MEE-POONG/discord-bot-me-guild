@@ -5,11 +5,6 @@ import { ServerUpdateRoleService } from './server-update-role.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    ServerUpdateRoleCommands,
-    ServerUpdateRoleService,
-  ],
+  providers: [PrismaClient, ServerRepository, ServerUpdateRoleCommands, ServerUpdateRoleService],
 })
-export class ServerUpdateRoleModule { }
+export class ServerUpdateRoleModule {}

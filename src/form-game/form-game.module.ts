@@ -7,4 +7,4 @@ import { FormGameService } from './form-game.service';
 @Module({
   providers: [FormGameService, FormGameCommands, PrismaService, ServerRepository],
 })
-export class FormGameModule { }
+export class FormGameModule {}

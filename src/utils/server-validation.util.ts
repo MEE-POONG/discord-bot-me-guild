@@ -44,14 +44,14 @@ export async function validateServerAndRole(
           .setTitle('⛔ หมดอายุการใช้งาน')
           .setDescription(
             `การใช้งาน Bot สำหรับเซิร์ฟเวอร์ "${guild.name}" หมดอายุแล้ว\n` +
-            `โปรดติดต่อแอดมินเพื่อขยายเวลาการใช้งาน`,
+              `โปรดติดต่อแอดมินเพื่อขยายเวลาการใช้งาน`,
           )
           .setColor(0xff0000), // สีแดง
       ],
       ephemeral: true,
     });
   }
-  
+
   if (!server.openBot) {
     return interaction.reply({
       embeds: [
@@ -59,7 +59,7 @@ export async function validateServerAndRole(
           .setTitle('⛔ ยังไม่รับอนุญาติใช้งาน')
           .setDescription(
             `การใช้งาน Bot สำหรับเซิร์ฟเวอร์ "${guild.name}" ยังไม่รับอนุญาติใช้งาน\n` +
-            `ติดต่อผู้ให้บริการ`,
+              `ติดต่อผู้ให้บริการ`,
           )
           .setColor(0xff0000), // สีแดง
       ],
@@ -75,8 +75,8 @@ export async function validateServerAndRole(
           .setTitle('⚠️ พบความไม่ถูกต้อง')
           .setDescription(
             `ข้อมูลเซิร์ฟเวอร์ไม่ตรงกับข้อมูลในระบบ:\n` +
-            `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
-            `**เจ้าของ:** ${guild.ownerId}`,
+              `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
+              `**เจ้าของ:** ${guild.ownerId}`,
           )
           .setColor(0xffa500), // สีส้ม
       ],
@@ -104,8 +104,7 @@ export async function validateServerAndRole(
 
   // ตรวจสอบบทบาทสำหรับ adminRoleId หรือ userRoleId
   if (roleCheck === 'admin' || roleCheck === 'user') {
-    const roleIdToCheck =
-      roleCheck === 'admin' ? server.adminRoleId : server.userRoleId;
+    const roleIdToCheck = roleCheck === 'admin' ? server.adminRoleId : server.userRoleId;
 
     if (roleIdToCheck && member.roles.cache.has(roleIdToCheck)) {
       return null; // ผ่านการตรวจสอบบทบาท
@@ -124,10 +123,7 @@ export async function validateServerAndRole(
   });
 }
 
-export async function validateServerOwner(
-  interaction: any,
-  serverRepository: ServerRepository,
-) {
+export async function validateServerOwner(interaction: any, serverRepository: ServerRepository) {
   const guild = interaction.guild as Guild;
 
   // ตรวจสอบว่า interaction มาจาก guild หรือไม่

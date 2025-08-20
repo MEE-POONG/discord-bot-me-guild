@@ -6,16 +6,19 @@ import { ServerUpdateRoleNameDto } from './dto/length.dto';
 @Injectable()
 export class ServerUpdateRoleCommands {
   private readonly logger = new Logger(ServerUpdateRoleCommands.name);
-  constructor(private readonly ServerUpdateRoleService: ServerUpdateRoleService) { }
+  constructor(private readonly ServerUpdateRoleService: ServerUpdateRoleService) {}
 
   @SlashCommand({
     name: 'server-update-role',
     description: 'ลงทะเบียนโลใช้งาน',
-    defaultMemberPermissions:'8'
+    defaultMemberPermissions: '8',
   })
-  async handleServerUpdateRole(@Context() [interaction]: SlashCommandContext, @Options() options: ServerUpdateRoleNameDto) {
+  async handleServerUpdateRole(
+    @Context() [interaction]: SlashCommandContext,
+    @Options() options: ServerUpdateRoleNameDto,
+  ) {
     try {
-      await this.ServerUpdateRoleService.ServerUpdateRoleSystem(interaction,options);
+      await this.ServerUpdateRoleService.ServerUpdateRoleSystem(interaction, options);
 
       // return interaction.reply({
       //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',

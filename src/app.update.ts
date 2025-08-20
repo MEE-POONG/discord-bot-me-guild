@@ -8,9 +8,7 @@ export class AppUpdate {
   private readonly logger = new Logger(AppUpdate.name);
   private voiceTimeTracker = new Map<string, number>();
 
-  constructor(
-    private readonly voiceTimeService: VoiceTimeService
-  ) {}
+  constructor(private readonly voiceTimeService: VoiceTimeService) {}
 
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
@@ -28,55 +26,50 @@ export class AppUpdate {
   }
 
   @On('voiceStateUpdate')
-  public async handleVoiceState(
-    @Context() [oldState, newState]: [VoiceState, VoiceState],
-  ) {
+  public async handleVoiceState(@Context() [oldState, newState]: [VoiceState, VoiceState]) {
     const userId = newState.member.id;
 
     if (!oldState.channelId && newState.channelId) {
       this.voiceTimeTracker.set(userId, Date.now());
     }
-    
+
     if (oldState.channelId && !newState.channelId) {
       const startTime = this.voiceTimeTracker.get(userId);
-      
+
       if (startTime) {
         const duration = Math.floor((Date.now() - startTime) / 1000);
-        
+
         await this.voiceTimeService.createVoiceTime({
           userId,
           channelId: oldState.channelId,
           duration,
           timestamp: new Date(),
         });
-        
+
         this.voiceTimeTracker.delete(userId);
       }
     }
 
     if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
       const startTime = this.voiceTimeTracker.get(userId);
-      
+
       if (startTime) {
         const duration = Math.floor((Date.now() - startTime) / 1000);
-        
+
         await this.voiceTimeService.createVoiceTime({
           userId,
           channelId: oldState.channelId,
           duration,
           timestamp: new Date(),
         });
-        
+
         this.voiceTimeTracker.set(userId, Date.now());
       }
     }
 
     if (oldState.channelId !== newState.channelId) {
       if (oldState.channel && oldState.channel.members.size === 0) {
-        if (
-          oldState.channel.name.includes('🎮') &&
-          oldState.channel.name.includes('RMG')
-        ) {
+        if (oldState.channel.name.includes('🎮') && oldState.channel.name.includes('RMG')) {
           await oldState.channel.delete();
         }
       }

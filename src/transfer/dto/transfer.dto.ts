@@ -1,7 +1,6 @@
 import { NumberOption, StringOption } from 'necord';
 
 export class TransferDto {
-
   @StringOption({
     name: 'receiver-account-number',
     description: 'หมายเลขบัญชีผู้รับ',
@@ -22,4 +21,4 @@ export class TransferDto {
     required: true,
   })
   comment: string;
-} 
+}

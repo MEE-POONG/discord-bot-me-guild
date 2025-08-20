@@ -1,14 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import {
-  CacheType,
-  ChatInputCommandInteraction,
-  GuildMember,
-  User,
-} from 'discord.js';
-import {
-  GuildManageService,
-  UserProfile,
-} from 'src/guild-manage/guild-manage.service';
+import { CacheType, ChatInputCommandInteraction, GuildMember, User } from 'discord.js';
+import { GuildManageService, UserProfile } from 'src/guild-manage/guild-manage.service';
 import { PrismaService } from 'src/prisma.service';
 import { UserDataService } from 'src/user-data/user-data.service';
 import { GuildKickDto } from './dto/length.dto';
@@ -16,7 +8,7 @@ import { GuildKickDto } from './dto/length.dto';
 @Injectable()
 export class GuildKickService implements OnModuleInit {
   private readonly logger = new Logger(GuildKickService.name);
-  public constructor(private readonly prisma: PrismaService) { }
+  public constructor(private readonly prisma: PrismaService) {}
   public async onModuleInit() {
     this.logger.log('GuildKickService initialized');
   }
@@ -32,7 +24,7 @@ export class GuildKickService implements OnModuleInit {
         ephemeral: true,
       });
 
-    let target = options?.member as GuildMember;
+    let target = options?.member;
     if (target.id == interaction.user.id)
       return interaction.reply({
         content: 'คุณไม่สามารถเตะตัวเองได้',
@@ -52,7 +44,7 @@ export class GuildKickService implements OnModuleInit {
         ephemeral: true,
       });
 
-    let targetProfile = await this.getProfile(target.user);
+    const targetProfile = await this.getProfile(target.user);
     if (!targetProfile)
       return interaction.reply({
         content: 'สมาชิกนี้ไม่มีข้อมูลนักผจญภัย',
@@ -97,25 +89,28 @@ export class GuildKickService implements OnModuleInit {
         await member.roles
           .remove(roleCoFounder)
           .then(() => {
-            console.log('ลบสิทธิ์สมาชิกสำเร็จ');
+            this.logger.log('Successfully removed member permissions');
           })
           .catch((error) => {
-            console.log('ลบสิทธิ์สมาชิกไม่สำเร็จ');
+            this.logger.error('Failed to remove member permissions');
             return 'เกิดข้อผิดพลาดในการลบสิทธิ์สมาชิก';
           });
 
-      const roleGuild = member.roles.cache.find(
-        (r) => r.id === guildMember.guildDB?.guild_roleId,
-      );
+      const roleGuild = member.roles.cache.find((r) => r.id === guildMember.guildDB?.guild_roleId);
 
       if (roleGuild)
         await member.roles
           .remove(roleGuild)
           .then(() => {
-            console.log('ลบสิทธิ์กิลด์สำเร็จ', guildMember.guildId);
+            this.logger.log(
+              `Successfully removed guild permissions for guild: ${guildMember.guildId}`,
+            );
           })
           .catch((error) => {
-            console.log('ลบสิทธิ์กิลด์ไม่สำเร็จ', guildMember.guildId, error);
+            this.logger.error(
+              `Failed to remove guild permissions for guild: ${guildMember.guildId}`,
+              error,
+            );
             return 'เกิดข้อผิดพลาดในการลบสิทธิ์กิลด์';
           });
 
@@ -142,20 +137,20 @@ export class GuildKickService implements OnModuleInit {
 
   async getProfile(user: User) {
     try {
-      let userUserData = await this.prisma.userDB.findFirst({
+      const userUserData = await this.prisma.userDB.findFirst({
         where: {
           discord_id: user.id,
         },
       });
 
-      let userGuildMembers = await this.prisma.guildMembers.findMany({
+      const userGuildMembers = await this.prisma.guildMembers.findMany({
         where: {
           userId: user.id,
         },
       });
 
       // Fetch wallet data
-      let userWallet = await this.prisma.meGuildCoinDB.findFirst({
+      const userWallet = await this.prisma.meGuildCoinDB.findFirst({
         where: {
           userId: user.id,
         },

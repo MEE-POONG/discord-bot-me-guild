@@ -5,7 +5,7 @@ import { ServerTryItOnService } from './server-try-it-on.service';
 @Injectable()
 export class ServerTryItOnCommands {
   private readonly logger = new Logger(ServerTryItOnCommands.name);
-  constructor(private readonly serverTryItOnService: ServerTryItOnService) { }
+  constructor(private readonly serverTryItOnService: ServerTryItOnService) {}
 
   @SlashCommand({
     name: 'server-try-it-on',

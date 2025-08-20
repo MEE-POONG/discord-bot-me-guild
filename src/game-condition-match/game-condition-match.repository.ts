@@ -10,9 +10,8 @@ export type GameConditionMatchRepositoryType = {
 };
 
 @Injectable()
-export class GameConditionMatchRepository
-  implements GameConditionMatchRepositoryType {
-  constructor(private readonly prismaService: PrismaService) { }
+export class GameConditionMatchRepository implements GameConditionMatchRepositoryType {
+  constructor(private readonly prismaService: PrismaService) {}
 
   async getGamesConditionMatchByGameId(
     gameId: string,
@@ -20,7 +19,7 @@ export class GameConditionMatchRepository
   ): Promise<GameConditionMatchDB[]> {
     return this.prismaService.gameConditionMatchDB.findMany({
       where: {
-        gameId
+        gameId,
       },
     });
   }

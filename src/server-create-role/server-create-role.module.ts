@@ -5,11 +5,6 @@ import { ServerCreateRoleService } from './server-create-role.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    ServerCreateRoleCommands,
-    ServerCreateRoleService,
-  ],
+  providers: [PrismaClient, ServerRepository, ServerCreateRoleCommands, ServerCreateRoleService],
 })
-export class ServerCreateRoleModule { }
+export class ServerCreateRoleModule {}

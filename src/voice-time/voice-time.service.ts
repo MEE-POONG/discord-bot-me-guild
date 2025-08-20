@@ -13,7 +13,7 @@ export class VoiceTimeService {
     timestamp: Date;
   }) {
     return await this.prisma.voiceTime.create({
-      data
+      data,
     });
   }
 
@@ -21,7 +21,7 @@ export class VoiceTimeService {
   async getTotalVoiceTime(userId: string): Promise<number> {
     const voiceTimes = await this.prisma.voiceTime.aggregate({
       where: { userId },
-      _sum: { duration: true }
+      _sum: { duration: true },
     });
     return voiceTimes._sum.duration || 0;
   }
@@ -33,25 +33,27 @@ export class VoiceTimeService {
         userId,
         timestamp: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
-      _sum: { duration: true }
+      _sum: { duration: true },
     });
     return voiceTimes._sum.duration || 0;
   }
 
   // ดึงข้อมูลแยกตาม channel
-  async getVoiceTimeByChannel(userId: string): Promise<Array<{ channelId: string, totalDuration: number }>> {
+  async getVoiceTimeByChannel(
+    userId: string,
+  ): Promise<Array<{ channelId: string; totalDuration: number }>> {
     const voiceTimes = await this.prisma.voiceTime.groupBy({
       by: ['channelId'],
       where: { userId },
-      _sum: { duration: true }
+      _sum: { duration: true },
     });
 
-    return voiceTimes.map(vt => ({
+    return voiceTimes.map((vt) => ({
       channelId: vt.channelId,
-      totalDuration: vt._sum.duration || 0
+      totalDuration: vt._sum.duration || 0,
     }));
   }
 
@@ -68,4 +70,4 @@ export class VoiceTimeService {
 
     return parts.join(' ');
   }
-} 
+}

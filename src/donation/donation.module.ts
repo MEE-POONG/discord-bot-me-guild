@@ -5,11 +5,6 @@ import { DonationService } from './donation.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [
-    PrismaClient,
-    ServerRepository,
-    DonationCommands,
-    DonationService,
-  ],
+  providers: [PrismaClient, ServerRepository, DonationCommands, DonationService],
 })
-export class DonationModule { }
+export class DonationModule {}

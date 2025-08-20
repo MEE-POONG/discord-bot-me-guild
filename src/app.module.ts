@@ -1,4 +1,4 @@
-import { Collection, Guild, IntentsBitField } from 'discord.js';
+import { IntentsBitField } from 'discord.js';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NecordPaginationModule } from '@necord/pagination';
@@ -6,36 +6,36 @@ import { NecordModule } from 'necord';
 import { AppService } from './app.service';
 import { AppUpdate } from './app.update';
 import { PrismaService } from './prisma.service';
-// ดึงคำสั่ง
+
+// Feature modules
 import { BlogModule } from './blog/blog.module';
+import { BuskingModule } from './busking/busking.module';
+import { DonationModule } from './donation/donation.module';
+import { FormGameModule } from './form-game/form-game.module';
 import { FormRegisterModule } from './form-register/form-register.module';
 import { GameCreateRoomModule } from './game-create-room/game-create-room.module';
+import { GameJoinModule } from './game-join/game-join.module';
+import { GameModule } from './game/game.module';
 import { GameRankModule } from './game-rank/game-rank.module';
 import { GameTypeModule } from './game-type/game-type.module';
-import { GameModule } from './game/game.module';
 import { GuildCreateModule } from './guild-create/guild-create.module';
-import { GuildManageModule } from './guild-manage/guild-manage.module';
-import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
-import { PrototypeModule } from './prototype/prototype.module';
-import { ServerRegisterModule } from './server-register/server-register.module';
-import { UserDataModule } from './user-data/user-data.module';
-import { WelcomeModule } from './welcome/welcome.module';
+import { GuildKickModule } from './guild-kick/guild-kick.module';
+import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
-import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
-import { ServerCreateRoleModule } from './server-create-role/server-create-role.module';
-import { ServerUpdateRoleModule } from './server-update-role/server-update-role.module';
-import { ServerSetRoomModule } from './server-set-room/server-set-room.module';
-import { Client, GatewayIntentBits } from 'discord.js';
-import { GameJoinModule } from './game-join/game-join.module';
+import { PrototypeModule } from './prototype/prototype.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
 import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
-import { BuskingModule } from './busking/busking.module';
-import { FormGameModule } from './form-game/form-game.module';
-import { DonationModule } from './donation/donation.module';
-import { VoiceTimeModule } from './voice-time/voice-time.module';
-import { TransferModule } from './transfer/transfer.module';
+import { ServerCreateRoleModule } from './server-create-role/server-create-role.module';
+import { ServerRegisterModule } from './server-register/server-register.module';
+import { ServerSetRoomModule } from './server-set-room/server-set-room.module';
+import { ServerTryItOnModule } from './server-try-it-out/server-try-it-on.module';
+import { ServerUpdateRoleModule } from './server-update-role/server-update-role.module';
 import { StageChannelModule } from './stage-channel/stage-channel.module';
+import { TransferModule } from './transfer/transfer.module';
+import { UserDataModule } from './user-data/user-data.module';
+import { VoiceTimeModule } from './voice-time/voice-time.module';
+import { WelcomeModule } from './welcome/welcome.module';
 
 @Global()
 @Module({
@@ -113,65 +113,4 @@ import { StageChannelModule } from './stage-channel/stage-channel.module';
   providers: [PrismaService, AppUpdate, AppService],
   exports: [PrismaService, AppService],
 })
-export class AppModule {
-  private client: Client;
-
-  constructor() {
-    this.client = new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildBans,
-        GatewayIntentBits.GuildEmojisAndStickers,
-        GatewayIntentBits.GuildIntegrations,
-        GatewayIntentBits.GuildWebhooks,
-        GatewayIntentBits.GuildInvites,
-        GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.GuildMessageReactions,
-        GatewayIntentBits.GuildMessageTyping,
-        GatewayIntentBits.DirectMessageReactions,
-        GatewayIntentBits.DirectMessageTyping,
-        GatewayIntentBits.MessageContent,
-      ],
-    });
-
-    this.client.login(process.env.DISCORD_BOT_TOKEN);
-    this.client.on('ready', this.handleClientReady.bind(this));
-  }
-
-  private async handleClientReady() {
-    const guilds = this.client.guilds.cache;
-    const allCommands = new Map<string, any>();
-
-    for (const guild of guilds.values()) {
-      const commands = await guild.commands.fetch();
-
-      if (commands.size > 0) {
-        commands.forEach((command) => {
-          allCommands.set(command.name, command);
-        });
-      }
-
-      commands.forEach((command) => {
-        console.log(
-          `Guild: ${guild.name}, Command Name: ${command.name}, Command Description: ${command.description}`,
-        );
-      });
-    }
-
-    await this.client.application.commands.set([]);
-
-    for (const guild of guilds.values()) {
-      allCommands.forEach((command) => {
-        guild.commands.create({
-          name: command.name,
-          description: command.description,
-          options: command.options as any,
-        });
-      });
-    }
-  }
-}
+export class AppModule {}

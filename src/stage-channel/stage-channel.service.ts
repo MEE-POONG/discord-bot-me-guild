@@ -20,11 +20,12 @@ export class StageChannelService {
 
       // หา category ที่ชื่อ Busking
       const category = interaction.guild.channels.cache.find(
-        (c) =>
-          c.type === ChannelType.GuildCategory && c.name === '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈',
+        (c) => c.type === ChannelType.GuildCategory && c.name === '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈',
       ) as CategoryChannel | undefined;
 
-      console.log(interaction.guild.channels.cache.map((c) => c.name));
+      this.logger.debug(
+        `Available channels: ${interaction.guild.channels.cache.map((c) => c.name).join(', ')}`,
+      );
 
       if (!category) {
         throw new Error('ไม่พบหมวดหมู่ Busking ในเซิร์ฟเวอร์นี้');
@@ -38,10 +39,7 @@ export class StageChannelService {
         permissionOverwrites: [
           {
             id: interaction.guild.id, // @everyone role
-            allow: [
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.Connect,
-            ],
+            allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.Connect],
             deny: [PermissionFlagsBits.RequestToSpeak],
           },
           {
@@ -62,17 +60,17 @@ export class StageChannelService {
         // ดึง user ที่สั่งคำสั่งเข้าห้อง stage
         await member.voice.setChannel(stageChannel as VoiceBasedChannel);
       } catch (error) {
-        console.log('error ดึง user ที่สั่งคำสั่งเข้าห้อง stage', error);
+        this.logger.error('Error moving user to stage channel', error);
       }
 
-    //   try {
-    //     // Promote เป็น speaker (request to speak)
-    //     if (stageChannel.type === ChannelType.GuildStageVoice) {
-    //       await member.voice.setRequestToSpeak(true);
-    //     }
-    //   } catch (error) {
-    //     console.log('error Promote เป็น speaker (request to speak)', error);
-    //   }
+      //   try {
+      //     // Promote เป็น speaker (request to speak)
+      //     if (stageChannel.type === ChannelType.GuildStageVoice) {
+      //       await member.voice.setRequestToSpeak(true);
+      //     }
+      //   } catch (error) {
+      //     this.logger.error('Error promoting to speaker (request to speak)', error);
+      //   }
 
       return stageChannel;
     } catch (error) {

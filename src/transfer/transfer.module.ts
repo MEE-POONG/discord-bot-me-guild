@@ -5,4 +5,4 @@ import { TransferCommands } from './transfer.commands';
 @Module({
   providers: [TransferService, TransferCommands],
 })
-export class TransferModule {} 
+export class TransferModule {}

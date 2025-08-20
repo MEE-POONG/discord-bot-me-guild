@@ -1,11 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  GuildDB,
-  GuildMembers,
-  PrismaClient,
-  UserDB,
-  MeGuildCoinDB,
-} from '@prisma/client';
+import { GuildDB, GuildMembers, PrismaClient, UserDB, MeGuildCoinDB } from '@prisma/client';
 import {
   ButtonInteraction,
   CacheType,
@@ -33,7 +27,7 @@ export class GuildManageService {
     private readonly users: UserManager,
     private readonly client: Client,
     private readonly serverRepository: ServerRepository,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     this.logger.log('GuildManageService initialized');
@@ -57,7 +51,7 @@ export class GuildManageService {
   async checkGuild(userData: UserProfile) {
     try {
       return await this.prisma.guildMembers.findFirst({
-        where: { userId: userData.discord_id as string },
+        where: { userId: userData.discord_id },
       });
     } catch (error) {
       throw error;
@@ -77,7 +71,7 @@ export class GuildManageService {
         });
       }
 
-      interaction.message.delete().catch(() => { });
+      interaction.message.delete().catch(() => {});
       interaction.reply({
         content: 'ยกเลิกคำขอสำเร็จ',
         ephemeral: true,
@@ -90,17 +84,17 @@ export class GuildManageService {
             .send({
               content: `❌ เนื่องจากผู้ร่วมก่อตั้งกิลด์ ${report.guildName} ไม่เห็นด้วยกับคำขอของคุณ คำขอสร้างกิลด์ของคุณได้ถูกยกเลิกแล้ว`,
             })
-            .catch(() => { });
+            .catch(() => {});
         }
 
         await this.prisma.guildCreateReport
           .delete({
             where: { id: reportId },
           })
-          .catch(() => { });
+          .catch(() => {});
       }
     } catch {
-      interaction.message.delete().catch(() => { });
+      interaction.message.delete().catch(() => {});
       interaction.reply({
         content: 'ยกเลิกคำขอสำเร็จ',
         ephemeral: true,
@@ -175,9 +169,7 @@ export class GuildManageService {
           content: 'ยืนยันคำขอสำเร็จ',
         });
 
-        const Interguild = await this.client.guilds.fetch(
-          process.env.DISCORD_GUILD_ID,
-        );
+        const Interguild = await this.client.guilds.fetch(process.env.DISCORD_GUILD_ID);
         if (!Interguild) {
           return interaction.editReply({
             content: 'ไม่สามารถเข้าถึงดิสกิลด์ได้',
@@ -186,49 +178,38 @@ export class GuildManageService {
 
         const owner = await Interguild.members.fetch(report.ownerId);
 
-        owner?.roles
-          .add(process.env.DISCORD_GUILD_FOUNDER_ROLE_ID)
-          .catch((error) => {
-            console.log('Failed to add role to owner', error);
-          });
+        owner?.roles.add(process.env.DISCORD_GUILD_FOUNDER_ROLE_ID).catch((error) => {
+          this.logger.error('Failed to add guild founder role to owner', error);
+        });
         owner?.roles.add(res.role).catch((error) => {
-          console.log('Failed to add role to owner', error);
+          this.logger.error('Failed to add guild role to owner', error);
         });
 
         for (const id of membersList.filter((id) => id !== report.ownerId)) {
           const member = await Interguild.members.fetch(id);
           if (member) {
-            member.roles
-              .add(process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID)
-              .catch((error) => {
-                console.log(`Failed to add role to member ${id}`, error);
-              });
+            member.roles.add(process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID).catch((error) => {
+              this.logger.error(`Failed to add co-founder role to member ${id}`, error);
+            });
             member.roles.add(res.role).catch((error) => {
-              console.log(`Failed to add role to member ${id}`, error);
+              this.logger.error(`Failed to add guild role to member ${id}`, error);
             });
             member
               .send({
                 content: `🎉 ยินดีด้วย! กิลด์ ${report.guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`,
               })
               .catch(() => {
-                console.log(`Failed to send message to member ${id}`);
+                this.logger.error(`Failed to send message to member ${id}`);
               });
           }
         }
 
-        this.updateMessage(
-          report.channelId,
-          report.messageId,
-          report.guildName,
-          membersList,
-        );
+        this.updateMessage(report.channelId, report.messageId, report.guildName, membersList);
 
-        await this.prisma.guildCreateReport
-          .delete({ where: { id: reportId } })
-          .catch(() => { });
+        await this.prisma.guildCreateReport.delete({ where: { id: reportId } }).catch(() => {});
 
         interaction.message.delete().catch(() => {
-          console.log('Failed to delete interaction message');
+          this.logger.error('Failed to delete interaction message');
         });
       } else {
         await this.prisma.guildCreateReport.update({
@@ -240,18 +221,16 @@ export class GuildManageService {
           content: 'ยืนยันคำขอสำเร็จ',
         });
         interaction.message.delete().catch(() => {
-          console.log('Failed to delete interaction message');
+          this.logger.error('Failed to delete interaction message');
         });
 
-        this.updateMessage(
-          report.channelId,
-          report.messageId,
-          report.guildName,
-          [...report.members, interaction.user.id],
-        );
+        this.updateMessage(report.channelId, report.messageId, report.guildName, [
+          ...report.members,
+          interaction.user.id,
+        ]);
       }
     } catch (error) {
-      console.log('error', error);
+      this.logger.error('Error in acceptInviteCreate', error);
       interaction.editReply({
         content: 'เกิดข้อผิดพลาดในการยืนยันคำขอ โปรดลองอีกครั้ง',
       });
@@ -259,28 +238,17 @@ export class GuildManageService {
   }
 
   async deleteData(guildDB: GuildDB) {
-    await this.prisma.guildDB
-      .delete({ where: { id: guildDB.id } })
-      .catch(() => {
-        console.log(`Failed to delete guild: ${guildDB.id}`);
-      });
-    await this.prisma.guildMembers
-      .deleteMany({ where: { guildId: guildDB.id } })
-      .catch(() => {
-        console.log(`Failed to delete guild members for guild: ${guildDB.id}`);
-      });
+    await this.prisma.guildDB.delete({ where: { id: guildDB.id } }).catch(() => {
+      this.logger.error(`Failed to delete guild: ${guildDB.id}`);
+    });
+    await this.prisma.guildMembers.deleteMany({ where: { guildId: guildDB.id } }).catch(() => {
+      this.logger.error(`Failed to delete guild members for guild: ${guildDB.id}`);
+    });
   }
 
-  async updateMessage(
-    channelId: string,
-    messageId: string,
-    guildName: string,
-    members: string[],
-  ) {
+  async updateMessage(channelId: string, messageId: string, guildName: string, members: string[]) {
     try {
-      const channel = (await this.client.channels.fetch(channelId)) as
-        | TextChannel
-        | VoiceChannel;
+      const channel = (await this.client.channels.fetch(channelId)) as TextChannel | VoiceChannel;
       if (!channel) return;
 
       const message = await channel.messages.fetch(messageId);
@@ -289,21 +257,17 @@ export class GuildManageService {
       const embed = new EmbedBuilder(message.embeds[0].toJSON());
       if (members.length >= 4) {
         embed
-          .setTitle(
-            `#🎉 กิลด์ ${guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`,
-          )
+          .setTitle(`#🎉 กิลด์ ${guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`)
           .setColor('Gold');
       } else {
-        embed.setTitle(
-          `# ความคืบหน้า (${members.length}/4) ของกิลด์ ${guildName}`,
-        );
+        embed.setTitle(`# ความคืบหน้า (${members.length}/4) ของกิลด์ ${guildName}`);
       }
 
       await message.edit({ embeds: [embed] }).catch(() => {
-        console.log('Failed to edit message');
+        this.logger.error('Failed to edit message');
       });
     } catch {
-      console.log('Failed to fetch channel or message');
+      this.logger.error('Failed to fetch channel or message');
     }
   }
 
@@ -337,19 +301,14 @@ export class GuildManageService {
       const message = await this.createChannel(role);
       return { role, message };
     } catch (error) {
-      console.log('error ไม่สามารถสร้างห้องกิลด์ได้', error);
+      this.logger.error('Error creating guild room', error);
       return { role: undefined, message: 'ไม่สามารถสร้างห้องกิลด์ได้' };
     }
   }
 
-  private async createGiftHouseChannel(
-    categoryId: string,
-    roles: Role,
-  ): Promise<void> {
+  private async createGiftHouseChannel(categoryId: string, roles: Role): Promise<void> {
     try {
-      const guildServer = await this.client.guilds.fetch(
-        process.env.DISCORD_GUILD_ID,
-      );
+      const guildServer = await this.client.guilds.fetch(process.env.DISCORD_GUILD_ID);
       if (!guildServer) {
         this.logger.error('Failed to fetch guild');
         return;
@@ -371,14 +330,9 @@ export class GuildManageService {
     }
   }
 
-  private async createGuildEventChannel(
-    categoryId: string,
-    roles: Role,
-  ): Promise<void> {
+  private async createGuildEventChannel(categoryId: string, roles: Role): Promise<void> {
     try {
-      const guildServer = await this.client.guilds.fetch(
-        process.env.DISCORD_GUILD_ID,
-      );
+      const guildServer = await this.client.guilds.fetch(process.env.DISCORD_GUILD_ID);
       if (!guildServer) {
         this.logger.error('Failed to fetch guild');
         return;
@@ -402,9 +356,7 @@ export class GuildManageService {
 
   private async createChannel(roles: Role): Promise<string> {
     try {
-      const guildServer = await this.client.guilds.fetch(
-        process.env.DISCORD_GUILD_ID,
-      );
+      const guildServer = await this.client.guilds.fetch(process.env.DISCORD_GUILD_ID);
       if (!guildServer) {
         this.logger.error('Failed to fetch guild');
         return 'ไม่สามารถเข้าถึงดิสกิลด์ได้';
@@ -442,11 +394,7 @@ export class GuildManageService {
         return 'ไม่สามารถสร้างห้องหมวดหมู่กิลด์ได้';
       }
 
-      const createVoiceChannel = async (
-        name: string,
-        state = 0,
-        publicView = false,
-      ) => {
+      const createVoiceChannel = async (name: string, state = 0, publicView = false) => {
         try {
           const voiceChannel = await category.children.create({
             type:
@@ -458,17 +406,17 @@ export class GuildManageService {
             name,
             permissionOverwrites: publicView
               ? [
-                {
-                  id: process.env.DISCORD_GUILD_CATEGORY_ID_PARTY,
-                  allow: ['ViewChannel', 'Connect'],
-                },
-              ]
+                  {
+                    id: process.env.DISCORD_GUILD_CATEGORY_ID_PARTY,
+                    allow: ['ViewChannel', 'Connect'],
+                  },
+                ]
               : [
-                {
-                  id: guildServer.roles.everyone.id,
-                  deny: ['ViewChannel'],
-                },
-              ],
+                  {
+                    id: guildServer.roles.everyone.id,
+                    deny: ['ViewChannel'],
+                  },
+                ],
           });
 
           return voiceChannel;

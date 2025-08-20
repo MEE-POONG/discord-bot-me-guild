@@ -5,12 +5,12 @@ import { ServerRegisterService } from './server-register.service';
 @Injectable()
 export class ServerRegisterCommands {
   private readonly logger = new Logger(ServerRegisterCommands.name);
-  constructor(private readonly registerService: ServerRegisterService) { }
+  constructor(private readonly registerService: ServerRegisterService) {}
 
   @SlashCommand({
     name: 'server-register',
     description: 'ระบบเจ้าของดิสลงทะเบียน Discord Server',
-    defaultMemberPermissions:'8'
+    defaultMemberPermissions: '8',
   })
   async handleServerRegister(@Context() [interaction]: SlashCommandContext) {
     try {

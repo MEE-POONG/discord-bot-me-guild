@@ -22,6 +22,10 @@ RUN npm install -g pnpm
 # Set working directory
 WORKDIR /app
 
+# Set Node.js memory limits to prevent heap out of memory
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_ENV=development
+
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
@@ -49,5 +53,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node healthcheck.js
 
-# Start the application in development mode
-CMD ["pnpm", "start:dev"]
+# Start the application with optimized TypeScript compilation
+CMD ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm start:dev"]

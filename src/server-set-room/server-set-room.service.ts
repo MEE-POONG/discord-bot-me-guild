@@ -204,15 +204,15 @@ export class ServerSetRoomService {
 
   private getDefaultRoomNames() {
     return {
-      welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆', // ห้องต้อนรับ
-      news: '📢︰ข่าวสาร', // ห้องข่าวสาร
-      register: '🧾︰ลงทะเบียน', // ห้องลงทะเบียน
+      welcome: '🚪︰𝑾𝒆𝒍𝒄𝒐𝒎𝒆', // ห้องต้อนรับ ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
+      news: '📢︰ข่าวสาร', // ห้องข่าวสาร ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
+      register: '🧾︰ลงทะเบียน', // ห้องลงทะเบียน ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
       trade: '💱︰𝑻𝒓𝒂𝒅𝒆 ค้าขาย',
-      complaint: '📢︰แจ้งความร้องทุกข์',
+      complaint: '📢︰แจ้งความร้องทุกข์', 
       suggestion: '💡︰ข้อเสนอแนะ',
-      guild: '🎭︰𝑮𝒖𝒊𝒍𝒅-𝑳𝒊𝒔𝒕',
-      gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม
-      gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม
+      guild: '🎭︰𝑮𝒖𝒊𝒍𝒅-𝑳𝒊𝒔𝒕', //ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
+      gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
+      gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
     };
   }
 
@@ -239,6 +239,12 @@ export class ServerSetRoomService {
         name: `〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓`,
         type: 4, // Category Channel
         position: 0,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // @everyone role
+            allow: ['ViewChannel', 'ReadMessageHistory'],
+          },
+        ],
       });
 
       // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
@@ -261,6 +267,13 @@ export class ServerSetRoomService {
       type: 0, // Text Channel
       parent: meguildCategory.id, // ตั้ง parent เป็น 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
       position: channelPositionMapping[roomType], // กำหนดลำดับห้อง
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id, // @everyone role
+          allow: ['ViewChannel', 'ReadMessageHistory'],
+          deny: ['SendMessages'],
+        },
+      ],
     });
 
     this.logger.debug('New room created:', newRoom.name);
@@ -308,6 +321,12 @@ export class ServerSetRoomService {
     const gameCategory = await interaction.guild.channels.create({
       name: `〔🎮〕𝑮𝒂𝒎𝒆 𝑪𝒆𝒏𝒕𝒆𝒓`,
       type: 4, // Category Channel
+      permissionOverwrites: [
+        {
+          id: interaction.guild.roles.everyone.id, // @everyone role
+          allow: ['ViewChannel', 'ReadMessageHistory'],
+        },
+      ],
     });
 
     this.logger.debug('Game category created:', gameCategory.name);
@@ -317,6 +336,13 @@ export class ServerSetRoomService {
       name: defaultRoomNames['gamebtn'],
       type: 0, // Text Channel
       parent: gameCategory.id, // Set the category as the parent
+      permissionOverwrites: [
+        {
+          id: interaction.guild.roles.everyone.id, // @everyone role
+          allow: ['ViewChannel', 'ReadMessageHistory'],
+          deny: ['SendMessages'],
+        },
+      ],
     });
 
     // Create game match text channel under the category
@@ -324,6 +350,13 @@ export class ServerSetRoomService {
       name: defaultRoomNames['gamematch'],
       type: 0, // Text Channel
       parent: gameCategory.id, // Set the category as the parent
+      permissionOverwrites: [
+        {
+          id: interaction.guild.roles.everyone.id, // @everyone role
+          allow: ['ViewChannel', 'ReadMessageHistory'],
+          deny: ['SendMessages'],
+        },
+      ],
     });
 
     // Update the database with the new channels
@@ -418,6 +451,12 @@ export class ServerSetRoomService {
       buskingCategory = await guild.channels.create({
         name: '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓',
         type: ChannelType.GuildCategory,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // @everyone role
+            allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+          },
+        ],
       });
 
       // อัปเดต ID หมวดหมู่ในฐานข้อมูล
@@ -439,6 +478,12 @@ export class ServerSetRoomService {
       name: '🎩𝗘𝗻𝘁𝗲𝗿𝘁𝗮𝗶𝗻 𝗭𝗼𝗻𝗲',
       type: ChannelType.GuildText,
       parent: buskingCategory.id,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id, // @everyone role
+          allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+        },
+      ],
     });
 
     this.logger.debug('Busking channel created:', buskingChannel.name);

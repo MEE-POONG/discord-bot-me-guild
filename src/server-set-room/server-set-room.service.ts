@@ -415,7 +415,7 @@ export class ServerSetRoomService {
       .setColor(16760137)
       .setFooter({ text: 'ข้อมูลของคุณจะถูกเก็บเป็นความลับ' })
       .setImage(
-        'https://media.discordapp.net/attachments/1222826027445653536/1222826136359276595/registerguild.webp?ex=6617a095&is=66052b95&hm=17dfd3921b25470b1e99016eb9f89dd68fb1ada3481867d145c8acf81e25cec6&=&format=webp&width=839&height=400',
+        'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA/31920c9b-3108-4221-fae3-030b45e2b200/public',
       )
       .setThumbnail('https://cdn-icons-png.flaticon.com/512/6521/6521996.png');
     const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
@@ -429,6 +429,41 @@ export class ServerSetRoomService {
         .setEmoji('📝')
         .setLabel('ลงทะเบียนกิลล์')
         .setStyle(ButtonStyle.Primary),
+    );
+
+    return channel.send({ embeds: [embed], components: [actionRow] });
+  }
+
+  private async createBuskingMessage(channel: TextChannel) {
+    const embed = new EmbedBuilder()
+      .setTitle('🎩 ศูนย์กิจกรรมบันเทิง')
+      .setDescription(
+        '🌟 **ยินดีต้อนรับสู่โซนบันเทิง!** 🌟\n\n' +
+        '📋 **ขอสร้างกิจกรรมบันเทิง:**\n' +
+        '• กิจกรรมการแสดงสด (Live Performance)\n' +
+        '• การแข่งขันความสามารถ (Talent Competition)\n' +
+        '• Workshop สอนทักษะ (Skill Workshop)\n' +
+        '• กิจกรรมสันทนาการ (Entertainment Events)\n\n' +
+        '🎭 คลิกปุ่มด้านล่างเพื่อขอสร้างกิจกรรมของคุณ!'
+      )
+      .setColor(0xffb347) // สีส้มทอง
+      .setFooter({ text: 'แสดงความสามารถของคุณและสร้างความสนุกให้กับชุมชน!' })
+      .setImage(
+        'https://imagedelivery.net/QZ6TuL-3r02W7wQjQrv5DA/31920c9b-3108-4221-fae3-030b45e2b200/public',
+      )
+      .setThumbnail('https://cdn-icons-png.flaticon.com/512/3515/3515174.png'); // entertainment icon
+
+    const actionRow = new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setCustomId('busking-request-activity')
+        .setEmoji('🎪')
+        .setLabel('ขอสร้างกิจกรรมบันเทิง')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('busking-schedule-view')
+        .setEmoji('📅')
+        .setLabel('ดูตารางกิจกรรม')
+        .setStyle(ButtonStyle.Secondary),
     );
 
     return channel.send({ embeds: [embed], components: [actionRow] });
@@ -491,6 +526,9 @@ export class ServerSetRoomService {
     await this.serverRepository.updateServer(interaction.guildId, {
       buskingChannel: buskingChannel.id,
     });
+
+    // สร้างข้อความกิจกรรมบันเทิงในห้อง Busking
+    await this.createBuskingMessage(buskingChannel);
 
     this.roomName = buskingChannel.name;
     return this.replySuccess(interaction, 'busking');

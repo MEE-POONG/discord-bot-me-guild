@@ -134,10 +134,13 @@ export class ServerSetRoomService {
   public async handleRoomRegistration(@Context() [interaction]: StringSelectContext) {
     this.logger.debug('handleRoomRegistration called with interaction:', interaction);
 
+    // Defer reply เพื่อป้องกัน timeout
+    await interaction.deferReply({ ephemeral: true });
+
     const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) {
       this.logger.warn('Server not found for guildId:', interaction.guildId);
-      return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์');
+      return this.editReplyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์');
     }
 
     this.logger.debug('Server found:', server);
@@ -154,7 +157,7 @@ export class ServerSetRoomService {
 
     if (existingChannel) {
       this.logger.warn('Existing channel found:', existingChannel.name);
-      return this.replyStopCreate(interaction, roomType, existingChannel.name);
+      return this.editReplyStopCreate(interaction, roomType, existingChannel.name);
     }
 
     try {
@@ -176,7 +179,7 @@ export class ServerSetRoomService {
         this.logger.error('Missing Permissions');
         errorMessage = '❌ กรุณาให้สิทธิ์บทบาทขั้นสูงกับ Bot';
       }
-      return interaction.update({
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('⚠️ ข้อผิดพลาด')
@@ -290,7 +293,7 @@ export class ServerSetRoomService {
       await this.createRegistrationMessage(newRoom);
     }
 
-    return this.replySuccess(interaction, roomType);
+    return this.editReplySuccess(interaction, roomType);
   }
 
   private async createGameMatchRooms(
@@ -306,14 +309,13 @@ export class ServerSetRoomService {
     const registerChannel = interaction.guild.channels.cache.get(registerChannelId);
 
     if (!registerChannel) {
-      return interaction.reply({
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('❌ ไม่สามารถสร้างห้อง GameMatch ได้')
             .setDescription('กรุณาสร้างห้อง **REGISTER** ก่อนการสร้างห้อง GameMatch')
             .setColor(0xff0000),
         ],
-        ephemeral: true,
       });
     }
 
@@ -395,7 +397,7 @@ export class ServerSetRoomService {
       components: [actionRow],
     });
     // Reply to the interaction to confirm the creation
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle('✅ การสร้างห้องสำเร็จ')
@@ -404,7 +406,6 @@ export class ServerSetRoomService {
           )
           .setColor(0x00ff00),
       ],
-      ephemeral: true,
     });
   }
 
@@ -502,7 +503,7 @@ export class ServerSetRoomService {
     // 🛑 ตรวจสอบว่าห้อง Busking มีอยู่แล้วหรือไม่
     const existingBuskingChannel = guild.channels.cache.get(server?.buskingChannel || '');
     if (existingBuskingChannel) {
-      return this.replyStopCreate(interaction, 'busking', existingBuskingChannel.name);
+      return this.editReplyStopCreate(interaction, 'busking', existingBuskingChannel.name);
     }
 
     this.logger.log('สร้างห้อง Busking ใหม่');
@@ -527,13 +528,73 @@ export class ServerSetRoomService {
       buskingChannel: buskingChannel.id,
     });
 
+    // สร้างห้องเสียงพักพูดคุย 5 ห้อง
+    for (let i = 1; i <= 5; i++) {
+      await guild.channels.create({
+        name: `🔊・ห้องพักพูดคุย ${i}`,
+        type: ChannelType.GuildVoice,
+        parent: buskingCategory.id,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // @everyone role
+            allow: ['ViewChannel', 'Connect', 'Speak'],
+          },
+        ],
+      });
+    }
+
+    this.logger.debug('Busking voice channels created');
+
     // สร้างข้อความกิจกรรมบันเทิงในห้อง Busking
     await this.createBuskingMessage(buskingChannel);
 
     this.roomName = buskingChannel.name;
-    return this.replySuccess(interaction, 'busking');
+    return this.editReplySuccess(interaction, 'busking');
   }
 
+  private editReplyStopCreate(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    roomType: string,
+    existingChannelName: string,
+  ) {
+    return interaction.editReply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
+          .setDescription(
+            `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
+              `**${existingChannelName}**\n` +
+              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+          )
+          .setColor(0xffa500),
+      ],
+      components: [],
+    });
+  }
+
+  private editReplyError(interaction: any, message: string) {
+    return interaction.editReply({
+      embeds: [
+        new EmbedBuilder().setTitle('❌ เกิดข้อผิดพลาด').setDescription(message).setColor(0xff0000),
+      ],
+    });
+  }
+
+  private editReplySuccess(interaction: StringSelectMenuInteraction<CacheType>, roomType: string) {
+    return interaction.editReply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('✅ การสร้างห้องสำเร็จ')
+          .setDescription(
+            `🎉 ห้อง **${this.roomName}** สำหรับประเภท **${roomType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!`,
+          )
+          .setColor(0x00ff00),
+      ],
+      components: [],
+    });
+  }
+
+  // เก็บ methods เดิมไว้เพื่อความเข้ากันได้
   private replyStopCreate(
     interaction: StringSelectMenuInteraction<CacheType>,
     roomType: string,
@@ -545,8 +606,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-            `**${existingChannelName}**\n` +
-            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+              `**${existingChannelName}**\n` +
+              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],

@@ -20,7 +20,7 @@ export class StageChannelService {
 
       // หา category ที่ชื่อ Busking
       const category = interaction.guild.channels.cache.find(
-        (c) => c.type === ChannelType.GuildCategory && c.name === '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈',
+        (c) => c.type === ChannelType.GuildCategory && (c.name === '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈' || c.name === '〔🎩〕𝑩𝒖𝒔𝒌𝒊𝒏𝒈 𝑪𝒆𝒏𝒕𝒆𝒓'),
       ) as CategoryChannel | undefined;
 
       this.logger.debug(

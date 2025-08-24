@@ -1,3 +1,4 @@
+import { StageChannelService } from '@/stage-channel/stage-channel.service';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   EmbedBuilder,
@@ -9,8 +10,10 @@ import {
   ButtonStyle,
   CacheType,
   ChannelType,
+  GuildMember,
+  CommandInteraction,
 } from 'discord.js';
-import { Context, SlashCommandContext, StringSelect, StringSelectContext } from 'necord';
+import { Button, ButtonContext, Context, SlashCommandContext, StringSelect, StringSelectContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -23,6 +26,7 @@ export class ServerSetRoomService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
+    private readonly stageChannelService: StageChannelService,
   ) { }
 
   public onModuleInit() {
@@ -468,6 +472,43 @@ export class ServerSetRoomService {
     );
 
     return channel.send({ embeds: [embed], components: [actionRow] });
+  }
+
+  @Button('busking-request-activity')
+  public async createBuskingRequestActivity(@Context() [interaction]: ButtonContext) {
+
+    
+
+    const member = interaction.member as GuildMember;
+    const voiceChannel = member.voice.channel;
+    if (!voiceChannel) {
+      await interaction.reply({
+        content: '❌ คุณต้องอยู่ในห้องเสียงก่อนจึงจะสามารถเข้าร่วมห้องได้',
+        ephemeral: true, // ข้อความจะเห็นได้เฉพาะผู้ใช้ที่กดปุ่ม
+        fetchReply: true, // ใช้เพื่อให้เราสามารถดึงข้อมูลข้อความที่ส่งออกมาได้
+      });
+      return;
+    }
+    
+
+    try {
+      await interaction.deferReply({ ephemeral: true });
+
+      const topic = member.displayName + ' สร้างกิจกรรมบันเทิงแล้ว';
+      const stageChannel = await this.stageChannelService.createStageChannel(
+        interaction as unknown as CommandInteraction<CacheType>,
+        topic,
+      );
+
+      await interaction.editReply({
+        content: `✅ สร้าง Stage Channel "${stageChannel.name}" และตั้งเวทีสำเร็จ!\nหัวข้อ: ${topic}\n\nบอทได้ย้ายคุณเข้าห้องแล้ว กรุณากด 'ขอพูด' (Request to Speak) ด้วยตัวเอง`,
+      });
+    } catch (error) {
+      this.logger.error('Create stage command failed:', error);
+      await interaction.editReply({
+        content: '❌ ไม่สามารถสร้าง Stage Channel ได้ กรุณาลองใหม่อีกครั้ง',
+      });
+    }
   }
 
   private async createBuskingRoom(interaction: StringSelectMenuInteraction<CacheType>) {

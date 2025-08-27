@@ -3,8 +3,9 @@ import { GameJoinService } from './game-join.service';
 import { GameJoinCommands } from './game-join.commands';
 import { GameTypeRepository } from 'src/game-type/game-type.repository';
 import { GameRepository } from 'src/game/game.repository';
+import { GameRankRepository } from 'src/game-rank/game-rank.repository';
 
 @Module({
-  providers: [GameJoinService, GameJoinCommands, GameTypeRepository, GameRepository],
+  providers: [GameJoinService, GameJoinCommands, GameTypeRepository, GameRepository, GameRankRepository],
 })
 export class GameJoinModule {}

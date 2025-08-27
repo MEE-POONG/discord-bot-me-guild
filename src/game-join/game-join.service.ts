@@ -19,10 +19,11 @@ import { Context } from 'necord';
 import { StringSelect } from 'necord';
 import { GameTypeRepository } from 'src/game-type/game-type.repository';
 import { GameRepository } from 'src/game/game.repository';
+import { GameRankRepository } from 'src/game-rank/game-rank.repository';
 import { PrismaService } from 'src/prisma.service';
 
 const CATEGORY_TITLE = 'แนวเกมส์';
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 20;
 
 @Injectable()
 export class GameJoinService {
@@ -34,6 +35,7 @@ export class GameJoinService {
     private readonly paginationService: NecordPaginationService,
     private readonly gameTypeRepository: GameTypeRepository,
     private readonly gameRepository: GameRepository,
+    private readonly gameRankRepository: GameRankRepository,
   ) {}
 
   public async onModuleInit() {
@@ -62,7 +64,7 @@ export class GameJoinService {
                       await this.gameTypeRepository.getGameTypesWithPagination(
                         CATEGORY_TITLE,
                         page,
-                        5,
+                        ITEMS_PER_PAGE,
                       )
                     ).data.map((gameType) => ({
                       label: gameType.title,
@@ -113,12 +115,27 @@ export class GameJoinService {
     if (interaction.member instanceof GuildMember) {
       const voiceChannel = interaction.member.voice.channel;
       if (!voiceChannel) {
-        await interaction.update({
-          content: 'คุณต้องเชื่อมต่อกับช่องเสียงก่อน',
+        await interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('❌ ไม่พบการเชื่อมต่อช่องเสียง')
+              .setDescription('คุณต้องเชื่อมต่อกับช่องเสียงก่อนจึงจะสามารถใช้งานคำสั่งนี้ได้')
+              .setColor('Red'), // ✅ สีแดง
+            // .setThumbnail('https://cdn-icons-png.flaticon.com/512/1828/1828843.png'), // (optional) ไอคอนเตือน
+          ],
           components: [],
-          files: [],
-          embeds: [],
+          ephemeral: true, // 👈 ซ่อนข้อความให้เห็นเฉพาะคนกด (แนะนำ)
         });
+
+        // ✅ ลบข้อความหลัง 10 วินาที
+        setTimeout(async () => {
+          try {
+            await interaction.deleteReply();
+          } catch (err) {
+            console.warn('⚠️ ไม่สามารถลบข้อความ:', err.message);
+          }
+        }, 10000);
+
         return false;
       }
     }
@@ -127,236 +144,290 @@ export class GameJoinService {
 
   @StringSelect('GAME_JOIN_SELECT_MENU_GAME_TYPE')
   public async onSelectMenu(@Context() [interaction]: StringSelectContext) {
-    try {
-      if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
-        return;
-      }
-
-      const userId = interaction.user.id;
-      const gameTypeId = interaction.values[0];
-
-      this.storeSelectedValues('GAME_JOIN_SELECT_MENU_GAME_TYPE', userId, [gameTypeId]);
-
-      // ✅ ดึงข้อมูลเกมเพื่อเช็คว่า ranking หรือไม่
-      const game = await this.gameRepository.getGameById(gameTypeId); // 👈 เปลี่ยนตรงนี้ถ้าไม่ตรงกับ schema
-
-      // ✅ สร้าง options ตาม ranking
-      const options = [];
-
-      if (game?.ranking) {
-        options.push({
-          label: 'โหมดจัดอันดับ',
-          value: 'RANKED',
-        });
-      }
-
-      options.push(
-        {
-          label: 'โหมดปกติ',
-          value: 'NORMAL',
-        },
-        {
-          label: 'กำหนดเอง',
-          value: 'CUSTOM',
-        },
-      );
-
-      return interaction.update({
-        components: [
-          new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-            new StringSelectMenuBuilder()
-              .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
-              .setPlaceholder('เลือกรูปแบบการเล่น')
-              .setMaxValues(1)
-              .setMinValues(1)
-              .setOptions(options),
-          ),
-        ],
-      });
-    } catch (error) {
-      this.logger.error('Error in onSelectMenu:', error);
-      await interaction.reply({
-        content: 'เกิดข้อผิดพลาดในการเลือกประเภทเกมส์',
-        ephemeral: true,
-      });
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
     }
-  }
 
-  @StringSelect('GAME_JOIN_SELECT_MENU_PLAY_MODE')
-  public async onSelectMenuPlayMode(@Context() [interaction]: StringSelectContext) {
-    try {
-      const gameType = this.selectedValues.find(
-        (value) =>
-          value.key === 'GAME_JOIN_SELECT_MENU_GAME_TYPE' && value.user === interaction.user.id,
-      )?.value;
-      const rankMode = interaction.values[0];
+    const user = interaction.user;
 
-      const member = interaction.member as GuildMember;
-      const user_data = await this.prisma.userDB.findFirst({
-        where: {
-          discord_id: interaction.user.id,
-        },
-      });
+    this.storeSelectedValues('game_join', user.id, interaction.values);
+    this.storeSelectedValues('user_id', user.id, [user.id]);
+    this.storeSelectedValues('user_name', user.id, [user.username]);
+    this.storeSelectedValues('user_display_name', user.id, [user.displayName]);
+    this.storeSelectedValues('user_tag', user.id, [user.tag]);
+    this.storeSelectedValues('user_avatar', user.id, [user.avatarURL()]);
+    this.storeSelectedValues('user_created_at', user.id, [user.createdAt.toISOString()]);
 
-      if (!user_data) {
-        return interaction.reply({
-          content: `กรุณาลงทะเบียน นักผจญภัยเพื่อใช้งานระบบนี้`,
-          ephemeral: true,
-        });
-      }
-
-      if (!member.voice.channel) {
-        return interaction.reply({
-          content: `กรุณาเข้าร่วมช่องเสียงเพื่อใช้คำสั่ง`,
-          ephemeral: true,
-        });
-      }
-
-      const gameInType = await this.prisma.gameTypeGame.findMany({
-        where: {
-          typeId: gameType,
-        },
-      });
-
-      const gameOnline = await this.prisma.gameOnlineDB.findMany({
-        where: {
-          id: {
-            in: gameInType.map((game) => game.gameId),
-          },
-        },
-      });
-
-      if (!gameOnline || gameOnline.length < 1) {
-        return interaction.reply({
-          content: 'ไม่พบข้อมูลเกมในประเภทนี้',
-          ephemeral: true,
-        });
-      }
-
-      const gameSelectId = `gameSelect_${await this.randomNumber(1000, 9999)}`;
-      const gameSelect = new ActionRowBuilder<StringSelectMenuBuilder>().setComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId(gameSelectId)
-          .setMaxValues(1)
-          .setMinValues(1)
-          .setPlaceholder('กรุณาเลือกเกม')
-          .setOptions(
-            gameOnline.map((game) => ({
-              value: game.id,
-              label: game.game_name,
-            })),
-          ),
-      );
-
-      const inter = await interaction.update({
-        components: [gameSelect],
-      });
-      inter
-        .createMessageComponentCollector({
-          filter: (i) => i.user.id === interaction.user.id && i.customId === gameSelectId,
-          max: 1,
-          time: 60 * 1000 * 5,
-        })
-        .on('collect', async (interCollect) => {
-          if (interCollect.isStringSelectMenu()) {
-            const gameId = interCollect.values[0];
-            try {
-              const game = await this.prisma.gameOnlineDB.findFirst({
-                where: { id: gameId },
-              });
-
-              if (!game) {
-                return await interCollect.reply({
-                  content: 'ไม่พบข้อมูลเกม',
-                  ephemeral: true,
-                });
-              }
-
-              const channelData = await this.collectVoiceChannels(interCollect);
-              const matchGameChanel = new RegExp(
-                `^🎮・\\s*${game.game_name}\\s*${rankMode === 'RANKED' ? '' : 'NORMAL'}`,
-              );
-
-              const gameChannel = channelData.filter((channel) =>
-                matchGameChanel.test(channel.name),
-              );
-
-              if (gameChannel.length < 1) {
-                return await interCollect.reply({
-                  content: 'ยังไม่มีสมาชิกสร้างห้องเล่นเกมนี้',
-                  ephemeral: true,
-                });
-              }
-
-              const selectedChannel = gameChannel[Math.floor(Math.random() * gameChannel.length)];
-              await member.voice.setChannel(selectedChannel);
-              await interCollect.reply({
-                content: `เข้าร่วมห้องเกมส์ ${selectedChannel.name} แล้ว`,
-                ephemeral: true,
-              });
-            } catch (error) {
-              console.error('Error moving member to voice channel:', error);
-              await interCollect.reply({
-                content: 'เกิดข้อผิดพลาดในการเข้าร่วมห้องเกมส์',
-                ephemeral: true,
-              });
-            }
-          }
-        })
-        .on('end', () => {
-          inter.delete().catch(() => {});
-        });
-    } catch (error) {
-      this.logger.error('Error in onSelectMenuPlayMode:', error);
-      await interaction.reply({
-        content: 'เกิดข้อผิดพลาดในการเลือกโหมดการเล่น',
-        ephemeral: true,
-      });
-    }
-  }
-
-  private async randomNumber(min: number, max: number): Promise<number> {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  async createEmbedForRoom(roomIndex: number, rooms: VoiceChannel[]) {
-    const room = rooms[roomIndex];
-    const embed = new EmbedBuilder().setDescription(
-      `ห้อง : <#${room.id}>\nผู้สร้าง : <@${room.members.first()?.id}>`,
+    const games = await this.gameRepository.getGamesByType(
+      interaction.values[0],
+      1,
+      ITEMS_PER_PAGE,
     );
-    embed.addFields(
-      { name: 'ขนาดปาร์ตี้', value: `${room.members.size}`, inline: true },
+    this.paginationService.register((builder) =>
+      builder
+        .setCustomId('select_menu_game_join')
+        .setPagesFactory(async (page) =>
+          new PageBuilder()
+            .setContent(`Page ${page}/${Math.ceil(games.total / games.limit)}`)
+            .setComponents([
+              new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+                new StringSelectMenuBuilder()
+                  .setCustomId('GAME_JOIN_SELECT_MENU_GAME')
+                  .setPlaceholder('เลือกเกมส์')
+                  .setMaxValues(1)
+                  .setMinValues(1)
+                  .setOptions(
+                    (
+                      await this.gameRepository.getGamesByType(
+                        interaction.values[0],
+                        page,
+                        ITEMS_PER_PAGE,
+                      )
+                    ).data.map((game) => ({
+                      label: game.game_name,
+                      value: game.id,
+                    })),
+                  ),
+              ),
+            ]),
+        )
+        .setMaxPages(Math.ceil(games.total / games.limit)),
+    );
+    const pagination = this.paginationService.get('select_menu_game_join');
+    const page = await pagination.build();
+
+    return interaction.update({ ...page });
+  }
+
+  @StringSelect('GAME_JOIN_SELECT_MENU_GAME')
+  public async onSelectMenuPlayMode(@Context() [interaction]: StringSelectContext) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
+    const user = interaction.user;
+    this.storeSelectedValues('select_menu_game', user.id, interaction.values);
+
+    const game_uid = interaction.values[0];
+    const game = await this.gameRepository.getGameById(game_uid);
+
+    const options = [];
+
+    if (game.ranking) {
+      options.push({
+        label: 'โหมดจัดอันดับ',
+        value: 'RANKED',
+      });
+    }
+
+    options.push(
       {
-        name: 'ขนาดปาร์ตี้สูงสุด',
-        value: `${room.members.size}`,
-        inline: true,
+        label: 'โหมดปกติ',
+        value: 'NORMAL',
+      },
+      {
+        label: 'กำหนดเอง',
+        value: 'CUSTOM',
       },
     );
 
-    return embed;
+    return interaction.update({
+      content: '',
+      components: [
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_MODE')
+            .setPlaceholder('เลือกโหมดห้องเล่น')
+            .setMaxValues(1)
+            .setMinValues(1)
+            .setOptions(options),
+        ),
+      ],
+    });
   }
 
-  async createActionRow(currentIndex: number, game_id: string, rooms: VoiceChannel[]) {
-    return new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`previous_${currentIndex}_${game_id}`)
-        .setDisabled(currentIndex === 0)
-        .setEmoji('⬅')
-        .setLabel('ย้อนกลับ')
-        .setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder()
-        .setCustomId(`join_${rooms[currentIndex].id}`)
-        .setDisabled(false)
-        .setEmoji('✅')
-        .setLabel('เข้าร่วม')
-        .setDisabled(rooms[currentIndex].members.size === rooms[currentIndex].members.size)
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId(`next_${currentIndex}_${game_id}`)
-        .setDisabled(currentIndex === rooms.length - 1)
-        .setEmoji('➡')
-        .setLabel('ถัดไป')
-        .setStyle(ButtonStyle.Secondary),
-    );
+  @StringSelect('GAME_JOIN_SELECT_MENU_PLAY_MODE')
+  public async onSelectMenuPlayRangedMode(@Context() [interaction]: StringSelectContext) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
+    const user = interaction.user;
+    this.storeSelectedValues('select_menu_play_mode', user.id, interaction.values);
+
+    const check_no_range = interaction.values[0] === 'NORMAL';
+    const game_uid = this.selectedValues.find(
+      (value) => value.key === 'select_menu_game' && value.user === user.id,
+    )?.value;
+
+    if (check_no_range) {
+      const game_name = await this.gameRepository.getGameById(game_uid);
+      const room_name = ` ${game_name.game_name} `;
+
+      if (game_name) {
+        return this.joinGameRoom(interaction, room_name, 'NORMAL');
+      }
+    }
+
+    const check_custom = interaction.values[0] === 'CUSTOM';
+    if (check_custom) {
+      const game_name = await this.gameRepository.getGameById(game_uid);
+      const room_name = ` ${game_name.game_name} `;
+
+      if (game_name) {
+        return this.joinGameRoom(interaction, room_name, 'CUSTOM');
+      }
+    }
+
+    // สำหรับโหมด RANKED ให้เลือกระดับแรงค์ก่อน
+    const game_rank = await this.gameRankRepository.getGamesRank(game_uid);
+
+    if (!game_rank.length) {
+      return interaction.update({
+        components: [],
+        content: 'ไม่พบระดับการเล่นสําหรับเกมนี้',
+      });
+    }
+
+    return interaction.update({
+      components: [
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+          new StringSelectMenuBuilder()
+            .setCustomId('GAME_JOIN_SELECT_MENU_PLAY_RANGED_MODE')
+            .setPlaceholder('เลือกระดับการเล่น')
+            .setMaxValues(1)
+            .setMinValues(1)
+            .setOptions(
+              game_rank.map((game) => ({
+                label: game.nameRank,
+                value: game.id,
+              })),
+            ),
+        ),
+      ],
+    });
+  }
+
+  @StringSelect('GAME_JOIN_SELECT_MENU_PLAY_RANGED_MODE')
+  public async onSelectRankedMode(@Context() [interaction]: StringSelectContext) {
+    if (!(await this.isUserConnectedToVoiceChannel(interaction))) {
+      return;
+    }
+
+    const user = interaction.user;
+    this.storeSelectedValues('select_menu_play_ranged_mode', user.id, interaction.values);
+
+    const game_uid = this.selectedValues.find(
+      (value) => value.key === 'select_menu_game' && value.user === user.id,
+    )?.value;
+
+    const gameRank = await this.gameRankRepository.getGamesRankByID(interaction.values[0]);
+    const game_name = await this.gameRepository.getGameById(game_uid);
+
+    if (!game_name) {
+      return interaction.update({
+        components: [],
+        content: 'ไม่พบเกมส์นี้',
+      });
+    }
+
+    const room_name = ` ${game_name.game_name} `;
+
+    return this.joinGameRoom(interaction, room_name, 'RANKED', gameRank.nameRank);
+  }
+
+  private async joinGameRoom(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    roomName: string,
+    mode: string,
+    rankName?: string,
+  ) {
+    const member = interaction.member as GuildMember;
+    const user_data = await this.prisma.userDB.findFirst({
+      where: {
+        discord_id: interaction.user.id,
+      },
+    });
+
+    if (!user_data) {
+      return interaction.reply({
+        content: `กรุณาลงทะเบียน นักผจญภัยเพื่อใช้งานระบบนี้`,
+        ephemeral: true,
+      });
+    }
+
+    if (!member.voice.channel) {
+      return interaction.reply({
+        content: `กรุณาเข้าร่วมช่องเสียงเพื่อใช้คำสั่ง`,
+        ephemeral: true,
+      });
+    }
+
+    try {
+      const channelData = await this.collectVoiceChannels(interaction);
+      
+      // สร้าง pattern ตาม mode และ rank
+      let matchPattern: RegExp;
+      if (mode === 'RANKED' && rankName) {
+        matchPattern = new RegExp(`^🎮・\\s*${roomName.trim()}\\s*-\\s*${rankName}\\s*-\\s*RMG`);
+      } else {
+        matchPattern = new RegExp(`^🎮・\\s*${roomName.trim()}\\s*-\\s*RMG`);
+      }
+
+      const gameChannel = channelData.filter((channel) =>
+        matchPattern.test(channel.name),
+      );
+
+      if (gameChannel.length < 1) {
+        return interaction.update({
+          content: `ยังไม่มีสมาชิกสร้างห้องเล่นเกม${mode === 'RANKED' ? `แรงค์ ${rankName}` : ''}นี้`,
+          components: [],
+        });
+      }
+
+      const selectedChannel = gameChannel[Math.floor(Math.random() * gameChannel.length)];
+      await member.voice.setChannel(selectedChannel);
+      
+      await interaction.update({
+        content: `✅ เข้าร่วมห้องเกมส์ **${selectedChannel.name}** เรียบร้อยแล้ว!`,
+        components: [],
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('🎮 เข้าร่วมห้องเกมส์สำเร็จ!')
+            .setDescription(`คุณได้เข้าร่วมห้อง **${selectedChannel.name}**`)
+            .setThumbnail(interaction.user.displayAvatarURL())
+            .addFields(
+              { name: 'ชื่อห้อง', value: `${selectedChannel.name}`, inline: true },
+              {
+                name: 'จำนวนผู้เล่นปัจจุบัน',
+                value: `${selectedChannel.members.size}`,
+                inline: true,
+              },
+              {
+                name: 'โหมด',
+                value: mode === 'RANKED' ? `จัดอันดับ (${rankName})` : mode === 'NORMAL' ? 'ปกติ' : 'กำหนดเอง',
+                inline: true,
+              },
+            )
+            .setColor('Green'),
+        ],
+        files: [],
+      });
+
+      // ✅ ลบข้อความหลัง 10 วินาที
+      setTimeout(async () => {
+        try {
+          await interaction.deleteReply();
+        } catch (err) {
+          console.warn('⚠️ ไม่สามารถลบข้อความ:', err.message);
+        }
+      }, 10_000); // 10 วินาที
+    } catch (error) {
+      this.logger.error('Error in joining game room:', error);
+      return interaction.update({
+        content: '❌ เกิดข้อผิดพลาดในการเข้าร่วมห้องเกมส์ กรุณาลองใหม่อีกครั้ง',
+        components: [],
+      });
+    }
   }
 }

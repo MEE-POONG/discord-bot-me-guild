@@ -214,12 +214,16 @@ model GuildDB {
 }
 
 model GuildCreateReport {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId   String
-  channelId String
-  messageId String
-  guildName String
-  members   String[]
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  ownerId         String
+  serverId        String   // Discord server ID where guild is being created
+  channelId       String
+  messageId       String
+  guildName       String
+  invitedMembers  String[] // All members who were invited
+  confirmedMembers String[] @default([]) // Members who confirmed (starts with owner)
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime // 5 minutes from creation
 }
 
 model GuildMembers {

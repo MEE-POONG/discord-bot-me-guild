@@ -727,7 +727,7 @@ export class ServerSetRoomService {
       new ButtonBuilder()
         .setCustomId('register-guild')
         .setEmoji('📝')
-        .setLabel('ลงทะเบียนกิลล์')
+        .setLabel('ลงทะเบียนกิลด์')
         .setStyle(ButtonStyle.Primary),
     );
 
@@ -767,6 +767,101 @@ export class ServerSetRoomService {
     );
 
     return channel.send({ embeds: [embed], components: [actionRow] });
+  }
+
+  @Button('busking-schedule-view')
+  public async viewBuskingSchedule(@Context() [interaction]: ButtonContext) {
+    try {
+      // Get all activities from database
+      const activities = await this.prisma.actDetailDB.findMany({
+        include: {
+          actType: true,
+        },
+        orderBy: {
+          startdate: 'asc',
+        },
+      });
+
+      if (activities.length === 0) {
+        const noActivitiesEmbed = new EmbedBuilder()
+          .setTitle('📅 ตารางกิจกรรมบันเทิง')
+          .setDescription('❌ **ยังไม่มีกิจกรรมที่กำหนดไว้**\n\n' +
+                         '🎭 กิจกรรมบันเทิงจะแสดงที่นี่เมื่อมีการสร้างกิจกรรมใหม่\n' +
+                         '💡 ใช้ปุ่ม "ขอสร้างกิจกรรมบันเทิง" เพื่อสร้างกิจกรรมของคุณ')
+          .setColor(0xff6b6b)
+          .setThumbnail('https://cdn-icons-png.flaticon.com/512/3515/3515174.png')
+          .setTimestamp();
+
+        return interaction.reply({
+          embeds: [noActivitiesEmbed],
+          ephemeral: true,
+        });
+      }
+
+      // Create activity list embed
+      const scheduleEmbed = new EmbedBuilder()
+        .setTitle('📅 ตารางกิจกรรมบันเทิง')
+        .setDescription('🎭 **รายการกิจกรรมบันเทิงที่กำหนดไว้**\n\n' +
+                       '📋 กิจกรรมทั้งหมดที่กำลังจะเกิดขึ้นในชุมชน')
+        .setColor(0x4ecdc4)
+        .setThumbnail('https://cdn-icons-png.flaticon.com/512/3515/3515174.png')
+        .setTimestamp();
+
+      // Add activities to embed fields
+      activities.forEach((activity, index) => {
+        const startDate = new Date(activity.startdate);
+        const endDate = new Date(activity.enddate);
+        const now = new Date();
+        
+        let status = '🟡 กำลังรอ';
+        let statusColor = 0xffff00;
+        
+        if (now >= startDate && now <= endDate) {
+          status = '🟢 กำลังดำเนินการ';
+          statusColor = 0x00ff00;
+        } else if (now > endDate) {
+          status = '🔴 สิ้นสุดแล้ว';
+          statusColor = 0xff0000;
+        }
+
+        scheduleEmbed.addFields({
+          name: `${index + 1}. ${activity.title}`,
+          value: `**ประเภท:** ${activity.actType?.name || 'ไม่ระบุ'}\n` +
+                 `**รายละเอียด:** ${activity.description}\n` +
+                 `**เริ่มต้น:** <t:${Math.floor(startDate.getTime() / 1000)}:F>\n` +
+                 `**สิ้นสุด:** <t:${Math.floor(endDate.getTime() / 1000)}:F>\n` +
+                 `**สถานะ:** ${status}\n` +
+                 `**ผู้จัด:** ${activity.disname || 'ไม่ระบุ'}`,
+          inline: false,
+        });
+      });
+
+      // Add footer with total count
+      scheduleEmbed.setFooter({
+        text: `รวม ${activities.length} กิจกรรม • อัพเดทล่าสุด`,
+        iconURL: 'https://cdn-icons-png.flaticon.com/512/3515/3515174.png'
+      });
+
+      return interaction.reply({
+        embeds: [scheduleEmbed],
+        ephemeral: true,
+      });
+
+    } catch (error) {
+      this.logger.error('Error fetching busking schedule:', error);
+      
+      const errorEmbed = new EmbedBuilder()
+        .setTitle('❌ เกิดข้อผิดพลาด')
+        .setDescription('ไม่สามารถโหลดตารางกิจกรรมได้ในขณะนี้\n\n' +
+                       '🔄 กรุณาลองใหม่อีกครั้งในภายหลัง')
+        .setColor(0xff0000)
+        .setTimestamp();
+
+      return interaction.reply({
+        embeds: [errorEmbed],
+        ephemeral: true,
+      });
+    }
   }
 
   @Button('busking-request-activity')

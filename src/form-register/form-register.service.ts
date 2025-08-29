@@ -92,7 +92,7 @@ export class FormRegisterService {
         new ButtonBuilder()
           .setCustomId('register-guild')
           .setEmoji('📝')
-          .setLabel('ลงทะเบียนกิลล์')
+          .setLabel('ลงทะเบียนกิลด์')
           .setStyle(ButtonStyle.Primary),
       );
 

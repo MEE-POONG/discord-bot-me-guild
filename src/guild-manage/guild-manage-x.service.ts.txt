@@ -671,7 +671,7 @@ export class GuildManageService {
         return 'ไม่สามารถเข้าถึงข้อมูลการตั้งค่าเซิร์ฟเวอร์ได้';
       }
       
-      // ตำแหน่งสร้างกิลล์ - ใช้ meguildPositionCreate จาก ServerDB
+      // ตำแหน่งสร้างกิลด์ - ใช้ meguildPositionCreate จาก ServerDB
       const guildPositionChannelId = server.meguildPositionCreate || server.registerChannel;
       const positionGuild = guildServer.channels.cache.get(
         guildPositionChannelId,

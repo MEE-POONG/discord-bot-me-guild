@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GuildDB, GuildMembers, PrismaClient, UserDB, MeGuildCoinDB } from '@prisma/client';
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
   ButtonInteraction,
+  ButtonStyle,
   CacheType,
   CategoryChannel,
   ChannelType,
@@ -19,6 +22,7 @@ import {
   VoiceChannel,
 } from 'discord.js';
 import { ServerRepository } from 'src/repository/server';
+import { Button, ButtonContext, Context } from 'necord';
 
 @Injectable()
 export class GuildManageService {
@@ -30,6 +34,109 @@ export class GuildManageService {
     private readonly client: Client,
     private readonly serverRepository: ServerRepository,
   ) { }
+
+  private createDismissButton(): ActionRowBuilder<ButtonBuilder> {
+    return new ActionRowBuilder<ButtonBuilder>().setComponents(
+      new ButtonBuilder()
+        .setCustomId('dismiss_notification')
+        .setLabel('ปิดการแจ้งเตือนนี้')
+        .setEmoji('🗑️')
+        .setStyle(ButtonStyle.Secondary),
+    );
+  }
+
+  private createProgressBar(current: number, total: number): string {
+    const filled = Math.round((current / total) * 10);
+    const empty = 10 - filled;
+    return '▓'.repeat(filled) + '░'.repeat(empty);
+  }
+
+  async sendProgressUpdateToCreator(
+    creatorId: string,
+    guildName: string,
+    confirmedMembers: string[],
+    status: 'progress' | 'completed' | 'failed',
+    invitedMembers?: string[],
+    reason?: string
+  ): Promise<void> {
+    try {
+      const creator = await this.users.fetch(creatorId);
+      if (!creator) return;
+
+      let embed: EmbedBuilder;
+      let autoDeleteTime = 5000; // default 5 seconds
+
+      switch (status) {
+        case 'completed':
+          embed = new EmbedBuilder()
+            .setTitle('🎊 กิลด์ก่อตั้งสำเร็จ!')
+            .setDescription(
+              `🏰 **กิลด์ "${guildName}" ได้รับการก่อตั้งอย่างเป็นทางการแล้ว!**\n\n` +
+              `🎯 **สมาชิกผู้ก่อตั้ง:**\n${confirmedMembers.map(id => `👑 <@${id}>`).join('\n')}\n\n` +
+              `✨ **สถานะ:** เสร็จสมบูรณ์\n` +
+              `🎮 **ห้องกิลด์:** ได้ถูกสร้างขึ้นแล้ว`
+            )
+            .setColor(0x00ff7f)
+            .setFooter({ text: '🌟 ขอแสดงความยินดี! เริ่มต้นการผจญภัยได้เลย' })
+            .setTimestamp();
+          autoDeleteTime = 20000; // 15 seconds for success
+          break;
+
+        case 'progress':
+          const totalInvited = invitedMembers?.length || 4;
+          const progressBar = this.createProgressBar(confirmedMembers.length, totalInvited);
+          const progressPercentage = Math.round((confirmedMembers.length / totalInvited) * 100);
+
+          embed = new EmbedBuilder()
+            .setTitle('📈 อัปเดตความคืบหน้ากิลด์')
+            .setDescription(
+              `🏰 **กิลด์ "${guildName}"**\n\n` +
+              `${progressBar} **${confirmedMembers.length}/${totalInvited}** (${progressPercentage}%)\n\n` +
+              `✅ **ยืนยันแล้ว:**\n${confirmedMembers.map(id => `🟢 <@${id}>`).join('\n')}\n\n` +
+              `⏳ **รอการยืนยัน:**\n${invitedMembers?.filter(id => !confirmedMembers.includes(id)).map(id => `🟡 <@${id}>`).join('\n') || 'ไม่มี'}\n\n` +
+              `💡 **สถานะ:** ${totalInvited - confirmedMembers.length} คนเหลือ`
+            )
+            .setColor(0xffa500)
+            .setFooter({ text: '⏰ รอสมาชิกคนอื่นยืนยันการเข้าร่วม' })
+            .setTimestamp();
+          autoDeleteTime = 10000; // 10 seconds for progress
+          break;
+
+        case 'failed':
+          embed = new EmbedBuilder()
+            .setTitle('❌ การก่อตั้งกิลด์ล้มเหลว')
+            .setDescription(
+              `🏰 **กิลด์ "${guildName}"**\n\n` +
+              `💔 **สถานะ:** ยกเลิกแล้ว\n` +
+              `📝 **เหตุผล:** ${reason || 'มีสมาชิกปฏิเสธการเชิญ'}\n\n` +
+              `🔄 **คำแนะนำ:** คุณสามารถลองสร้างกิลด์ใหม่ได้อีกครั้ง\n` +
+              `💡 **เคล็ดลับ:** ลองเชิญสมาชิกคนอื่นที่อาจสนใจเข้าร่วมมากกว่า`
+            )
+            .setColor(0xff4444)
+            .setFooter({ text: '💪 อย่าท้อแท้! ลองอีกครั้งได้เสมอ' })
+            .setTimestamp();
+          autoDeleteTime = 8000; // 8 seconds for failure
+          break;
+      }
+
+      const message = await creator.send({
+        embeds: [embed],
+        components: [this.createDismissButton()]
+      });
+
+      // Auto delete notification
+      setTimeout(async () => {
+        try {
+          await message.delete();
+        } catch (error) {
+          // Message might already be deleted
+        }
+      }, autoDeleteTime);
+
+    } catch (error) {
+      this.logger.error(`Failed to send progress update to creator ${creatorId}:`, error);
+    }
+  }
 
   async onModuleInit() {
     this.logger.log('GuildManageService initialized');
@@ -108,21 +215,45 @@ export class GuildManageService {
 
       this.logger.debug(`[cancelInviteCreate] Deleting message and replying to user`);
       interaction.message.delete().catch(() => { });
-      interaction.reply({
-        content: 'ยกเลิกคำขอสำเร็จ',
+      const cancelEmbed = new EmbedBuilder()
+        .setTitle('❌ ปฏิเสธการเชิญเข้าร่วมกิลด์')
+        .setDescription(
+          `🎯 **คุณได้ปฏิเสธการเชิญเข้าร่วมก่อตั้งกิลด์แล้ว**\n\n` +
+          `💭 **เหตุผล:** การตัดสินใจของคุณได้ถูกบันทึกแล้ว\n` +
+          `📨 **การแจ้งเตือน:** ผู้สร้างกิลด์จะได้รับแจ้งเตือนเกี่ยวกับการตัดสินใจของคุณ\n\n` +
+          `💫 **ขอบคุณ:** ขอบคุณที่สละเวลาในการพิจารณา`
+        )
+        .setColor(0xff6b6b)
+        .setFooter({ text: '💨 ข้อความนี้จะหายไปในอีกไม่กี่วินาที' })
+        .setTimestamp();
+
+      const cancelReply = await interaction.reply({
+        embeds: [cancelEmbed],
+        components: [this.createDismissButton()],
         ephemeral: true,
       });
 
+      // Auto delete after 3 seconds (general process notification)
+      setTimeout(async () => {
+        try {
+          await interaction.deleteReply();
+        } catch (error) {
+          // Message might already be deleted
+        }
+      }, 3000);
+
       if ('ownerId' in report && 'guildName' in report) {
         this.logger.debug(`[cancelInviteCreate] Notifying owner: ${report.ownerId} about cancellation`);
-        const user = await this.users.fetch(report.ownerId);
-        if (user) {
-          user
-            .send({
-              content: `❌ เนื่องจากผู้ร่วมก่อตั้งกิลด์ ${report.guildName} ไม่เห็นด้วยกับคำขอของคุณ คำขอสร้างกิลด์ของคุณได้ถูกยกเลิกแล้ว`,
-            })
-            .catch(() => { });
-        }
+
+        // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
+        await this.sendProgressUpdateToCreator(
+          report.ownerId,
+          report.guildName,
+          [],
+          'failed',
+          report.invitedMembers,
+          `<@${interaction.user.id}> ได้ปฏิเสธการเชิญ`
+        );
 
         this.logger.debug(`[cancelInviteCreate] Deleting report from database`);
         await this.prisma.guildCreateReport
@@ -134,10 +265,32 @@ export class GuildManageService {
     } catch (error) {
       this.logger.error(`[cancelInviteCreate] Error during cancellation:`, error);
       interaction.message.delete().catch(() => { });
-      interaction.reply({
-        content: 'ยกเลิกคำขอสำเร็จ',
+      const errorEmbed = new EmbedBuilder()
+        .setTitle('❌ ปฏิเสธการเชิญเข้าร่วมกิลด์')
+        .setDescription(
+          `🎯 **คุณได้ปฏิเสธการเชิญเข้าร่วมก่อตั้งกิลด์แล้ว**\n\n` +
+          `💭 **เหตุผล:** การตัดสินใจของคุณได้ถูกบันทึกแล้ว\n` +
+          `📨 **การแจ้งเตือน:** ผู้สร้างกิลด์จะได้รับแจ้งเตือนเกี่ยวกับการตัดสินใจของคุณ\n\n` +
+          `💫 **ขอบคุณ:** ขอบคุณที่สละเวลาในการพิจารณา`
+        )
+        .setColor(0xff6b6b)
+        .setFooter({ text: '💨 ข้อความนี้จะหายไปในอีกไม่กี่วินาที' })
+        .setTimestamp();
+
+      const errorReply = await interaction.reply({
+        embeds: [errorEmbed],
+        components: [this.createDismissButton()],
         ephemeral: true,
       });
+
+      // Auto delete after 3 seconds (general process notification)
+      setTimeout(async () => {
+        try {
+          await interaction.deleteReply();
+        } catch (error) {
+          // Message might already be deleted
+        }
+      }, 3000);
     }
   }
 
@@ -176,6 +329,17 @@ export class GuildManageService {
 
         if (!res.role || res.message !== 'success') {
           this.logger.error(`[acceptInviteCreate] Failed to create Discord guild: ${res.message}`);
+
+          // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
+          await this.sendProgressUpdateToCreator(
+            report.ownerId,
+            report.guildName,
+            [],
+            'failed',
+            report.invitedMembers,
+            `ไม่สามารถสร้างห้องกิลด์ได้: ${res.message}`
+          );
+
           return interaction.editReply({
             content: `กิลด์ ${report.guildName} ของคุณได้รับอนุมัติแล้ว แต่ ${res.message}`,
           });
@@ -202,6 +366,17 @@ export class GuildManageService {
 
         if (!guild) {
           this.logger.error(`[acceptInviteCreate] Failed to create guild for report: ${GuildCreateReportId}`);
+
+          // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
+          await this.sendProgressUpdateToCreator(
+            report.ownerId,
+            report.guildName,
+            [],
+            'failed',
+            report.invitedMembers,
+            'ไม่สามารถบันทึกข้อมูลกิลด์ลงฐานข้อมูลได้'
+          );
+
           return interaction.editReply({
             content: 'ไม่สามารถสร้างกิลด์ใหม่ได้ โปรดทำการก่อตั้งกิลด์ใหม่',
           });
@@ -220,6 +395,17 @@ export class GuildManageService {
 
         if (!members.count) {
           this.logger.error(`[acceptInviteCreate] Failed to create guild members for guild: ${guild.id}`);
+
+          // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
+          await this.sendProgressUpdateToCreator(
+            report.ownerId,
+            report.guildName,
+            [],
+            'failed',
+            report.invitedMembers,
+            'ไม่สามารถเพิ่มสมาชิกลงในกิลด์ได้'
+          );
+
           await this.deleteData(guild);
           return interaction.editReply({
             content: 'ไม่สามารถเพิ่มสมาชิกลงในกิลด์ได้',
@@ -227,9 +413,34 @@ export class GuildManageService {
         }
         console.log(210);
         this.logger.debug(213, `[acceptInviteCreate] Replying success to user`);
-        interaction.editReply({
-          content: 'ยืนยันคำขอสำเร็จ',
+        const successEmbed = new EmbedBuilder()
+          .setTitle('🎊 ยินดีด้วย! กิลด์ก่อตั้งสำเร็จ!')
+          .setDescription(
+            `🏰 **กิลด์ "${report.guildName}" ได้รับการก่อตั้งอย่างเป็นทางการแล้ว!**\n\n` +
+            `🎯 **สถานะของคุณ:** ผู้ร่วมก่อตั้งกิลด์\n` +
+            `💎 **สิทธิพิเศษ:** คุณได้รับสิทธิ์เข้าถึงพื้นที่ส่วนตัวของกิลด์แล้ว\n` +
+            `🎮 **ห้องกิลด์:** ห้องพูดคุยและกิจกรรมของกิลด์ได้ถูกสร้างขึ้นแล้ว\n` +
+            `👑 **บทบาท:** คุณได้รับบทบาทผู้ร่วมก่อตั้งพร้อมสิทธิพิเศษทั้งหมด!\n\n` +
+            `✨ **ขั้นตอนต่อไป:** เริ่มต้นการผจญภัยกับสมาชิกกิลด์ได้เลย!`
+          )
+          .setColor(0x00ff7f)
+          .setFooter({ text: '🌟 ขอบคุณที่เป็นส่วนหนึ่งของการก่อตั้งกิลด์!' })
+          .setTimestamp()
+          .setThumbnail('https://media.discordapp.net/attachments/861491684214833182/1224408324922015876/DALLE_2024-04-02_00.21.20_-_A_vibrant_watercolor_of_an_elven_archer_a_human_mage_and_a_dwarf_warrior_standing_triumphantly_atop_a_hill_looking_towards_the_horizon_at_dawn._The.webp?ex=661d621d&is=660aed1d&hm=29e373d7dea2b16ceddf3e45271ca343bf01c5e5b2bbfc1ee263503f04900ca7&=&format=webp&width=839&height=479');
+
+        await interaction.editReply({
+          embeds: [successEmbed],
+          components: [this.createDismissButton()],
         });
+
+        // Auto delete after 10 seconds (success notification with extensive content)
+        setTimeout(async () => {
+          try {
+            await interaction.deleteReply();
+          } catch (error) {
+            // Message might already be deleted
+          }
+        }, 20000);
         console.log(214);
         this.logger.debug(217, `[acceptInviteCreate] Fetching Discord guild: ${report.serverId}`);
         const Interguild = await this.client.guilds.fetch(report.serverId);
@@ -286,13 +497,6 @@ export class GuildManageService {
             member.roles.add(res.role).catch((error) => {
               this.logger.error(`Failed to add guild role to member ${id}`, error);
             });
-            member
-              .send({
-                content: `🎉 ยินดีด้วย! กิลด์ ${report.guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`,
-              })
-              .catch(() => {
-                this.logger.error(`Failed to send message to member ${id}`);
-              });
           } else {
             this.logger.warn(`[acceptInviteCreate] Could not fetch member: ${id}`);
           }
@@ -300,6 +504,10 @@ export class GuildManageService {
         console.log(283);
         this.logger.debug(263, ` [acceptInviteCreate] Updating message and cleaning up`);
         this.updateMessage(report.channelId, report.messageId, report.guildName, membersList);
+
+        // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ก่อตั้งสำเร็จ
+        await this.sendProgressUpdateToCreator(report.ownerId, report.guildName, membersList, 'completed');
+
         console.log(286);
         await this.prisma.guildCreateReport.delete({ where: { id: GuildCreateReportId } }).catch(() => { });
         console.log(287);
@@ -314,9 +522,35 @@ export class GuildManageService {
         });
         console.log(298);
         this.logger.debug(299, ` [acceptInviteCreate] Replying success and updating message`);
-        interaction.editReply({
-          content: 'ยืนยันคำขอสำเร็จ',
+        const remainingCount = report.invitedMembers.length - (report.confirmedMembers.length + 1);
+        const confirmEmbed = new EmbedBuilder()
+          .setTitle('✅ ยืนยันการเข้าร่วมสำเร็จ!')
+          .setDescription(
+            `🎯 **คุณได้ยืนยันการเข้าร่วมก่อตั้งกิลด์ "${report.guildName}" แล้ว**\n\n` +
+            `📊 **สถานะปัจจุบัน:**\n` +
+            `✅ ยืนยันแล้ว: **${report.confirmedMembers.length + 1}** คน\n` +
+            `⏳ รอการยืนยัน: **${remainingCount}** คน\n\n` +
+            `🎮 **ขั้นตอนต่อไป:** รอสมาชิกคนอื่นยืนยันการเข้าร่วม\n` +
+            `🏰 **เมื่อครบจำนวน:** กิลด์จะถูกสร้างทันที!\n\n` +
+            `💡 **หมายเหตุ:** คุณจะได้รับแจ้งเตือนเมื่อกิลด์ก่อตั้งเสร็จสิ้น`
+          )
+          .setColor(0x4caf50)
+          .setFooter({ text: '⏰ กำลังรอสมาชิกคนอื่นตัดสินใจ...' })
+          .setTimestamp();
+
+        await interaction.editReply({
+          embeds: [confirmEmbed],
+          components: [this.createDismissButton()],
         });
+
+        // Auto delete after 7 seconds (progress notification with moderate content)
+        setTimeout(async () => {
+          try {
+            await interaction.deleteReply();
+          } catch (error) {
+            // Message might already be deleted
+          }
+        }, 7000);
         interaction.message.delete().catch(() => {
           this.logger.error('Failed to delete interaction message');
         });
@@ -325,10 +559,36 @@ export class GuildManageService {
           ...report.confirmedMembers,
           interaction.user.id,
         ]);
+
+        // แจ้งเตือนผู้ส่งคำเชิญว่ามีความคืบหน้า
+        const updatedMembers = [...report.confirmedMembers, interaction.user.id];
+        await this.sendProgressUpdateToCreator(report.ownerId, report.guildName, updatedMembers, 'progress', report.invitedMembers);
+
         console.log(311);
       }
     } catch (error) {
       this.logger.error('Error in acceptInviteCreate', error);
+
+      // พยายามแจ้งเตือนผู้ส่งคำเชิญถ้าเป็นไปได้
+      try {
+        const report = await this.prisma.guildCreateReport.findFirst({
+          where: { id: GuildCreateReportId }
+        });
+
+        if (report) {
+          await this.sendProgressUpdateToCreator(
+            report.ownerId,
+            report.guildName,
+            [],
+            'failed',
+            report.invitedMembers,
+            'เกิดข้อผิดพลาดในระบบระหว่างการสร้างกิลด์'
+          );
+        }
+      } catch (notifyError) {
+        this.logger.error('Error notifying creator of failure', notifyError);
+      }
+
       interaction.editReply({
         content: 'เกิดข้อผิดพลาดในการยืนยันคำขอ โปรดลองอีกครั้ง',
       });
@@ -372,7 +632,11 @@ export class GuildManageService {
       }
 
       const message = await channel.messages.fetch(messageId).catch((error) => {
-        this.logger.warn(`[updateMessage] Failed to fetch message ${messageId}:`, error.message);
+        if (error.code === 10008) {
+          this.logger.warn(`[updateMessage] Message ${messageId} not found - it may have been deleted or expired`);
+        } else {
+          this.logger.warn(`[updateMessage] Failed to fetch message ${messageId}:`, error.message);
+        }
         return null;
       });
 
@@ -387,20 +651,69 @@ export class GuildManageService {
         return;
       }
 
-      const embed = new EmbedBuilder(message.embeds[0].toJSON());
-      if (members.length >= 4) {
-        this.logger.debug(`[updateMessage] Guild ${guildName} is complete with ${members.length} members`);
-        embed
-          .setTitle(`#🎉 กิลด์ ${guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`)
-          .setColor('Gold');
-      } else {
-        this.logger.debug(`[updateMessage] Guild ${guildName} progress: ${members.length}/4`);
-        embed.setTitle(`# ความคืบหน้า (${members.length}/4) ของกิลด์ ${guildName}`);
+      // ตรวจสอบว่า bot เป็นผู้เขียน message หรือไม่
+      if (message.author.id !== this.client.user?.id) {
+        this.logger.warn(`[updateMessage] Cannot edit message ${messageId} - not authored by bot`);
+        return;
       }
 
-      await message.edit({ embeds: [embed] }).catch((error) => {
-        this.logger.error(`[updateMessage] Failed to edit message ${messageId}:`, error.message);
+      // Get the original guild report to determine total invited
+      const report = await this.prisma.guildCreateReport.findFirst({
+        where: { messageId: messageId }
       });
+
+      const totalInvited = report ? report.invitedMembers.length : 4;
+      const confirmedCount = members.length;
+
+      const embed = new EmbedBuilder(message.embeds[0].toJSON());
+      if (confirmedCount >= totalInvited) {
+        this.logger.debug(`[updateMessage] Guild ${guildName} is complete with ${confirmedCount} members`);
+        embed
+          .setDescription(`# 🎉 กิลด์ ${guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`)
+          .setColor('Gold');
+      } else {
+        this.logger.debug(`[updateMessage] Guild ${guildName} progress: ${confirmedCount}/${totalInvited}`);
+
+        const progressBar = this.createProgressBar(confirmedCount, totalInvited);
+        const progressPercentage = Math.round((confirmedCount / totalInvited) * 100);
+
+        let invitedList = '';
+        if (report && report.invitedMembers.length > 0) {
+          invitedList = '\n\n🎯 **คำเชิญชวนร่วมก่อตั้งได้ส่งไปยัง:**\n';
+          report.invitedMembers.forEach((userId, index) => {
+            const status = index < confirmedCount ? '✅' : '⏳';
+            invitedList += `${status} ${index + 1}. <@${userId}>\n`;
+          });
+          invitedList += '\n⏰ **ข้อความนี้จะปิดตัวเองใน 3 นาที**';
+        }
+
+        embed.setTitle(`🏰 ความคืบหน้าการก่อตั้งกิลด์ "${guildName}"`)
+          .setDescription(
+            `${progressBar} **${confirmedCount}/${totalInvited}** (${progressPercentage}%)\n\n` +
+            `📊 **สถานะปัจจุบัน:**\n` +
+            `✅ ยืนยันแล้ว: **${confirmedCount}** คน\n` +
+            `⏳ รอการยืนยัน: **${totalInvited - confirmedCount}** คน${invitedList}`
+          )
+          .setColor(confirmedCount === totalInvited ? 0x00ff00 : 0xffa500)
+          .setFooter({
+            text: `🎮 กิลด์ ${guildName} • กำลังรอการยืนยันจากสมาชิก`,
+            iconURL: 'https://cdn.discordapp.com/emojis/1234567890123456789.png'
+          })
+          .setTimestamp();
+      }
+      // ปิดตัวเองใน 15 วินาที
+      await message.edit({ embeds: [embed] }).catch((error) => {
+        if (error.code === 10008) {
+          this.logger.warn(`[updateMessage] Message ${messageId} not found - it may have been deleted`);
+        } else {
+          this.logger.error(`[updateMessage] Failed to edit message ${messageId}:`, error.message);
+        }
+      });
+      setTimeout(async () => {
+        await message.delete().catch((error) => {
+          this.logger.warn(`[updateMessage] Failed to delete message ${messageId}:`, error.message);
+        });
+      }, 15000);
     } catch (error) {
       this.logger.error(`[updateMessage] Failed to update message for guild ${guildName}:`, error);
     }
@@ -672,7 +985,7 @@ export class GuildManageService {
         return { message: 'ไม่สามารถเข้าถึงดิสกิลด์ได้', categoryId: undefined };
       }
 
-      // ตำแหน่งสร้างกิลล์
+      // ตำแหน่งสร้างกิลด์
       this.logger.debug(`[createChannel] Getting position guild from register channel: ${server.registerChannel}`);
       const positionGuild = guildServer.channels.cache.get(
         server.registerChannel,
@@ -707,17 +1020,17 @@ export class GuildManageService {
 
       this.logger.debug(`[createChannel] Created category: ${category.name} (${category.id})`);
 
-              // เรียกใช้เมธอดใหม่แทนฟังก์ชันซ้อน
-        this.logger.debug(`[createChannel] Creating all channels for guild`);
-        await Promise.all([
-          this.createPrivateVoiceChannel(category, '💬・แชท', 2, server, guildServer, roles),
-          this.createPrivateVoiceChannel(category, '🎤・โถงหลัก', 0, server, guildServer, roles),
-          this.createPrivateVoiceChannel(category, '🎤・โถงรอง', 0, server, guildServer, roles),
-          this.createPublicVoiceChannel(category, '👑・กิจกรรม', 0, server, guildServer, roles),
-          this.createPublicVoiceChannel(category, '🎁・เยี่ยมบ้าน', 0, server, guildServer, roles),
-          // ถ้าจะเปิดห้อง public ให้เปลี่ยน publicView = true
-          // this.createVoiceChannel(category, '📣・ประชาสัมพันธ์', 2, true, server, guildServer, roles),
-        ]);
+      // เรียกใช้เมธอดใหม่แทนฟังก์ชันซ้อน
+      this.logger.debug(`[createChannel] Creating all channels for guild`);
+      await Promise.all([
+        this.createPrivateVoiceChannel(category, '💬・แชท', 2, server, guildServer, roles),
+        this.createPrivateVoiceChannel(category, '🎤・โถงหลัก', 0, server, guildServer, roles),
+        this.createPrivateVoiceChannel(category, '🎤・โถงรอง', 0, server, guildServer, roles),
+        this.createPublicVoiceChannel(category, '👑・กิจกรรม', 0, server, guildServer, roles),
+        this.createPublicVoiceChannel(category, '🎁・เยี่ยมบ้าน', 0, server, guildServer, roles),
+        // ถ้าจะเปิดห้อง public ให้เปลี่ยน publicView = true
+        // this.createVoiceChannel(category, '📣・ประชาสัมพันธ์', 2, true, server, guildServer, roles),
+      ]);
 
       this.logger.debug(`[createChannel] All channels created successfully for role: ${roles.name}`);
       return { message: 'success', categoryId: category.id };
@@ -725,6 +1038,34 @@ export class GuildManageService {
       this.logger.error('Error in createChannel:', error);
       return { message: error.message || 'เกิดข้อผิดพลาดในการสร้างห้อง', categoryId: undefined };
     }
+  }
+
+  @Button('dismiss_notification')
+  async dismissNotification(@Context() [interaction]: ButtonContext): Promise<void> {
+    const dismissEmbed = new EmbedBuilder()
+      .setTitle('🗑️ การแจ้งเตือนถูกปิดแล้ว')
+      .setDescription(
+        `✅ **ข้อความได้ถูกซ่อนแล้ว**\n\n` +
+        `💡 **คำแนะนำ:** หากต้องการข้อมูลเพิ่มเติม สามารถใช้คำสั่งต่างๆ ของบอทได้\n` +
+        `🔄 **หมายเหตุ:** ข้อความนี้จะหายไปอัตโนมัติในอีกไม่กี่วินาที`
+      )
+      .setColor(0x95a5a6)
+      .setFooter({ text: '💫 ขอบคุณที่ใช้บริการ' })
+      .setTimestamp();
+
+    await interaction.update({
+      embeds: [dismissEmbed],
+      components: [],
+    });
+
+    // Auto delete after 3 minutes
+    setTimeout(async () => {
+      try {
+        await interaction.deleteReply();
+      } catch (error) {
+        // Message might already be deleted
+      }
+    }, 3 * 60 * 1000);
   }
 
 }

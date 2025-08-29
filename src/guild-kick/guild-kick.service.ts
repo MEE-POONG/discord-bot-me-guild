@@ -40,7 +40,7 @@ export class GuildKickService implements OnModuleInit {
       )
     )
       return interaction.reply({
-        content: 'ไม่สามารถเตะหัวหน้ากิลล์หรือรองหัวหน้ากิลล์ได้',
+        content: 'ไม่สามารถเตะหัวหน้ากิลด์หรือรองหัวหน้ากิลด์ได้',
         ephemeral: true,
       });
 

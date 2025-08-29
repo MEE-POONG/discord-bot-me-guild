@@ -116,8 +116,8 @@ export class GuildManageService {
         });
       }
 
-      if (report.members.length >= 1) {
-        const membersList = [...report.members, interaction.user.id];
+      if (report.confirmedMembers.length >= 1) {
+        const membersList = [...report.confirmedMembers, interaction.user.id];
         const guild = await this.prisma.guildDB.create({
           data: {
             guild_name: report.guildName,
@@ -213,7 +213,7 @@ export class GuildManageService {
         });
       } else {
         await this.prisma.guildCreateReport.update({
-          data: { members: { push: interaction.user.id } },
+          data: { confirmedMembers: { push: interaction.user.id } },
           where: { id: reportId },
         });
 
@@ -225,7 +225,7 @@ export class GuildManageService {
         });
 
         this.updateMessage(report.channelId, report.messageId, report.guildName, [
-          ...report.members,
+          ...report.confirmedMembers,
           interaction.user.id,
         ]);
       }

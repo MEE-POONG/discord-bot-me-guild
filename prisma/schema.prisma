@@ -341,6 +341,7 @@ model ServerDB {
   visitorRoleId         String?
   guildHeadRoleId       String? // บทบาทหัวหน้ากิล (optional)
   guildCoRoleId         String? // บทบาทรองหัวหน้ากิล (optional)
+  eccentricRoleId       String?
   openUntilAt           DateTime  @db.Date
   meguildPositionCreate String?
   welcomechannel        String?

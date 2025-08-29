@@ -408,6 +408,22 @@ export class ServerSetRoomService {
       this.logger.debug('User role created:', userRole.name);
     }
 
+    // ตรวจสอบและสร้าง Eccentric Role
+    let eccentricRole = null;
+    if (server?.eccentricRoleId) {
+      eccentricRole = guild.roles.cache.get(server.eccentricRoleId);
+    }
+
+    if (!eccentricRole) {
+      eccentricRole = await guild.roles.create({
+        name: '🎭 ผู้มีเอกลักษณ์',
+        color: 0xe74c3c, // สีแดง
+        permissions: ['ViewChannel', 'ReadMessageHistory', 'SendMessages'],
+        reason: 'Created for Welcome Room system',
+      });
+      this.logger.debug('Eccentric role created:', eccentricRole.name);
+    }
+
     // เตรียม permission overrides สำหรับ Welcome Room
     const welcomePermissionOverwrites = [
       {
@@ -417,6 +433,11 @@ export class ServerSetRoomService {
       },
       {
         id: userRole.id,
+        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+        deny: [],
+      },
+      {
+        id: eccentricRole.id,
         allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
         deny: [],
       },
@@ -460,6 +481,7 @@ export class ServerSetRoomService {
     await this.serverRepository.updateServer(interaction.guildId, {
       [roomFieldMapping.welcome]: channel.id,
       userRoleId: userRole.id,
+      eccentricRoleId: eccentricRole.id,
     });
 
     this.roomName = channel.name;
@@ -805,7 +827,7 @@ export class ServerSetRoomService {
         headRole = await guild.roles.create({
           name: '👑 หัวหน้ากิลด์',
           color: 0xffd700, // สีทอง
-          permissions: ['Administrator'],
+          permissions: [],
           reason: 'Repaired missing guild head role',
         });
         needsUpdate = true;
@@ -815,7 +837,7 @@ export class ServerSetRoomService {
       headRole = await guild.roles.create({
         name: '👑 หัวหน้ากิลด์',
         color: 0xffd700, // สีทอง
-        permissions: ['Administrator'],
+        permissions: [],
         reason: 'Created missing guild head role',
       });
       needsUpdate = true;
@@ -829,7 +851,7 @@ export class ServerSetRoomService {
         coRole = await guild.roles.create({
           name: '⭐ รองหัวหน้ากิลด์',
           color: 0x00bfff, // สีฟ้า
-          permissions: ['ManageChannels', 'ManageRoles', 'KickMembers', 'BanMembers'],
+          permissions: [],
           reason: 'Repaired missing guild co-role',
         });
         needsUpdate = true;
@@ -839,7 +861,7 @@ export class ServerSetRoomService {
       coRole = await guild.roles.create({
         name: '⭐ รองหัวหน้ากิลด์',
         color: 0x00bfff, // สีฟ้า
-        permissions: ['ManageChannels', 'ManageRoles', 'KickMembers', 'BanMembers'],
+        permissions: [],
         reason: 'Created missing guild co-role',
       });
       needsUpdate = true;

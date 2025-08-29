@@ -687,9 +687,9 @@ export class GuildManageService {
           invitedList += '\n⏰ **ข้อความนี้จะปิดตัวเองใน 3 นาที**';
         }
 
-        embed.setTitle(`🏰 ความคืบหน้าการก่อตั้งกิลด์ "${guildName}"`)
+        embed.setTitle(`🏰 คำร้องขอก่อตั้งกิลด์ "${guildName}"`)
           .setDescription(
-            `${progressBar} **${confirmedCount}/${totalInvited}** (${progressPercentage}%)\n\n` +
+            // `${progressBar} **${confirmedCount}/${totalInvited}** (${progressPercentage}%)\n\n` +
             `📊 **สถานะปัจจุบัน:**\n` +
             `✅ ยืนยันแล้ว: **${confirmedCount}** คน\n` +
             `⏳ รอการยืนยัน: **${totalInvited - confirmedCount}** คน${invitedList}`

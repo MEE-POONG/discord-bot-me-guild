@@ -23,7 +23,6 @@ import { ServerRepository } from 'src/repository/server';
 @Injectable()
 export class GuildManageService {
   private readonly logger = new Logger(GuildManageService.name);
-  public guildDB: GuildDB | null = null;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -47,7 +46,7 @@ export class GuildManageService {
 
     if (!guildMembers) {
       this.logger.debug(`[getGuild] No guild members found for user: ${user.id}`);
-      return (this.guildDB = null);
+      return null;
     }
 
     const guild = await this.prisma.guildDB.findFirst({
@@ -56,9 +55,8 @@ export class GuildManageService {
 
     this.logger.debug(`[getGuild] Found guild:`, guild);
 
-    this.guildDB = guild || null;
-    this.logger.debug(`[getGuild] Final guildDB result:`, this.guildDB);
-    return this.guildDB;
+    this.logger.debug(`[getGuild] Final guild result:`, guild);
+    return guild || null;
   }
 
   async checkGuild(userData: UserProfile) {
@@ -91,17 +89,17 @@ export class GuildManageService {
     }
   }
 
-  async cancelInviteCreate(interaction: ButtonInteraction, reportId: string) {
-    this.logger.debug(`[cancelInviteCreate] Starting cancel for reportId: ${reportId} by user: ${interaction.user.id}`);
+  async cancelInviteCreate(interaction: ButtonInteraction, GuildCreateReportId: string) {
+    this.logger.debug(`[cancelInviteCreate] Starting cancel for GuildCreateReportId: ${GuildCreateReportId} by user: ${interaction.user.id}`);
     try {
       const report = await this.prisma.guildCreateReport.findFirst({
-        where: { id: reportId },
+        where: { id: GuildCreateReportId },
       });
 
       this.logger.debug(`[cancelInviteCreate] Found report:`, report);
 
       if (!report) {
-        this.logger.warn(`[cancelInviteCreate] Report not found: ${reportId}`);
+        this.logger.warn(`[cancelInviteCreate] Report not found: ${GuildCreateReportId}`);
         return interaction.reply({
           content: 'ไม่พบรายงานที่คุณต้องการยกเลิก',
           ephemeral: true,
@@ -129,7 +127,7 @@ export class GuildManageService {
         this.logger.debug(`[cancelInviteCreate] Deleting report from database`);
         await this.prisma.guildCreateReport
           .delete({
-            where: { id: reportId },
+            where: { id: GuildCreateReportId },
           })
           .catch(() => { });
       }
@@ -143,14 +141,14 @@ export class GuildManageService {
     }
   }
 
-  async acceptInviteCreate(interaction: ButtonInteraction, reportId: string) {
-    this.logger.debug(`128 [acceptInviteCreate] Starting accept for reportId: ${reportId} by user: ${interaction.user.id} `);
+  async acceptInviteCreate(interaction: ButtonInteraction, GuildCreateReportId: string) {
+    this.logger.debug(`128 [acceptInviteCreate] Starting accept for GuildCreateReportId: ${GuildCreateReportId} by user: ${interaction.user.id} `);
     try {
       await interaction.deferReply({ ephemeral: true });
       console.log(131);
 
       const report = await this.prisma.guildCreateReport.findFirst({
-        where: { serverId: reportId },
+        where: { id: GuildCreateReportId },
       });
       console.log(136);
 
@@ -158,7 +156,7 @@ export class GuildManageService {
       console.log(139);
 
       if (!report) {
-        this.logger.warn(`[acceptInviteCreate] Report not found: ${reportId}`);
+        this.logger.warn(`[acceptInviteCreate] Report not found: ${GuildCreateReportId}`);
         return interaction.editReply({
           content: 'ไม่พบรายงานที่คุณต้องการยอมรับ',
         });
@@ -203,7 +201,7 @@ export class GuildManageService {
         this.logger.debug(181, ` [acceptInviteCreate] Created guild:`, guild);
 
         if (!guild) {
-          this.logger.error(`[acceptInviteCreate] Failed to create guild for report: ${reportId}`);
+          this.logger.error(`[acceptInviteCreate] Failed to create guild for report: ${GuildCreateReportId}`);
           return interaction.editReply({
             content: 'ไม่สามารถสร้างกิลด์ใหม่ได้ โปรดทำการก่อตั้งกิลด์ใหม่',
           });
@@ -303,7 +301,7 @@ export class GuildManageService {
         this.logger.debug(263, ` [acceptInviteCreate] Updating message and cleaning up`);
         this.updateMessage(report.channelId, report.messageId, report.guildName, membersList);
         console.log(286);
-        await this.prisma.guildCreateReport.delete({ where: { id: reportId } }).catch(() => { });
+        await this.prisma.guildCreateReport.delete({ where: { id: GuildCreateReportId } }).catch(() => { });
         console.log(287);
         interaction.message.delete().catch(() => {
           this.logger.error('Failed to delete interaction message');
@@ -312,7 +310,7 @@ export class GuildManageService {
         this.logger.debug(274, ` [acceptInviteCreate] Adding user to confirmed members (not enough members yet)`);
         await this.prisma.guildCreateReport.update({
           data: { confirmedMembers: { push: interaction.user.id } },
-          where: { id: reportId },
+          where: { id: GuildCreateReportId },
         });
         console.log(298);
         this.logger.debug(299, ` [acceptInviteCreate] Replying success and updating message`);
@@ -629,6 +627,10 @@ export class GuildManageService {
         ...(positionGuild ? { position: positionGuild.position + 1 } : {}),
         permissionOverwrites: [
           {
+            id: guildServer!.roles.everyone.id,
+            allow: ['ViewChannel'],
+          },
+          {
             id: guildId,
             allow: ['ViewChannel'],
             deny: ['Connect'],
@@ -653,6 +655,8 @@ export class GuildManageService {
           this.createVoiceChannel(category, '💬・แชท', 2, server, guildServer, roles),
           this.createVoiceChannel(category, '🎤・โถงหลัก', 0, server, guildServer, roles),
           this.createVoiceChannel(category, '🎤・โถงรอง', 0, server, guildServer, roles),
+          this.createVoiceChannel(category, '👑・กิจกรรม', 0, server, guildServer, roles),
+          this.createVoiceChannel(category, '🎁・เยี่ยมบ้าน', 0, server, guildServer, roles),
           // ถ้าจะเปิดห้อง public ให้เปลี่ยน publicView = true
           // this.createVoiceChannel(category, '📣・ประชาสัมพันธ์', 2, true, server, guildServer, roles),
         ]);

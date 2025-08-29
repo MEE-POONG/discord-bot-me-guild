@@ -30,7 +30,6 @@ import { Button, ButtonContext, Context, On, StringSelectContext } from 'necord'
 @Injectable()
 export class GuildCreateService {
   private readonly logger = new Logger(GuildCreateService.name);
-  private guildReportId: string;
   constructor(
     private readonly prisma: PrismaClient,
     private readonly guildManage: GuildManageService,
@@ -57,6 +56,8 @@ export class GuildCreateService {
   ) {
     const ownerData = (await this.userData.getProfile(interaction.user)) as UserProfile;
 
+    console.log('[createGuild]: ownerData', ownerData);
+
     if (!ownerData)
       return interaction.reply({
         content: `คุณไม่สามารถสร้างกิลด์ได้ เนื่องจากคุณไม่มีข้อมูลนักผจญภัย โปรดลงทะเบียนก่อนสร้างกิลด์`,
@@ -64,6 +65,8 @@ export class GuildCreateService {
       });
 
     const guildName = options.guildName;
+    console.log('[createGuild]: guildName', guildName);
+
     if (guildName.length < 4 || guildName.length > 16)
       return interaction.reply({
         content: `ชื่อกิลด์ของคุณต้องมีความยาวระหว่าง 4-16 ตัวอักษร`,
@@ -78,7 +81,10 @@ export class GuildCreateService {
 
     const time = `<t:${(Date.now() / 1000 + 600).toFixed(0)}:R>`;
 
-    if (await this.guildManage.checkGuild(ownerData))
+    const checkGuild = await this.guildManage.checkGuild(ownerData);
+    console.log('[createGuild]: checkGuild', checkGuild);
+
+    if (checkGuild)
       return interaction.reply({
         content: `คุณไม่สามารถสร้างกิลด์ได้เนื่องจากคุณมีกิลด์อยู่แล้ว`,
         ephemeral: true,
@@ -86,6 +92,8 @@ export class GuildCreateService {
 
     // ตรวจสอบว่า ServerDB มี guildHeadRoleId และ guildCoRoleId หรือไม่
     const serverData = await this.serverRepository.getServerById(interaction.guildId);
+    console.log('[createGuild]: serverData', serverData);
+
     if (!serverData) {
       return interaction.reply({
         content: `❌ ไม่พบข้อมูลเซิร์ฟเวอร์ กรุณาติดต่อเจ้าของเซิร์ฟเวอร์เพื่อลงทะเบียนเซิร์ฟเวอร์ก่อน`,
@@ -93,10 +101,16 @@ export class GuildCreateService {
       });
     }
 
+    console.log('[createGuild]: serverData.guildHeadRoleId', serverData.guildHeadRoleId);
+    console.log('[createGuild]: serverData.guildCoRoleId', serverData.guildCoRoleId);
+
     if (!serverData.guildHeadRoleId || !serverData.guildCoRoleId) {
       const guildOwner = await interaction.guild.fetchOwner();
+      console.log('[createGuild]: guildOwner', guildOwner);
+
       return interaction.reply({
-        content: `❌ **ไม่สามารถสร้างกิลด์ได้**\n\n` +
+        content:
+          `❌ **ไม่สามารถสร้างกิลด์ได้**\n\n` +
           `🔧 **กรุณาแจ้งเจ้าของเซิร์ฟเวอร์** ${guildOwner?.toString()} **ให้ทำการ:**\n` +
           `1. ใช้คำสั่ง \`/server-set-room\`\n` +
           `2. เลือก **"Guild Room"**\n` +
@@ -107,8 +121,8 @@ export class GuildCreateService {
     }
 
     const createEmbedFounded = new EmbedBuilder({
-      title: 'เลือกผู้ร่วมก่อตั้งสมาชิกของคุณ (1/4) คน',
-      description: `- คุณจำเป็นที่จะต้องมีผู้ร่วมก่อตั้งกิลด์ 4 คน เพื่อทำการสร้างกิลด์\n- ระยะเวลาในการยอมรับ ${time}`,
+      title: `เลือกผู้ร่วมก่อตั้งสมาชิกของคุณ`,
+      description: `- คุณจำเป็นที่จะต้องมีผู้ร่วมก่อตั้งกิลด์ 4 คน เพื่อทำการสร้างกิลด์ ${guildName}\n- ระยะเวลาในการยอมรับ ${time}`,
       color: 9304831,
       image: {
         url: 'https://media.discordapp.net/attachments/861491684214833182/1224408324922015876/DALLE_2024-04-02_00.21.20_-_A_vibrant_watercolor_of_an_elven_archer_a_human_mage_and_a_dwarf_warrior_standing_triumphantly_atop_a_hill_looking_towards_the_horizon_at_dawn._The.webp?ex=661d621d&is=660aed1d&hm=29e373d7dea2b16ceddf3e45271ca343bf01c5e5b2bbfc1ee263503f04900ca7&=&format=webp&width=839&height=479',
@@ -138,6 +152,8 @@ export class GuildCreateService {
     createSelectMemberForFounded: ActionRowBuilder<UserSelectMenuBuilder>,
     guildName: string,
   ) {
+    console.log('[interactionHandler]: guildName', guildName);
+
     try {
       await interaction.reply({
         embeds: [createEmbedFounded],
@@ -169,6 +185,7 @@ export class GuildCreateService {
         }
 
         const userHasGuild = await this.checkUsersGuildStatus(users);
+        console.log('[interactionHandler]: userHasGuild', userHasGuild);
 
         if (userHasGuild.length > 0) {
           await this.replyWithExistingGuilds(i, userHasGuild);
@@ -177,20 +194,24 @@ export class GuildCreateService {
         }
 
         const createAcceptGuildEmbeds = this.createGuildProgressEmbed(guildName);
-        const channel = interaction.channel as TextChannel;
-        const msg = await channel.send({
+        console.log('[interactionHandler]: createAcceptGuildEmbeds', createAcceptGuildEmbeds);
+        const channel = interaction;
+        const msg = await channel.followUp({
           content: `${interaction.member?.toString()}`,
           embeds: [createAcceptGuildEmbeds],
+          ephemeral: true,
         });
 
-        const guildReport = await this.createGuildReport(interaction, msg, guildName);
+        const GuildCreateReport = await this.createGuildReport(interaction, msg, guildName);
+        const GuildCreateReportId = GuildCreateReport.id;
+        console.log('[interactionHandler]: guildReport', GuildCreateReport);
 
         await interaction.deleteReply();
 
         await this.scheduleMessageDeletion(msg);
         await this.sendGuildInvitations(
           users,
-          guildReport.serverId,
+          GuildCreateReportId, // GuildCreateReport
           guildName,
           interaction.user.toString(),
         );
@@ -238,6 +259,9 @@ export class GuildCreateService {
     msg: any,
     guildName: string,
   ) {
+    console.log('[createGuildReport]: msg', msg);
+    console.log('[createGuildReport]: guildName', guildName);
+
     return await this.prisma.guildCreateReport.create({
       data: {
         ownerId: interaction.user.id,
@@ -263,19 +287,22 @@ export class GuildCreateService {
 
   private async sendGuildInvitations(
     users: string[],
-    guildReportId: string,
+    GuildCreateReportId: string,
     guildName: string,
     inviter: string,
   ) {
-    this.guildReportId = guildReportId;
+    console.log('[sendGuildInvitations]: GuildCreateReportId', GuildCreateReportId);
+    console.log('[sendGuildInvitations]: guildName', guildName);
+    console.log('[sendGuildInvitations]: inviter', inviter);
+
     const createActionAccept = new ActionRowBuilder<ButtonBuilder>().setComponents(
       new ButtonBuilder()
-        .setCustomId(`cancel_guild_invite_`)
+        .setCustomId(`cancel_guild_invite_${GuildCreateReportId}`)
         .setLabel('ปฏิเสธ')
         .setEmoji('✖')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
-        .setCustomId(`accept_guild_invite_`)
+        .setCustomId(`accept_guild_invite_${GuildCreateReportId}`)
         .setLabel('ยอมรับ')
         .setEmoji('✅')
         .setStyle(ButtonStyle.Success),
@@ -283,25 +310,33 @@ export class GuildCreateService {
     for (const userId of users) {
       try {
         const user = await this.users.fetch(userId);
+        console.log('[sendGuildInvitations]: user', user);
         await user.send({
           components: [createActionAccept],
           content: `คุณได้ถูกเชิญช่วยให้เป็นผู้ร่วมก่อตั้งกิลด์ ${guildName} โดย ${inviter}`,
         });
+        console.log('[sendGuildInvitations]: user sent');
       } catch (error) {
         this.logger.error('Error sending DM to user', error);
       }
     }
   }
 
-  @Button('accept_guild_invite_')
+  @Button('accept_guild_invite_:GuildCreateReportId')
   async acceptGuildInvite(@Context() [interaction]: ButtonContext): Promise<void> {
     this.logger.debug('Processing accept guild invite request');
+    
+    const GuildCreateReportId = interaction.customId.replace('accept_guild_invite_', '');
+    this.logger.debug(`Extracted GuildCreateReportId: ${GuildCreateReportId}`);
 
-    await this.guildManage.acceptInviteCreate(interaction, this.guildReportId);
+    await this.guildManage.acceptInviteCreate(interaction, GuildCreateReportId);
   }
 
-  @Button('cancel_guild_invite_')
+  @Button('cancel_guild_invite_:GuildCreateReportId')
   async cancelGuildInvite(@Context() [interaction]: ButtonContext): Promise<void> {
-    await this.guildManage.cancelInviteCreate(interaction, this.guildReportId);
+    const GuildCreateReportId = interaction.customId.replace('cancel_guild_invite_', '');
+    this.logger.debug(`Extracted GuildCreateReportId: ${GuildCreateReportId}`);
+    
+    await this.guildManage.cancelInviteCreate(interaction, GuildCreateReportId);
   }
 }

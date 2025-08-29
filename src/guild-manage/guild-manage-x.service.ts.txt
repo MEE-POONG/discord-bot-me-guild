@@ -21,7 +21,6 @@ import { ServerRepository } from 'src/repository/server';
 @Injectable()
 export class GuildManageService {
   private readonly logger = new Logger(GuildManageService.name);
-  public guildDB: GuildDB | null = null;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -39,14 +38,13 @@ export class GuildManageService {
       where: { userId: user.id },
     });
 
-    if (!guildMembers) return (this.guildDB = null);
+    if (!guildMembers) return null;
 
     const guild = await this.prisma.guildDB.findFirst({
       where: { id: guildMembers.guildId },
     });
 
-    this.guildDB = guild || null;
-    return this.guildDB;
+    return guild || null;
   }
 
   async checkGuild(userData: UserProfile) {

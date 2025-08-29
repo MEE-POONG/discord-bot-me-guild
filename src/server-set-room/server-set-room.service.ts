@@ -243,7 +243,7 @@ export class ServerSetRoomService {
       trade: '💱︰𝑻𝒓𝒂𝒅𝒆 ค้าขาย',
       complaint: '📢︰แจ้งความร้องทุกข์',
       suggestion: '💡︰ข้อเสนอแนะ',
-      guild: '🎭︰𝑮𝒖𝒊𝒍𝒅-𝑳𝒊𝒔𝒕', //ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
+      guild: '🛡️︰𝑮𝒖𝒊𝒍𝒅-𝑳𝒊𝒔𝒕', //ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
       gamematch: '👼︰หาปาร์ตี้เล่นเกม', // ห้องจับคู่เล่นเกม ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
       gamebtn: '💬︰หาห้องเกม', // ห้องควบคุมเกม ห้องนี้ตั้งค่าห้ามพิมแชทข้อความ
     };
@@ -416,7 +416,7 @@ export class ServerSetRoomService {
 
     if (!eccentricRole) {
       eccentricRole = await guild.roles.create({
-        name: '🎭 ผู้มีเอกลักษณ์',
+        name: '🎭 นอกรีต',
         color: 0xe74c3c, // สีแดง
         permissions: ['ViewChannel', 'ReadMessageHistory', 'SendMessages'],
         reason: 'Created for Welcome Room system',

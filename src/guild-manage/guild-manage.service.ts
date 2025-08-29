@@ -150,12 +150,12 @@ export class GuildManageService {
         this.logger.debug(`[acceptInviteCreate] Creating guild with ${report.confirmedMembers.length} confirmed members`);
         const membersList = [...report.confirmedMembers, interaction.user.id];
         this.logger.debug(`[acceptInviteCreate] Members list:`, membersList);
-        console.log(154);
+        console.log(153);
         // สร้าง Discord guild ก่อนเพื่อได้ category ID
-        this.logger.debug(195,`[acceptInviteCreate] Creating Discord guild first to get category ID for: ${report.guildName}`);
+        this.logger.debug(155,`[acceptInviteCreate] Creating Discord guild first to get category ID for: ${report.guildName}`);
         const res = await this.createGuild(report.guildName, report.serverId);
-        this.logger.debug(200,`[acceptInviteCreate] Create guild result:`, res);
-        console.log(200);
+        this.logger.debug(157,`[acceptInviteCreate] Create guild result:`, res);
+        console.log(158);
         
         if (!res.role || res.message !== 'success') {
           this.logger.error(`[acceptInviteCreate] Failed to create Discord guild: ${res.message}`);
@@ -164,13 +164,12 @@ export class GuildManageService {
           });
         }
 
-        // ใช้ category ID ที่ได้จาก Discord เป็น ID ของ GuildDB
-        const categoryId = res.categoryId; // ใช้ category ID ที่ได้จากการสร้าง
-        this.logger.debug(`[acceptInviteCreate] Using category ID as guild ID: ${categoryId}`);
+        // เก็บ category ID สำหรับการอ้างอิง
+        const categoryId = res.categoryId;
+        this.logger.debug(`[acceptInviteCreate] Category ID: ${categoryId}`);
         
         const guild = await this.prisma.guildDB.create({
           data: {
-            id: categoryId, // ใช้ category ID แทน auto-generated ID
             guild_name: report.guildName,
             guild_roleId: res.role.id,
             guild_size: 10,
@@ -178,6 +177,7 @@ export class GuildManageService {
             guild_copper: 0,
             guild_leader: report.ownerId,
             Logo: '',
+            guild_categoryId: categoryId, // เก็บ Discord category ID
           },
         });
         console.log(166);
@@ -189,8 +189,8 @@ export class GuildManageService {
             content: 'ไม่สามารถสร้างกิลด์ใหม่ได้ โปรดทำการก่อตั้งกิลด์ใหม่',
           });
         }
-        console.log(175);
-        this.logger.debug(176,`[acceptInviteCreate] Creating guild members for guild: ${guild.id}`);
+        console.log(192);
+        this.logger.debug(193,`[acceptInviteCreate] Creating guild members for guild: ${guild.id}`);
         const members = await this.prisma.guildMembers.createMany({
           data: membersList.map((userId) => ({
             userId,
@@ -198,7 +198,7 @@ export class GuildManageService {
             guildId: guild.id,
           })),
         });
-        console.log(185);
+        console.log(197);
         this.logger.debug(186,`[acceptInviteCreate] Created ${members.count} guild members`);
 
         if (!members.count) {
@@ -208,12 +208,12 @@ export class GuildManageService {
             content: 'ไม่สามารถเพิ่มสมาชิกลงในกิลด์ได้',
           });
         }
-        console.log(214);
+        console.log(212);
         this.logger.debug(215,`[acceptInviteCreate] Replying success to user`);
         interaction.editReply({
           content: 'ยืนยันคำขอสำเร็จ',
         });
-        console.log(218);
+        console.log(216);
         this.logger.debug(219,`[acceptInviteCreate] Fetching Discord guild: ${report.serverId}`);
         const Interguild = await this.client.guilds.fetch(report.serverId);
         if (!Interguild) {
@@ -222,18 +222,35 @@ export class GuildManageService {
             content: 'ไม่สามารถเข้าถึงดิสกิลด์ได้',
           });
         }
-        console.log(229);
+        console.log(227);
+        this.logger.debug(230,`[acceptInviteCreate] Fetching server data for role IDs`);
+        
+        // ดึงข้อมูล server เพื่อใช้ guildHeadRoleId และ guildCoRoleId
+        const serverData = await this.serverRepository.getServerById(report.serverId);
+        if (!serverData) {
+          this.logger.error(`[acceptInviteCreate] Server data not found for: ${report.serverId}`);
+          return interaction.editReply({
+            content: 'ไม่พบข้อมูลเซิร์ฟเวอร์ กรุณาสร้าง Guild Room ก่อน',
+          });
+        }
+
         this.logger.debug(230,`[acceptInviteCreate] Fetching owner: ${report.ownerId}`);
         const owner = await Interguild.members.fetch(report.ownerId);
         console.log(232);
         this.logger.debug(233,`[acceptInviteCreate] Adding roles to owner: ${report.ownerId}`);
-        owner?.roles.add(process.env.DISCORD_GUILD_FOUNDER_ROLE_ID).catch((error) => {
-          this.logger.error('Failed to add guild founder role to owner', error);
-        });
+        
+        // ใช้ guildHeadRoleId แทน environment variable
+        if (serverData.guildHeadRoleId) {
+          owner?.roles.add(serverData.guildHeadRoleId).catch((error) => {
+            this.logger.error('Failed to add guild head role to owner', error);
+          });
+        } else {
+          this.logger.warn('guildHeadRoleId not found in server data');
+        }
         owner?.roles.add(res.role).catch((error) => {
           this.logger.error('Failed to add guild role to owner', error);
         });
-        console.log(239);
+        console.log(237);
         const coFounders = membersList.filter((id) => id !== report.ownerId);
         this.logger.debug(242,`[acceptInviteCreate] Processing ${coFounders.length} co-founders:`, coFounders);
         console.log(242);
@@ -241,9 +258,14 @@ export class GuildManageService {
           this.logger.debug(243,`[acceptInviteCreate] Processing co-founder: ${id}`);
           const member = await Interguild.members.fetch(id);
           if (member) {
-            member.roles.add(process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID).catch((error) => {
-              this.logger.error(`Failed to add co-founder role to member ${id}`, error);
-            });
+            // ใช้ guildCoRoleId แทน environment variable
+            if (serverData.guildCoRoleId) {
+              member.roles.add(serverData.guildCoRoleId).catch((error) => {
+                this.logger.error(`Failed to add guild co-role to member ${id}`, error);
+              });
+            } else {
+              this.logger.warn('guildCoRoleId not found in server data');
+            }
             member.roles.add(res.role).catch((error) => {
               this.logger.error(`Failed to add guild role to member ${id}`, error);
             });
@@ -258,22 +280,22 @@ export class GuildManageService {
             this.logger.warn(`[acceptInviteCreate] Could not fetch member: ${id}`);
           }
         }
-        console.log(264);
+        console.log(262);
         this.logger.debug(265,` [acceptInviteCreate] Updating message and cleaning up`);
         this.updateMessage(report.channelId, report.messageId, report.guildName, membersList);
-        console.log(268);
+        console.log(266);
         await this.prisma.guildCreateReport.delete({ where: { id: reportId } }).catch(() => { });
         console.log(271);
         interaction.message.delete().catch(() => {
           this.logger.error('Failed to delete interaction message');
         });
       } else {
-        this.logger.debug(278,` [acceptInviteCreate] Adding user to confirmed members (not enough members yet)`);
+        this.logger.debug(276,` [acceptInviteCreate] Adding user to confirmed members (not enough members yet)`);
         await this.prisma.guildCreateReport.update({
           data: { confirmedMembers: { push: interaction.user.id } },
           where: { id: reportId },
         });
-        console.log(278);
+        console.log(276);
         this.logger.debug(279,` [acceptInviteCreate] Replying success and updating message`);
         interaction.editReply({
           content: 'ยืนยันคำขอสำเร็จ',
@@ -281,12 +303,12 @@ export class GuildManageService {
         interaction.message.delete().catch(() => {
           this.logger.error('Failed to delete interaction message');
         });
-        console.log(288);
+        console.log(286);
         this.updateMessage(report.channelId, report.messageId, report.guildName, [
           ...report.confirmedMembers,
           interaction.user.id,
         ]);
-        console.log(293);
+        console.log(291);
       }
     } catch (error) {
       this.logger.error('Error in acceptInviteCreate', error);
@@ -363,24 +385,24 @@ export class GuildManageService {
 
     this.logger.log('guildServer', guildServer);
     try {
-      console.log(372, ' guildServer', guildServer);
-      console.log(373, ' guildName', guildName);
+      console.log(366, ' guildServer', guildServer);
+      console.log(367, ' guildName', guildName);
 
-      this.logger.debug(375, `[createGuild] Creating role for guild: ${guildName}`);
+      this.logger.debug(369, `[createGuild] Creating role for guild: ${guildName}`);
       const role = await guildServer.roles.create({
         name: `🕍 ${guildName}`,
         position: 1,
         color: '#A4F1FF',
       });
 
-      this.logger.debug(382, ` [createGuild] Created role: ${role.name} (${role.id}) ${guildServer.id}`);
-      this.logger.debug(383, `[createGuild] Creating channels for guild: ${role.name}`);
+      this.logger.debug(376, ` [createGuild] Created role: ${role.name} (${role.id}) ${guildServer.id}`);
+      this.logger.debug(377, `[createGuild] Creating channels for guild: ${role.name}`);
 
       const channelResult = await this.createChannel(role, guildServer.id);
-      this.logger.log(387, 'role', role);
-      this.logger.log(388, 'channelResult', channelResult);
+      this.logger.log(381, 'role', role);
+      this.logger.log(382, 'channelResult', channelResult);
 
-      this.logger.debug(389, `[createGuild] Guild creation completed for: ${guildName}`);
+      this.logger.debug(383, `[createGuild] Guild creation completed for: ${guildName}`);
       return { role, message: channelResult.message, categoryId: channelResult.categoryId };
     } catch (error) {
       this.logger.error('Error creating guild room', error);
@@ -529,8 +551,8 @@ export class GuildManageService {
         createVoiceChannel('💬・แชท', 2),
         createVoiceChannel('🎤・โถงหลัก', 0),
         createVoiceChannel('🎤・โถงรอง', 0),
-        this.createGiftHouseChannel(category.id, roles),
-        this.createGuildEventChannel(category.id, roles),
+        // this.createGiftHouseChannel(category.id, roles),
+        // this.createGuildEventChannel(category.id, roles),
       ]);
 
       this.logger.debug(`[createChannel] All channels created successfully for role: ${roles.name}`);

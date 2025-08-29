@@ -24,6 +24,7 @@ import {
 } from 'discord.js';
 import { GuildManageService, UserProfile } from 'src/guild-manage/guild-manage.service';
 import { UserDataService } from 'src/user-data/user-data.service';
+import { ServerRepository } from 'src/repository/server';
 import { Button, ButtonContext, Context, On, StringSelectContext } from 'necord';
 
 @Injectable()
@@ -34,6 +35,7 @@ export class GuildCreateService {
     private readonly prisma: PrismaClient,
     private readonly guildManage: GuildManageService,
     private readonly userData: UserDataService,
+    private readonly serverRepository: ServerRepository,
 
     private readonly client: Client,
     private readonly channels: ChannelManager,
@@ -81,6 +83,28 @@ export class GuildCreateService {
         content: `คุณไม่สามารถสร้างกิลด์ได้เนื่องจากคุณมีกิลด์อยู่แล้ว`,
         ephemeral: true,
       });
+
+    // ตรวจสอบว่า ServerDB มี guildHeadRoleId และ guildCoRoleId หรือไม่
+    const serverData = await this.serverRepository.getServerById(interaction.guildId);
+    if (!serverData) {
+      return interaction.reply({
+        content: `❌ ไม่พบข้อมูลเซิร์ฟเวอร์ กรุณาติดต่อเจ้าของเซิร์ฟเวอร์เพื่อลงทะเบียนเซิร์ฟเวอร์ก่อน`,
+        ephemeral: true,
+      });
+    }
+
+    if (!serverData.guildHeadRoleId || !serverData.guildCoRoleId) {
+      const guildOwner = await interaction.guild.fetchOwner();
+      return interaction.reply({
+        content: `❌ **ไม่สามารถสร้างกิลด์ได้**\n\n` +
+          `🔧 **กรุณาแจ้งเจ้าของเซิร์ฟเวอร์** ${guildOwner?.toString()} **ให้ทำการ:**\n` +
+          `1. ใช้คำสั่ง \`/server-set-room\`\n` +
+          `2. เลือก **"Guild Room"**\n` +
+          `3. รอให้ระบบสร้างบทบาทหัวหน้าและรองหัวหน้า\n\n` +
+          `⚠️ **หมายเหตุ**: ระบบต้องมีบทบาทหัวหน้าและรองหัวหน้าก่อนจึงจะสามารถสร้างกิลด์ได้`,
+        ephemeral: true,
+      });
+    }
 
     const createEmbedFounded = new EmbedBuilder({
       title: 'เลือกผู้ร่วมก่อตั้งสมาชิกของคุณ (1/4) คน',

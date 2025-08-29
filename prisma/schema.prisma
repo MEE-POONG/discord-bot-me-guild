@@ -197,7 +197,7 @@ model GameRankDB {
 }
 
 model GuildDB {
-  id                       String         @id @map("_id") @db.ObjectId
+  id                       String         @id @default(auto()) @map("_id") @db.ObjectId
   Logo                     String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
   guild_copper             BigInt?
   guild_leader             String?
@@ -210,6 +210,7 @@ model GuildDB {
   guild_room_secondaryHall String?
   guild_room_activity      String?
   guild_room_visiting      String?
+  guild_categoryId         String?        // Discord category ID
   GuildMembers             GuildMembers[]
 }
 

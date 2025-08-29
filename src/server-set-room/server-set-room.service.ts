@@ -192,6 +192,9 @@ export class ServerSetRoomService {
       } else if (roomType === 'talk') {
         this.logger.debug('Creating Talk rooms');
         await this.createTalkRooms(interaction);
+      } else if (roomType === 'guild') {
+        this.logger.debug('Creating Guild room with roles');
+        await this.createGuildRoom(interaction, defaultRoomNames, roomFieldMapping);
       } else {
         this.logger.debug('Creating single room of type:', roomType);
         await this.createSingleRoom(interaction, roomType, defaultRoomNames, roomFieldMapping);
@@ -531,6 +534,165 @@ export class ServerSetRoomService {
         content: '❌ ไม่สามารถสร้าง Stage Channel ได้ กรุณาลองใหม่อีกครั้ง',
       });
     }
+  }
+
+  private async validateAndRepairGuildRoles(interaction: StringSelectMenuInteraction<CacheType>) {
+    this.logger.debug('validateAndRepairGuildRoles called');
+
+    const guild = interaction.guild;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+
+    if (!server) {
+      this.logger.warn('Server data not found');
+      return { headRole: null, coRole: null };
+    }
+
+    let headRole = null;
+    let coRole = null;
+    let needsUpdate = false;
+
+    // ตรวจสอบ guildHeadRoleId
+    if (server.guildHeadRoleId) {
+      headRole = guild.roles.cache.get(server.guildHeadRoleId);
+      if (!headRole) {
+        this.logger.warn('Guild head role not found in Discord, creating new one');
+        headRole = await guild.roles.create({
+          name: '👑 หัวหน้ากิลด์',
+          color: 0xffd700, // สีทอง
+          permissions: ['Administrator'],
+          reason: 'Repaired missing guild head role',
+        });
+        needsUpdate = true;
+      }
+    } else {
+      this.logger.warn('Guild head role ID not found in database, creating new one');
+      headRole = await guild.roles.create({
+        name: '👑 หัวหน้ากิลด์',
+        color: 0xffd700, // สีทอง
+        permissions: ['Administrator'],
+        reason: 'Created missing guild head role',
+      });
+      needsUpdate = true;
+    }
+
+    // ตรวจสอบ guildCoRoleId
+    if (server.guildCoRoleId) {
+      coRole = guild.roles.cache.get(server.guildCoRoleId);
+      if (!coRole) {
+        this.logger.warn('Guild co-role not found in Discord, creating new one');
+        coRole = await guild.roles.create({
+          name: '⭐ รองหัวหน้ากิลด์',
+          color: 0x00bfff, // สีฟ้า
+          permissions: ['ManageChannels', 'ManageRoles', 'KickMembers', 'BanMembers'],
+          reason: 'Repaired missing guild co-role',
+        });
+        needsUpdate = true;
+      }
+    } else {
+      this.logger.warn('Guild co-role ID not found in database, creating new one');
+      coRole = await guild.roles.create({
+        name: '⭐ รองหัวหน้ากิลด์',
+        color: 0x00bfff, // สีฟ้า
+        permissions: ['ManageChannels', 'ManageRoles', 'KickMembers', 'BanMembers'],
+        reason: 'Created missing guild co-role',
+      });
+      needsUpdate = true;
+    }
+
+    // อัปเดตฐานข้อมูลหากมีการเปลี่ยนแปลง
+    if (needsUpdate) {
+      await this.serverRepository.updateServer(interaction.guildId, {
+        guildHeadRoleId: headRole.id,
+        guildCoRoleId: coRole.id,
+      });
+      this.logger.log('Updated guild role IDs in database');
+    }
+
+    return { headRole, coRole };
+  }
+
+  private async createGuildRoom(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    defaultRoomNames: any,
+    roomFieldMapping: any,
+  ) {
+    this.logger.debug('createGuildRoom called');
+
+    const guild = interaction.guild;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+
+    // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+    const meguildPositionCreate = await this.serverRepository.getServerById(interaction.guildId);
+    let meguildCategory = guild.channels.cache.get(
+      meguildPositionCreate?.meguildPositionCreate || '',
+    );
+
+    if (!meguildCategory || meguildCategory.type !== 4) {
+      // ตรวจสอบว่าหมวดหมู่มีอยู่และเป็น Category
+      // สร้างหมวดหมู่ใหม่
+      const newCategory = await guild.channels.create({
+        name: `〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓`,
+        type: 4, // Category Channel
+        position: 0,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // @everyone role
+            allow: ['ViewChannel', 'ReadMessageHistory'],
+          },
+        ],
+      });
+
+      // บันทึก ID ของหมวดหมู่ในฐานข้อมูล
+      await this.serverRepository.updateServer(interaction.guildId, {
+        meguildPositionCreate: newCategory.id,
+      });
+
+      meguildCategory = newCategory;
+    }
+
+    // ตรวจสอบและซ่อมแซมบทบาท Guild
+    const { headRole, coRole } = await this.validateAndRepairGuildRoles(interaction);
+
+    if (!headRole || !coRole) {
+      this.logger.error('Failed to validate or create guild roles');
+      return interaction.editReply({
+        content: '❌ ไม่สามารถสร้างหรือตรวจสอบบทบาทกิลด์ได้',
+      });
+    }
+
+    this.logger.debug('Guild roles validated:', { headRole: headRole.name, coRole: coRole.name });
+
+    // สร้างห้อง Guild ภายใต้หมวดหมู่ MeGuild Center
+    const guildChannel = await guild.channels.create({
+      name: defaultRoomNames.guild,
+      type: ChannelType.GuildText,
+      parent: meguildCategory.id, // ใช้ MeGuild Center เป็น parent
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id, // @everyone role
+          deny: ['SendMessages'], // ห้ามส่งข้อความ
+          allow: ['ViewChannel', 'ReadMessageHistory'],
+        },
+        {
+          id: headRole.id, // หัวหน้ากิลด์
+          allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageMessages'],
+        },
+        {
+          id: coRole.id, // รองหัวหน้ากิลด์
+          allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageMessages'],
+        },
+      ],
+    });
+
+    this.logger.debug('Guild channel created:', guildChannel.name);
+
+    // อัปเดตข้อมูลในฐานข้อมูล (เฉพาะ guildChannel เพราะ role IDs ถูกอัปเดตแล้วใน validateAndRepairGuildRoles)
+    await this.serverRepository.updateServer(interaction.guildId, {
+      guildChannel: guildChannel.id,
+    });
+
+    this.roomName = guildChannel.name;
+    return this.editReplySuccess(interaction, 'guild');
   }
 
   private async createTalkRooms(interaction: StringSelectMenuInteraction<CacheType>) {

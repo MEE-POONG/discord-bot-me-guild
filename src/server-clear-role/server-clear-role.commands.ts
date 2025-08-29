@@ -13,13 +13,19 @@ export class ServerclearRoleCommands {
   })
   async handleServerclearRole(@Context() [interaction]: SlashCommandContext) {
     try {
+      // Defer reply เพื่อป้องกัน Unknown interaction error
+      await interaction.deferReply({ ephemeral: true });
+      
       await this.serverclearroleService.ServerclearRoleSystem(interaction);
     } catch (error) {
       this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
-      return interaction.reply({
-        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
-        ephemeral: true,
-      });
+      try {
+        return interaction.editReply({
+          content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
+        });
+      } catch (editError) {
+        this.logger.error('Failed to edit reply:', editError.message);
+      }
     }
   }
 }

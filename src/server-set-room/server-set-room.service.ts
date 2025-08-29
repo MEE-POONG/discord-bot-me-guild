@@ -12,6 +12,7 @@ import {
   ChannelType,
   GuildMember,
   CommandInteraction,
+  PermissionFlagsBits,
 } from 'discord.js';
 import { Button, ButtonContext, Context, SlashCommandContext, StringSelect, StringSelectContext } from 'necord';
 import { PrismaService } from 'src/prisma.service';
@@ -70,11 +71,11 @@ export class ServerSetRoomService {
             value: 'news',
             description: 'สร้างห้อง News',
           },
-            {
-              label: 'Register Room',
-              value: 'register',
-              description: 'สร้างห้อง Register',
-            },
+          {
+            label: 'Register Room',
+            value: 'register',
+            description: 'สร้างห้อง Register',
+          },
           // {
           //   label: 'Complaint Room',
           //   value: 'complaint',
@@ -294,18 +295,52 @@ export class ServerSetRoomService {
       register: 2,
     };
 
+    // จัดการพิเศษสำหรับ Welcome Room และ Register Room
+    if (roomType === 'welcome') {
+      return await this.createWelcomeRoom(interaction, defaultRoomNames, roomFieldMapping);
+    } else if (roomType === 'register') {
+      return await this.createRegisterRoom(interaction, defaultRoomNames, roomFieldMapping);
+    }
+
+    // เตรียม permission overrides สำหรับห้องต่างๆ
+    const permissionOverwrites = [
+      {
+        id: guild.roles.everyone.id, // @everyone role
+        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
+        deny: [PermissionFlagsBits.SendMessages],
+      },
+    ];
+
+    // เพิ่ม permission สำหรับ visitorRole และ adventurerRole
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+    if (server?.visitorRoleId) {
+      const visitorRole = guild.roles.cache.get(server.visitorRoleId);
+      if (visitorRole) {
+        permissionOverwrites.push({
+          id: visitorRole.id,
+          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          deny: [],
+        });
+      }
+    }
+
+    if (server?.adventurerRoleId) {
+      const adventurerRole = guild.roles.cache.get(server.adventurerRoleId);
+      if (adventurerRole) {
+        permissionOverwrites.push({
+          id: adventurerRole.id,
+          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          deny: [],
+        });
+      }
+    }
+
     const newRoom = await guild.channels.create({
       name: defaultRoomNames[roomType],
       type: 0, // Text Channel
       parent: meguildCategory.id, // ตั้ง parent เป็น 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
       position: channelPositionMapping[roomType], // กำหนดลำดับห้อง
-      permissionOverwrites: [
-        {
-          id: guild.roles.everyone.id, // @everyone role
-          allow: ['ViewChannel', 'ReadMessageHistory'],
-          deny: ['SendMessages'],
-        },
-      ],
+      permissionOverwrites: permissionOverwrites,
     });
 
     this.logger.debug('New room created:', newRoom.name);
@@ -318,11 +353,224 @@ export class ServerSetRoomService {
     // กำหนดชื่อห้องใหม่ให้ `this.roomName`
     this.roomName = newRoom.name;
 
-    if (roomType === 'register') {
-      await this.createRegistrationMessage(newRoom);
+    return this.editReplySuccess(interaction, roomType);
+  }
+
+  private async createWelcomeRoom(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    defaultRoomNames: any,
+    roomFieldMapping: any,
+  ) {
+    this.logger.debug('createWelcomeRoom called');
+
+    const guild = interaction.guild;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+
+    // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+    const meguildPositionCreate = await this.serverRepository.getServerById(interaction.guildId);
+    let meguildCategory = guild.channels.cache.get(
+      meguildPositionCreate?.meguildPositionCreate || '',
+    );
+
+    if (!meguildCategory || meguildCategory.type !== 4) {
+      const newCategory = await guild.channels.create({
+        name: `〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓`,
+        type: 4,
+        position: 0,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            allow: ['ViewChannel', 'ReadMessageHistory'],
+          },
+        ],
+      });
+
+      await this.serverRepository.updateServer(interaction.guildId, {
+        meguildPositionCreate: newCategory.id,
+      });
+
+      meguildCategory = newCategory;
     }
 
-    return this.editReplySuccess(interaction, roomType);
+    // ตรวจสอบและสร้าง User Role
+    let userRole = null;
+    if (server?.userRoleId) {
+      userRole = guild.roles.cache.get(server.userRoleId);
+    }
+
+    if (!userRole) {
+      userRole = await guild.roles.create({
+        name: '👤 ผู้ใช้',
+        color: 0x95a5a6, // สีเทา
+        permissions: ['ViewChannel', 'ReadMessageHistory'],
+        reason: 'Created for Welcome Room system',
+      });
+      this.logger.debug('User role created:', userRole.name);
+    }
+
+    // เตรียม permission overrides สำหรับ Welcome Room
+    const welcomePermissionOverwrites = [
+      {
+        id: guild.roles.everyone.id,
+        deny: [PermissionFlagsBits.SendMessages],
+        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
+      },
+      {
+        id: userRole.id,
+        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+        deny: [],
+      },
+    ];
+
+    // เพิ่ม permission สำหรับ visitorRole และ adventurerRole
+    if (server?.visitorRoleId) {
+      const visitorRole = guild.roles.cache.get(server.visitorRoleId);
+      if (visitorRole) {
+        welcomePermissionOverwrites.push({
+          id: visitorRole.id,
+          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          deny: [],
+        });
+      }
+    }
+
+    if (server?.adventurerRoleId) {
+      const adventurerRole = guild.roles.cache.get(server.adventurerRoleId);
+      if (adventurerRole) {
+        welcomePermissionOverwrites.push({
+          id: adventurerRole.id,
+          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          deny: [],
+        });
+      }
+    }
+
+    // สร้างห้อง Welcome
+    const channel = await guild.channels.create({
+      name: defaultRoomNames.welcome,
+      type: ChannelType.GuildText,
+      parent: meguildCategory.id,
+      position: 0,
+      permissionOverwrites: welcomePermissionOverwrites,
+    });
+
+    this.logger.debug('Welcome channel created:', channel.name);
+
+    // อัปเดตข้อมูลในฐานข้อมูล
+    await this.serverRepository.updateServer(interaction.guildId, {
+      [roomFieldMapping.welcome]: channel.id,
+      userRoleId: userRole.id,
+    });
+
+    this.roomName = channel.name;
+    return this.editReplySuccess(interaction, 'welcome');
+  }
+
+  private async createRegisterRoom(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    defaultRoomNames: any,
+    roomFieldMapping: any,
+  ) {
+    this.logger.debug('createRegisterRoom called');
+
+    const guild = interaction.guild;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+
+    // ตรวจสอบหมวดหมู่ 𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓
+    const meguildPositionCreate = await this.serverRepository.getServerById(interaction.guildId);
+    let meguildCategory = guild.channels.cache.get(
+      meguildPositionCreate?.meguildPositionCreate || '',
+    );
+
+    if (!meguildCategory || meguildCategory.type !== 4) {
+      const newCategory = await guild.channels.create({
+        name: `〔👑〕𝑴𝒆𝑮𝒖𝒊𝒍𝒅 𝑪𝒆𝒏𝒕𝒆𝒓`,
+        type: 4,
+        position: 0,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id,
+            allow: ['ViewChannel', 'ReadMessageHistory'],
+          },
+        ],
+      });
+
+      await this.serverRepository.updateServer(interaction.guildId, {
+        meguildPositionCreate: newCategory.id,
+      });
+
+      meguildCategory = newCategory;
+    }
+
+    // ตรวจสอบและสร้าง Visitor Role
+    let visitorRole = null;
+    if (server?.visitorRoleId) {
+      visitorRole = guild.roles.cache.get(server.visitorRoleId);
+    }
+
+    if (!visitorRole) {
+      visitorRole = await guild.roles.create({
+        name: '👥 ผู้มาเยือน',
+        color: 0xe74c3c, // สีแดง
+        permissions: ['ViewChannel', 'ReadMessageHistory'],
+        reason: 'Created for Register Room system',
+      });
+      this.logger.debug('Visitor role created:', visitorRole.name);
+    }
+
+    // ตรวจสอบและสร้าง Adventurer Role
+    let adventurerRole = null;
+    if (server?.adventurerRoleId) {
+      adventurerRole = guild.roles.cache.get(server.adventurerRoleId);
+    }
+
+    if (!adventurerRole) {
+      adventurerRole = await guild.roles.create({
+        name: '⚔️ นักผจญภัย',
+        color: 0x3498db, // สีฟ้า
+        permissions: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+        reason: 'Created for Register Room system',
+      });
+      this.logger.debug('Adventurer role created:', adventurerRole.name);
+    }
+
+    // สร้างห้อง Register
+    const channel = await guild.channels.create({
+      name: defaultRoomNames.register,
+      type: ChannelType.GuildText,
+      parent: meguildCategory.id,
+      position: 2,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id,
+          deny: ['SendMessages'],
+          allow: ['ViewChannel', 'ReadMessageHistory'],
+        },
+        {
+          id: visitorRole.id,
+          allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+        },
+        {
+          id: adventurerRole.id,
+          allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+        },
+      ],
+    });
+
+    this.logger.debug('Register channel created:', channel.name);
+
+    // สร้าง registration form ใน channel
+    await this.createRegistrationMessage(channel);
+
+    // อัปเดตข้อมูลในฐานข้อมูล
+    await this.serverRepository.updateServer(interaction.guildId, {
+      [roomFieldMapping.register]: channel.id,
+      visitorRoleId: visitorRole.id,
+      adventurerRoleId: adventurerRole.id,
+    });
+
+    this.roomName = channel.name;
+    return this.editReplySuccess(interaction, 'register');
   }
 
   private async createGameMatchRooms(
@@ -502,7 +750,6 @@ export class ServerSetRoomService {
   @Button('busking-request-activity')
   public async createBuskingRequestActivity(@Context() [interaction]: ButtonContext) {
 
-    
 
     const member = interaction.member as GuildMember;
     const voiceChannel = member.voice.channel;
@@ -514,7 +761,6 @@ export class ServerSetRoomService {
       });
       return;
     }
-    
 
     try {
       await interaction.deferReply({ ephemeral: true });
@@ -867,8 +1113,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-              `**${existingChannelName}**\n` +
-              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+            `**${existingChannelName}**\n` +
+            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],
@@ -910,8 +1156,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-              `**${existingChannelName}**\n` +
-              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+            `**${existingChannelName}**\n` +
+            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],

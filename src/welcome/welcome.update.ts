@@ -10,6 +10,95 @@ export class WelcomeUpdate {
 
   @On('guildMemberAdd')
   public async onGuildMemberAdd(@Context() [member]: ContextOf<'guildMemberAdd'>) {
+    this.logger.debug(`New member joined: ${member.user.tag} (${member.user.id}) in guild: ${member.guild.name}`);
+
+    try {
+      // Auto-assign visitor role
+      await this.assignVisitorRole(member);
+
+      // ส่งข้อความต้อนรับ
+      await this.sendWelcomeMessage(member);
+    } catch (error) {
+      this.logger.error('Failed to handle guild member add', error);
+    }
+  }
+
+  private async assignVisitorRole(member: GuildMember) {
+    try {
+      const server = await this.serverRepository.getServerById(member.guild.id);
+      
+      if (!server) {
+        this.logger.warn(`Server data not found for guild: ${member.guild.id}`);
+        return;
+      }
+
+      // ตรวจสอบว่าผู้ใช้เคยลงทะเบียนแล้วหรือไม่
+      const isRegistered = await this.checkUserRegistration(member.user.id);
+      
+      if (isRegistered) {
+        // ถ้าเคยลงทะเบียนแล้ว ให้บทบาท adventurer
+        if (server.adventurerRoleId) {
+          const adventurerRole = member.guild.roles.cache.get(server.adventurerRoleId);
+          
+          if (adventurerRole) {
+            await member.roles.add(adventurerRole);
+            this.logger.log(`✅ Added adventurer role to registered user ${member.user.tag} in ${member.guild.name}`);
+          } else {
+            this.logger.warn(`Adventurer role not found in Discord: ${server.adventurerRoleId}`);
+            // ถ้าไม่พบ adventurer role ให้ visitor role แทน
+            await this.assignVisitorRoleFallback(member, server);
+          }
+        } else {
+          this.logger.warn(`No adventurerRoleId found in server data for guild: ${member.guild.id}`);
+          // ถ้าไม่มี adventurer role ให้ visitor role แทน
+          await this.assignVisitorRoleFallback(member, server);
+        }
+      } else {
+        // ถ้ายังไม่เคยลงทะเบียน ให้บทบาท visitor
+        await this.assignVisitorRoleFallback(member, server);
+      }
+    } catch (error) {
+      this.logger.error(`Error assigning role to ${member.user.tag}:`, error);
+    }
+  }
+
+  private async assignVisitorRoleFallback(member: GuildMember, server: any) {
+    // ให้บทบาท visitor เป็น fallback สำหรับทุกคน
+    if (server.visitorRoleId) {
+      const visitorRole = member.guild.roles.cache.get(server.visitorRoleId);
+      
+      if (visitorRole) {
+        await member.roles.add(visitorRole);
+        this.logger.log(`✅ Added visitor role to user ${member.user.tag} in ${member.guild.name}`);
+      } else {
+        this.logger.warn(`Visitor role not found in Discord: ${server.visitorRoleId}`);
+      }
+    } else {
+      this.logger.warn(`No visitorRoleId found in server data for guild: ${member.guild.id}`);
+    }
+  }
+
+  private async checkUserRegistration(userId: string): Promise<boolean> {
+    try {
+      // ตรวจสอบในฐานข้อมูลว่าผู้ใช้เคยลงทะเบียนแล้วหรือไม่
+      // ใช้ PrismaService เพื่อตรวจสอบ UserData
+      const { PrismaService } = await import('../prisma.service');
+      const prisma = new PrismaService();
+      
+      const userData = await prisma.userDB.findFirst({
+        where: { discord_id: userId }
+      });
+
+      await prisma.$disconnect();
+      
+      return !!userData; // return true ถ้าพบข้อมูลผู้ใช้
+    } catch (error) {
+      this.logger.error(`Error checking user registration for ${userId}:`, error);
+      return false; // ถ้าเกิด error ให้ถือว่าไม่เคยลงทะเบียน
+    }
+  }
+
+  private async sendWelcomeMessage(member: GuildMember) {
     try {
       const buffer = await axios({
         method: 'POST',
@@ -44,6 +133,92 @@ export class WelcomeUpdate {
       }
     } catch (error) {
       this.logger.error('Failed to send welcome message', error);
+    }
+  }
+
+  // ฟังก์ชันสำหรับเปลี่ยน role จาก visitor เป็น adventurer
+  async promoteToAdventurer(member: GuildMember, guildId: string) {
+    this.logger.debug(`Promoting ${member.user.tag} to adventurer in guild: ${guildId}`);
+
+    try {
+      // ดึงข้อมูล server
+      const server = await this.serverRepository.getServerById(guildId);
+      
+      if (!server) {
+        this.logger.warn(`Server data not found for guild: ${guildId}`);
+        return false;
+      }
+
+      // ตรวจสอบ visitorRoleId และ adventurerRoleId
+      if (!server.visitorRoleId || !server.adventurerRoleId) {
+        this.logger.warn(`Missing role IDs in server data for guild: ${guildId}`);
+        return false;
+      }
+
+      const visitorRole = member.guild.roles.cache.get(server.visitorRoleId);
+      const adventurerRole = member.guild.roles.cache.get(server.adventurerRoleId);
+
+      if (!visitorRole || !adventurerRole) {
+        this.logger.warn(`Roles not found in Discord for guild: ${guildId}`);
+        return false;
+      }
+
+      // ลบ visitor role และเพิ่ม adventurer role
+      if (member.roles.cache.has(visitorRole.id)) {
+        await member.roles.remove(visitorRole);
+        this.logger.log(`Removed visitor role from ${member.user.tag}`);
+      }
+
+      await member.roles.add(adventurerRole);
+      this.logger.log(`Added adventurer role to ${member.user.tag}`);
+
+      return true;
+    } catch (error) {
+      this.logger.error(`Error promoting ${member.user.tag} to adventurer:`, error);
+      return false;
+    }
+  }
+
+  // ฟังก์ชันสำหรับเปลี่ยน role จาก adventurer เป็น visitor (กรณีต้องการ downgrade)
+  async demoteToVisitor(member: GuildMember, guildId: string) {
+    this.logger.debug(`Demoting ${member.user.tag} to visitor in guild: ${guildId}`);
+
+    try {
+      // ดึงข้อมูล server
+      const server = await this.serverRepository.getServerById(guildId);
+      
+      if (!server) {
+        this.logger.warn(`Server data not found for guild: ${guildId}`);
+        return false;
+      }
+
+      // ตรวจสอบ visitorRoleId และ adventurerRoleId
+      if (!server.visitorRoleId || !server.adventurerRoleId) {
+        this.logger.warn(`Missing role IDs in server data for guild: ${guildId}`);
+        return false;
+      }
+
+      const visitorRole = member.guild.roles.cache.get(server.visitorRoleId);
+      const adventurerRole = member.guild.roles.cache.get(server.adventurerRoleId);
+
+      if (!visitorRole || !adventurerRole) {
+        this.logger.warn(`Roles not found in Discord for guild: ${guildId}`);
+        return false;
+      }
+
+      // ลบ adventurer role และเพิ่ม visitor role
+      if (member.roles.cache.has(adventurerRole.id)) {
+        await member.roles.remove(adventurerRole);
+        this.logger.log(`Removed adventurer role from ${member.user.tag}`);
+      }
+
+      await member.roles.add(visitorRole);
+      this.logger.log(`Added visitor role to ${member.user.tag}`);
+
+      return true;
+    } catch (error) {
+      this.logger.error(`Error demoting ${member.user.tag} to visitor:`, error);
+      return false;
     }
   }
 

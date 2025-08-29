@@ -154,24 +154,29 @@ export class FormRegisterService {
       const server = await this.serverRepository.getServerById(interaction.guildId);
       const member = interaction.member as GuildMember;
 
-      // 🔍 ตรวจสอบว่าผู้ใช้มี Role อยู่หรือไม่
-      const hasRoles = member.roles.cache.size > 1;
-      this.logger.debug(`[registerModal] User has roles: ${hasRoles}`);
+      // 🔍 ตรวจสอบว่าผู้ใช้มี Adventurer Role อยู่หรือไม่
+      const hasAdventurerRole = server.adventurerRoleId && member.roles.cache.has(server.adventurerRoleId);
+      const hasVisitorRole = server.visitorRoleId && member.roles.cache.has(server.visitorRoleId);
+      
+      this.logger.debug(`[registerModal] User has adventurer role: ${hasAdventurerRole}, visitor role: ${hasVisitorRole}`);
 
-      // ✅ ถ้าไม่มี Role หรือออกจากเซิร์ฟแล้วกลับมาใหม่ ให้มอบ Role ที่เคยมีให้
-      if (!hasRoles) {
-        this.logger.debug(`[registerModal] Adding roles to user`);
-        if (server.visitorRoleId) {
+      // ✅ ถ้าไม่มี Adventurer Role ให้เพิ่มให้ (ผู้ใช้เคยลงทะเบียนแล้ว)
+      if (!hasAdventurerRole && server.adventurerRoleId) {
+        this.logger.debug(`[registerModal] Adding adventurer role to existing user`);
+        
+        // ลบ Visitor Role ถ้ามี
+        if (hasVisitorRole && server.visitorRoleId) {
           await member.roles.remove(server.visitorRoleId).catch((e) => {
             this.logger.warn(`⚠️ ไม่สามารถลบ Visitor Role: ${e.message}`);
           });
         }
 
-        if (server.adventurerRoleId) {
-          await member.roles.add(server.adventurerRoleId).catch((e) => {
-            this.logger.warn(`⚠️ ไม่สามารถเพิ่ม Adventurer Role: ${e.message}`);
-          });
-        }
+        // เพิ่ม Adventurer Role
+        await member.roles.add(server.adventurerRoleId).catch((e) => {
+          this.logger.warn(`⚠️ ไม่สามารถเพิ่ม Adventurer Role: ${e.message}`);
+        });
+        
+        this.logger.log(`✅ Added adventurer role to existing user: ${interaction.user.tag}`);
       }
 
       // ✅ แสดงโปรไฟล์ของผู้ใช้ที่มีอยู่ในระบบ

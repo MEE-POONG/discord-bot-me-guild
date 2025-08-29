@@ -537,7 +537,7 @@ export class GuildManageService {
         // 🎭 ผู้มีเอกลักษณ์ - มองไม่เห็น
         ...(server?.eccentricRoleId ? [{
           id: server.eccentricRoleId,
-          deny: ['Connect', 'SendMessages', 'ReadMessageHistory'],
+          deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
         }] : []),
         // ⚔️ นักผจญภัย - มองไม่เห็น
         ...(server?.adventurerRoleId ? [{

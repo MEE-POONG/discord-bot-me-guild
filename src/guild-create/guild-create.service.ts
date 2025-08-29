@@ -217,10 +217,13 @@ export class GuildCreateService {
     return await this.prisma.guildCreateReport.create({
       data: {
         ownerId: interaction.user.id,
+        serverId: interaction.guildId!,
         channelId: msg.channel.id,
         messageId: msg.id,
         guildName: guildName,
-        members: { set: [interaction.user.id] },
+        invitedMembers: [interaction.user.id],
+        confirmedMembers: [interaction.user.id],
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
       },
     });
   }

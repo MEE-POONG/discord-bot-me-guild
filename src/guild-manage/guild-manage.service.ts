@@ -452,7 +452,7 @@ export class GuildManageService {
       return { role: undefined, message: 'ไม่สามารถสร้างห้องกิลด์ได้', categoryId: undefined };
     }
   }
-  private async createVoiceChannel(
+  private async createPrivateVoiceChannel(
     category: CategoryChannel,
     name: string,
     state: 0 | 1 | 2 = 0,       // 0 = Voice, 1 = Stage, 2 = Text
@@ -511,6 +511,64 @@ export class GuildManageService {
     }
   }
 
+  private async createPublicVoiceChannel(
+    category: CategoryChannel,
+    name: string,
+    state: 0 | 1 | 2 = 0,       // 0 = Voice, 1 = Stage, 2 = Text
+    server?: any,               // ถ้ามี type ของ ServerDB ให้ใส่แทน any
+    guildServer?: Guild,
+    roles?: Role                // Guild role สำหรับ permission
+  ) {
+    this.logger.debug(`[createVoiceChannel] Creating channel: ${name} (state: ${state}, category: ${category.id}`);
+    try {
+      const type =
+        state === 0
+          ? ChannelType.GuildVoice
+          : state === 1
+            ? ChannelType.GuildStageVoice
+            : ChannelType.GuildText;
+
+      const permissionOverwrites = [
+        // @everyone - มองไม่เห็น
+        {
+          id: guildServer!.roles.everyone.id,
+          allow: ['ViewChannel'],
+        },
+        // 🎭 ผู้มีเอกลักษณ์ - มองไม่เห็น
+        ...(server?.eccentricRoleId ? [{
+          id: server.eccentricRoleId,
+          deny: ['Connect', 'SendMessages', 'ReadMessageHistory'],
+        }] : []),
+        // ⚔️ นักผจญภัย - มองไม่เห็น
+        ...(server?.adventurerRoleId ? [{
+          id: server.adventurerRoleId,
+          deny: ['Connect', 'SendMessages', 'ReadMessageHistory'],
+        }] : []),
+        // 👥 ผู้เยี่ยมชม - มองไม่เห็น
+        ...(server?.visitorRoleId ? [{
+          id: server.visitorRoleId,
+          deny: ['Connect', 'SendMessages', 'ReadMessageHistory'],
+        }] : []),
+        // 🕍 ชื่อกิลด์ - มองเห็น (เฉพาะสมาชิกกิลด์)
+        ...(roles ? [{
+          id: roles.id, // Guild role ID
+          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+        }] : []),
+      ];
+
+      const ch = await category.children.create({
+        type,
+        name,
+        permissionOverwrites: permissionOverwrites as OverwriteResolvable[],
+      });
+
+      this.logger.debug(`[createVoiceChannel] Created: ${ch.name} (${ch.id})`);
+      return ch;
+    } catch (error) {
+      this.logger.error(`[createVoiceChannel] Failed to create channel "${name}":`, error);
+      throw new Error(`ไม่สามารถสร้างห้อง ${name} ได้`);
+    }
+  }
   private async createGiftHouseChannel(roles: Role, guildId: string): Promise<void> {
     this.logger.debug(`[createGiftHouseChannel] Creating gift house channel for category: ${guildId}`);
     try {
@@ -652,11 +710,11 @@ export class GuildManageService {
               // เรียกใช้เมธอดใหม่แทนฟังก์ชันซ้อน
         this.logger.debug(`[createChannel] Creating all channels for guild`);
         await Promise.all([
-          this.createVoiceChannel(category, '💬・แชท', 2, server, guildServer, roles),
-          this.createVoiceChannel(category, '🎤・โถงหลัก', 0, server, guildServer, roles),
-          this.createVoiceChannel(category, '🎤・โถงรอง', 0, server, guildServer, roles),
-          this.createVoiceChannel(category, '👑・กิจกรรม', 0, server, guildServer, roles),
-          this.createVoiceChannel(category, '🎁・เยี่ยมบ้าน', 0, server, guildServer, roles),
+          this.createPrivateVoiceChannel(category, '💬・แชท', 2, server, guildServer, roles),
+          this.createPrivateVoiceChannel(category, '🎤・โถงหลัก', 0, server, guildServer, roles),
+          this.createPrivateVoiceChannel(category, '🎤・โถงรอง', 0, server, guildServer, roles),
+          this.createPublicVoiceChannel(category, '👑・กิจกรรม', 0, server, guildServer, roles),
+          this.createPublicVoiceChannel(category, '🎁・เยี่ยมบ้าน', 0, server, guildServer, roles),
           // ถ้าจะเปิดห้อง public ให้เปลี่ยน publicView = true
           // this.createVoiceChannel(category, '📣・ประชาสัมพันธ์', 2, true, server, guildServer, roles),
         ]);

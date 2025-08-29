@@ -18,73 +18,85 @@ export class ServerclearService {
   }
 
   async ServerclearSystem(interaction: any) {
+    this.logger.debug(`[ServerclearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`);
     const roleCheck = 'admin';
+    this.logger.debug(`[ServerclearSystem] Validating server and role: ${roleCheck}`);
     const validationError = await validateServerAndRole(
       interaction,
       roleCheck,
       this.serverRepository,
     );
     if (validationError) {
+      this.logger.warn(`[ServerclearSystem] Validation failed:`, validationError);
       return validationError;
     }
+    this.logger.debug(`[ServerclearSystem] Validation passed`);
 
     const guild: Guild = interaction.guild;
+    this.logger.debug(`[ServerclearSystem] Guild: ${guild?.name} (${guild?.id})`);
 
     if (!guild) {
-      return interaction.reply({
+      this.logger.error(`[ServerclearSystem] No guild found`);
+      return interaction.editReply({
         content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
-        ephemeral: true,
       });
     }
 
     // ✅ เพิ่มเงื่อนไขตรวจสอบเจ้าของเซิร์ฟเวอร์
+    this.logger.debug(`[ServerclearSystem] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`);
     if (guild.ownerId !== interaction.user.id) {
-      return interaction.reply({
+      this.logger.warn(`[ServerclearSystem] User ${interaction.user.id} is not the owner of guild ${guild.id}`);
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
             .setDescription('🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้น')
             .setColor(0xff0000),
         ],
-        ephemeral: true,
       });
     }
 
     try {
+      this.logger.debug(`[ServerclearSystem] Starting channel deletion process`);
       const channels = guild.channels.cache;
       const excludeChannels = ['test', 'rules', 'moderator-only'];
+      this.logger.debug(`[ServerclearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`);
 
       let testChannel = channels.find(
         (channel) => channel.name === 'test' && channel.isTextBased(),
       );
+      this.logger.debug(`[ServerclearSystem] Test channel found: ${testChannel ? testChannel.name : 'none'}`);
 
       for (const [channelId, channel] of channels) {
         if (excludeChannels.includes(channel.name)) {
-          this.logger.log(`Skipped deleting channel: ${channel.name} (${channelId})`);
+          this.logger.debug(`[ServerclearSystem] Skipped deleting channel: ${channel.name} (${channelId})`);
           continue;
         }
 
         try {
+          this.logger.debug(`[ServerclearSystem] Deleting channel: ${channel.name} (${channelId})`);
           await channel.delete(`Deleted by ${interaction.user.tag}`);
-          this.logger.log(`Deleted channel: ${channel.name} (${channelId})`);
+          this.logger.log(`[ServerclearSystem] Deleted channel: ${channel.name} (${channelId})`);
         } catch (err) {
           this.logger.error(
-            `❌ Failed to delete channel ${channel.name} (${channelId}): ${err.message}`,
+            `[ServerclearSystem] Failed to delete channel ${channel.name} (${channelId}): ${err.message}`,
           );
         }
       }
 
       if (!testChannel) {
+        this.logger.debug(`[ServerclearSystem] Creating test channel`);
         testChannel = await guild.channels.create({
           name: 'test',
           type: 0,
           reason: `Created by ${interaction.user.tag} after clearing other channels`,
         });
 
-        this.logger.log(`Created channel: ${testChannel.name} (${testChannel.id})`);
+        this.logger.log(`[ServerclearSystem] Created channel: ${testChannel.name} (${testChannel.id})`);
       }
 
-      return interaction.reply({
+      this.logger.debug(`[ServerclearSystem] Sending success response`);
+      return interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('✅ ลบห้องสำเร็จ')
@@ -95,13 +107,11 @@ export class ServerclearService {
             )
             .setColor(0x00ff00),
         ],
-        ephemeral: true,
       });
     } catch (error) {
-      this.logger.error(`Error deleting channels: ${error.message}`);
-      return interaction.reply({
+      this.logger.error(`[ServerclearSystem] Error deleting channels: ${error.message}`, error);
+      return interaction.editReply({
         content: '❌ เกิดข้อผิดพลาดระหว่างการลบห้อง กรุณาลองใหม่อีกครั้ง',
-        ephemeral: true,
       });
     }
   }

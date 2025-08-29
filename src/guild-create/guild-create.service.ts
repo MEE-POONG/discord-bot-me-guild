@@ -166,7 +166,7 @@ export class GuildCreateService {
         await this.scheduleMessageDeletion(msg);
         await this.sendGuildInvitations(
           users,
-          guildReport.id,
+          guildReport.serverId,
           guildName,
           interaction.user.toString(),
         );

@@ -197,7 +197,7 @@ model GameRankDB {
 }
 
 model GuildDB {
-  id                       String         @id @default(auto()) @map("_id") @db.ObjectId
+  id                       String         @id @map("_id") @db.ObjectId
   Logo                     String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
   guild_copper             BigInt?
   guild_leader             String?
@@ -349,6 +349,8 @@ model ServerDB {
   suggestionChannel     String?
   tradeChannel          String?
   guildChannel          String?
+  talkChannel           String?
+  talkPositionCreate    String?
   gamePositionCreate    String?
   gameChannel           String?
   gamePostChannel       String?

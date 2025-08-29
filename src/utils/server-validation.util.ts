@@ -6,10 +6,13 @@ export async function validateServerAndRole(
   roleCheck: 'owner' | 'admin' | 'user',
   serverRepository: ServerRepository,
 ) {
+  console.log(`[validateServerAndRole] Starting validation for roleCheck: ${roleCheck}`);
   const guild = interaction.guild as Guild;
+  console.log(`[validateServerAndRole] Guild: ${guild?.name} (${guild?.id})`);
 
   // ตรวจสอบว่า interaction มาจาก guild หรือไม่
   if (!guild) {
+    console.log(`[validateServerAndRole] No guild found`);
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
@@ -22,8 +25,11 @@ export async function validateServerAndRole(
   }
 
   // ดึงข้อมูลเซิร์ฟเวอร์จากฐานข้อมูล
+  console.log(`[validateServerAndRole] Fetching server data for guild: ${guild.id}`);
   const server = await serverRepository.getServerById(guild.id);
+  console.log(`[validateServerAndRole] Server data:`, server);
   if (!server) {
+    console.log(`[validateServerAndRole] Server not found in database`);
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
@@ -85,7 +91,9 @@ export async function validateServerAndRole(
   }
 
   // เจ้าของเซิร์ฟเวอร์ (owner) สามารถใช้งานได้ทุกคำสั่ง
+  console.log(`[validateServerAndRole] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`);
   if (guild.ownerId === interaction.user.id) {
+    console.log(`[validateServerAndRole] User is owner, validation passed`);
     return null; // Validation ผ่าน
   }
 

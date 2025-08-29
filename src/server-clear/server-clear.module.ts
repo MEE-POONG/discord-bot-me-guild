@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
 import { ServerclearCommands } from './server-clear.commands';
 import { ServerclearService } from './server-clear.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [PrismaClient, ServerRepository, ServerclearCommands, ServerclearService],
+  providers: [PrismaService, ServerRepository, ServerclearCommands, ServerclearService],
 })
 export class ServerClearModule {}

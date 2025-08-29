@@ -70,11 +70,11 @@ export class ServerSetRoomService {
             value: 'news',
             description: 'สร้างห้อง News',
           },
-          {
-            label: 'Register Room',
-            value: 'register',
-            description: 'สร้างห้อง Register',
-          },
+            {
+              label: 'Register Room',
+              value: 'register',
+              description: 'สร้างห้อง Register',
+            },
           // {
           //   label: 'Complaint Room',
           //   value: 'complaint',
@@ -90,6 +90,11 @@ export class ServerSetRoomService {
           //   value: 'trade',
           //   description: 'สร้างห้อง Trade',
           // },
+          {
+            label: 'Talk Room',
+            value: 'talk',
+            description: 'สร้างหมวดหมู่และห้องพูดคุย 30 ห้อง',
+          },
           {
             label: 'Guild Room',
             value: 'guild',
@@ -110,7 +115,7 @@ export class ServerSetRoomService {
 
     this.logger.debug('Room selection menu created');
 
-    await interaction.reply({
+    const reply = await interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
@@ -119,19 +124,32 @@ export class ServerSetRoomService {
             `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่ของ MeGuild\n` +
             `- **News Room**: ห้องสำหรับโพสต์ข่าวสารและอัปเดตเกี่ยวกับ MeGuild\n` +
             `- **Register Room**: ห้องสำหรับลงทะเบียนและสมัครสมาชิกระบบ MeGuild\n` +
+            `- **Talk Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
             // `- **Complaint Room**: ห้องสำหรับแจ้งปัญหาและร้องเรียนเกี่ยวกับระบบ\n` +
             // `- **Suggestion Room**: ห้องสำหรับเสนอแนะไอเดียหรือปรับปรุงระบบ MeGuild\n` +
             // `- **Trade Room**: ห้องสำหรับการซื้อขายและแลกเปลี่ยนภายใน MeGuild\n` +
             `- **Guild Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
             `- **GameMatch Room**: ห้องแจ้งเตือนและจัดการจับคู่เกมสำหรับสมาชิก\n` +
-            `- **Busking Room**: ห้องแจ้งเตือนและจัดกิจกรรมการแสดงสดภายใน MeGuild`,
+            `- **Busking Room**: ห้องแจ้งเตือนและจัดกิจกรรมการแสดงสดภายใน MeGuild\n\n` +
+            `⏰ **หมายเหตุ**: ข้อความนี้จะหายไปอัตโนมัติใน 1 นาที`,
           )
           .setColor(0x00bfff),
       ],
       components: [roomSelectionRow],
+      ephemeral: true, // แสดงแค่คนที่ใช้คำสั่ง
     });
 
     this.logger.debug('Reply sent with room selection menu');
+
+    // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 1 นาที
+    setTimeout(async () => {
+      try {
+        await reply.delete();
+        this.logger.debug('Auto-deleted room selection message after 1 minute');
+      } catch (error) {
+        this.logger.warn('Failed to auto-delete room selection message:', error.message);
+      }
+    }, 1 * 60 * 1000); // 1 นาที
   }
 
   @StringSelect('SELECT_MENU_ROOM_TYPE')
@@ -171,6 +189,9 @@ export class ServerSetRoomService {
       } else if (roomType === 'busking') {
         this.logger.debug('Creating Busking room');
         await this.createBuskingRoom(interaction);
+      } else if (roomType === 'talk') {
+        this.logger.debug('Creating Talk rooms');
+        await this.createTalkRooms(interaction);
       } else {
         this.logger.debug('Creating single room of type:', roomType);
         await this.createSingleRoom(interaction, roomType, defaultRoomNames, roomFieldMapping);
@@ -204,6 +225,7 @@ export class ServerSetRoomService {
       complaint: 'complaintChannel',
       suggestion: 'suggestionChannel',
       guild: 'guildChannel',
+      talk: 'talkChannel',
       gamematch: 'gameChannel',
       gamebtn: 'gamebtnChannel',
     };
@@ -509,6 +531,85 @@ export class ServerSetRoomService {
         content: '❌ ไม่สามารถสร้าง Stage Channel ได้ กรุณาลองใหม่อีกครั้ง',
       });
     }
+  }
+
+  private async createTalkRooms(interaction: StringSelectMenuInteraction<CacheType>) {
+    this.logger.debug('createTalkRooms called');
+
+    const guild = interaction.guild;
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+
+    // ตรวจสอบหมวดหมู่ Talk Zone
+    let talkCategory = guild.channels.cache.get(server?.talkPositionCreate || '');
+
+    if (!talkCategory || talkCategory.type !== ChannelType.GuildCategory) {
+      this.logger.warn('หมวดหมู่ Talk Zone ไม่มีอยู่หรือถูกลบ กำลังสร้างใหม่');
+
+      // สร้างหมวดหมู่ Talk Zone ใหม่
+      talkCategory = await guild.channels.create({
+        name: '〔💬〕𝑻𝒂𝒍𝒌 𝒁𝒐𝒏𝒆',
+        type: ChannelType.GuildCategory,
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // @everyone role
+            allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'Connect', 'Speak'],
+          },
+        ],
+      });
+
+      // อัปเดต ID หมวดหมู่ในฐานข้อมูล
+      await this.serverRepository.updateServer(interaction.guildId, {
+        talkPositionCreate: talkCategory.id,
+      });
+    }
+
+    // 🛑 ตรวจสอบว่าห้อง Talk มีอยู่แล้วหรือไม่
+    const existingTalkChannel = guild.channels.cache.get(server?.talkChannel || '');
+    if (existingTalkChannel) {
+      return this.editReplyStopCreate(interaction, 'talk', existingTalkChannel.name);
+    }
+
+    this.logger.log('สร้างห้อง Talk ใหม่');
+
+    // สร้างห้อง Talk หลัก
+    const talkChannel = await guild.channels.create({
+      name: '💬𝗧𝗮𝗹𝗸 𝗛𝗮𝗹𝗹',
+      type: ChannelType.GuildText,
+      parent: talkCategory.id, // ใช้ Talk Zone เป็น parent
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id, // @everyone role
+          allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+        },
+      ],
+    });
+
+    this.logger.debug('Talk channel created:', talkChannel.name);
+
+    // อัปเดตข้อมูลในฐานข้อมูล
+    await this.serverRepository.updateServer(interaction.guildId, {
+      talkChannel: talkChannel.id,
+    });
+
+    // สร้างห้องพูดคุย 30 ห้อง
+    for (let i = 1; i <= 30; i++) {
+      await guild.channels.create({
+        name: `🪑• โต๊ะ ${i}`,
+        type: ChannelType.GuildVoice,
+        parent: talkCategory.id, // ใช้ Talk Zone เป็น parent
+        permissionOverwrites: [
+          {
+            id: guild.roles.everyone.id, // @everyone role
+            allow: ['ViewChannel', 'Connect', 'Speak'],
+          },
+        ],
+      });
+    }
+
+    this.logger.debug('Talk voice channels created (30 rooms)');
+
+    this.roomName = talkChannel.name;
+    return this.editReplySuccess(interaction, 'talk');
   }
 
   private async createBuskingRoom(interaction: StringSelectMenuInteraction<CacheType>) {

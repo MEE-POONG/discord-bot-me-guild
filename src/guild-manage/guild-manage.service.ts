@@ -855,12 +855,12 @@ export class GuildManageService {
         // ⚔️ นักผจญภัย - มองไม่เห็น
         ...(server?.adventurerRoleId ? [{
           id: server.adventurerRoleId,
-          deny: ['Connect', 'SendMessages', 'ReadMessageHistory'],
+          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
         }] : []),
         // 👥 ผู้เยี่ยมชม - มองไม่เห็น
         ...(server?.visitorRoleId ? [{
           id: server.visitorRoleId,
-          deny: ['Connect', 'SendMessages', 'ReadMessageHistory'],
+          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
         }] : []),
         // 🕍 ชื่อกิลด์ - มองเห็น (เฉพาะสมาชิกกิลด์)
         ...(roles ? [{

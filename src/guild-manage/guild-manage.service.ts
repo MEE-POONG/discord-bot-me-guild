@@ -907,7 +907,7 @@ export class GuildManageService {
           id: guildServer.roles.everyone.id,
           deny: ['ViewChannel'],
         },
-        // 🎭 ผู้มีเอกลักษณ์ - มองไม่เห็น (ยกเว้น Guild ตัวเอง)
+        // 🎭 นอกรีต - มองไม่เห็น (ยกเว้น Guild ตัวเอง)
         ...(server.eccentricRoleId ? [{
           id: server.eccentricRoleId,
           deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
@@ -1026,7 +1026,7 @@ export class GuildManageService {
         this.createPrivateVoiceChannel(category, '💬・แชท', 2, server, guildServer, roles),
         this.createPrivateVoiceChannel(category, '🎤・โถงหลัก', 0, server, guildServer, roles),
         this.createPrivateVoiceChannel(category, '🎤・โถงรอง', 0, server, guildServer, roles),
-        this.createPublicVoiceChannel(category, '👑・กิจกรรม', 0, server, guildServer, roles),
+        this.createPublicVoiceChannel(category, '👑・กิจกรรม', 1, server, guildServer, roles),
         this.createPublicVoiceChannel(category, '🎁・เยี่ยมบ้าน', 0, server, guildServer, roles),
         // ถ้าจะเปิดห้อง public ให้เปลี่ยน publicView = true
         // this.createVoiceChannel(category, '📣・ประชาสัมพันธ์', 2, true, server, guildServer, roles),

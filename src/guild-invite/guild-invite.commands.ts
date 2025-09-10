@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Context, Options, SlashCommand, SlashCommandContext } from 'necord';
 import { GuildInviteService } from './guild-invite.service';
-import { GuildInviteDto } from './dto/length.dto';
+import { InviteRequestDto } from './dto/invite-request.dto';
 
 @Injectable()
 export class GuildInviteCommands {
@@ -13,7 +13,7 @@ export class GuildInviteCommands {
   })
   public async onGuildInvite(
     @Context() [interaction]: SlashCommandContext,
-    @Options() options: GuildInviteDto,
+    @Options() options: InviteRequestDto,
   ) {
     await this.guildInviteService.inviteMember(interaction, options);
   }

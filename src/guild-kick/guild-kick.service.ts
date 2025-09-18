@@ -31,14 +31,16 @@ export class GuildKickService implements OnModuleInit {
         ephemeral: true,
       });
     target = await interaction.guild?.members.fetch(target.id);
+    const isInGuild = await this.prisma.guildMembers.findFirst({
+      where: {
+        userId: target.id,
+        position: {
+          in: ['Leader', 'Co-Founder'],
+        },
+      },
+    });
 
-    if (
-      target.roles.cache.some(
-        (r) =>
-          r.id == process.env.DISCORD_GUILD_FOUNDER_ROLE_ID ||
-          r.id == process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID,
-      )
-    )
+    if (isInGuild)
       return interaction.reply({
         content: 'ไม่สามารถเตะหัวหน้ากิลด์หรือรองหัวหน้ากิลด์ได้',
         ephemeral: true,
@@ -82,12 +84,15 @@ export class GuildKickService implements OnModuleInit {
 
       if (!guildMember) return 'สมาชิกที่ต้องการจะเตะไม่ได้อยู่ในกิลด์นี้';
 
-      const roleCoFounder = member.roles.cache.find(
-        (r) => r.id === process.env.DISCORD_GUILD_CO_FOUNDER_ROLE_ID,
-      );
+      const roleCoFounder = await this.prisma.guildMembers.findFirst({
+        where: {
+          userId: userData.discord_id,
+          position: 'Co-Founder',
+        },
+      });
       if (roleCoFounder)
         await member.roles
-          .remove(roleCoFounder)
+          .remove(roleCoFounder.userId)
           .then(() => {
             this.logger.log('Successfully removed member permissions');
           })
@@ -127,12 +132,12 @@ export class GuildKickService implements OnModuleInit {
   }
 
   async checkPermission(interaction: ChatInputCommandInteraction<CacheType>) {
-    if (interaction.member instanceof GuildMember) {
-      return interaction.member.roles.cache.some(
-        (r) => r.id === process.env.DISCORD_GUILD_FOUNDER_ROLE_ID,
-      );
-    }
-    return false;
+    return await this.prisma.guildMembers.findFirst({
+      where: {
+        userId: interaction.user.id,
+        position: 'Leader',
+      },
+    });
   }
 
   async getProfile(user: User) {

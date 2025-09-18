@@ -10,6 +10,7 @@ export class ServerclearCommands {
   @SlashCommand({
     name: 'server-clear',
     description: 'ล้างดิส',
+    defaultMemberPermissions: '8',
   })
   async handleServerclear(@Context() [interaction]: SlashCommandContext) {
     this.logger.debug(`[handleServerclear] Command triggered by user: ${interaction.user.id} (${interaction.user.username})`);

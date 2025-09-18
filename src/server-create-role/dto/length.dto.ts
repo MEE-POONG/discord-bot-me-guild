@@ -5,6 +5,7 @@ export class ServerCreateRoleNameDto {
     name: 'server-create-role-name',
     description: 'ชื่อบทบาท',
     required: true,
+    // defaultMemberPermissions: '8',
   })
   rolename: string;
 }

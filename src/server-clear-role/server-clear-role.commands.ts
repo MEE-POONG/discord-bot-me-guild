@@ -10,6 +10,7 @@ export class ServerclearRoleCommands {
   @SlashCommand({
     name: 'server-clear-role',
     description: 'ล้าง role บทบาทดิส',
+    defaultMemberPermissions: '8',
   })
   async handleServerclearRole(@Context() [interaction]: SlashCommandContext) {
     try {

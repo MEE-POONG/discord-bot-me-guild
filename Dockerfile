@@ -24,13 +24,17 @@ WORKDIR /app
 
 # Set Node.js memory limits to prevent heap out of memory
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-ENV NODE_ENV=development
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
+
+# Build the application (compile TypeScript)
+RUN pnpm run build
 
 # Copy the application code
 COPY . .
@@ -53,5 +57,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node healthcheck.js
 
-# Start the application with optimized TypeScript compilation
-CMD ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm start:dev"]
+# Start the compiled application
+CMD ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm start:prod"]

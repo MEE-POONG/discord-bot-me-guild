@@ -33,14 +33,15 @@ COPY package.json pnpm-lock.yaml ./
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build the application (compile TypeScript)
-RUN pnpm run build
-
-# Copy the application code
+# Copy the application code (now tsconfig.json and sources are available)
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client before building (types needed at compile time)
+ENV PRISMA_SKIP_DATABASE_URL_VALIDATION=true
 RUN npx prisma generate
+
+# Build the application (compile TypeScript)
+RUN pnpm run build
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

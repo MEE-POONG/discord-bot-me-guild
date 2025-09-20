@@ -1,7 +1,7 @@
 # Use Node.js base image (Alpine for smaller size)
 FROM node:22.14.0-alpine
 
-# Install required system dependencies including FFmpeg
+# Install required system dependencies including FFmpeg and Opus
 RUN apk add --no-cache \
     python3 \
     make \
@@ -15,7 +15,9 @@ RUN apk add --no-cache \
     pangomm-dev \
     libjpeg-turbo-dev \
     freetype-dev \
-    ffmpeg
+    ffmpeg \
+    opus-dev \
+    opus
 
 # Install pnpm globally
 RUN npm install -g pnpm

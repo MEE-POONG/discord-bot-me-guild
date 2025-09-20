@@ -53,6 +53,7 @@
     "discord.js": "^14.16.3",
     "ffmpeg-static": "^5.2.0",
     "necord": "^6.8.6",
+    "opusscript": "^0.0.8",
     "pnpm": "^9.15.1",
     "reflect-metadata": "^0.2.2",
     "youtube-ext": "^1.1.6",

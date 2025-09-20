@@ -1,7 +1,7 @@
 # Use Node.js base image (Alpine for smaller size)
 FROM node:22.14.0-alpine
 
-# Install required system dependencies
+# Install required system dependencies including FFmpeg
 RUN apk add --no-cache \
     python3 \
     make \
@@ -14,7 +14,8 @@ RUN apk add --no-cache \
     pixman-dev \
     pangomm-dev \
     libjpeg-turbo-dev \
-    freetype-dev
+    freetype-dev \
+    ffmpeg
 
 # Install pnpm globally
 RUN npm install -g pnpm

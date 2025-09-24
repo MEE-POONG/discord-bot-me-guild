@@ -405,16 +405,16 @@ export class FormRegisterService {
             name: 'ลิง์เป๋าตัง',
             value: `https://me-coins-wallet.me-prompt-technology.com`,
           },
-          {
-            name: 'username',
-            value: interaction.user.username,
-            inline: true,
-          },
-          {
-            name: 'password',
-            value: 'password123',
-            inline: true,
-          },
+          // {
+          //   name: 'username',
+          //   value: interaction.user.username,
+          //   inline: true,
+          // },
+          // {
+          //   name: 'password',
+          //   value: 'password123',
+          //   inline: true,
+          // },
         )
         .setThumbnail(interaction.user.displayAvatarURL())
         .setColor('#a0ff71');

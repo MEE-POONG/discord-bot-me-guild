@@ -23,7 +23,6 @@ import { GuildCreateModule } from './guild-create/guild-create.module';
 import { GuildInviteModule } from './guild-invite/guild-invite.module';
 import { GuildKickModule } from './guild-kick/guild-kick.module';
 import { GuildManageModule } from './guild-manage/guild-manage.module';
-import { MusicModule } from './music/music.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
 import { PrototypeModule } from './prototype/prototype.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
@@ -96,7 +95,6 @@ import { WelcomeModule } from './welcome/welcome.module';
     GuildManageModule,
     GuildKickModule,
     GuildInviteModule,
-    MusicModule,
     NewsUpdateModule,
     PrototypeModule,
     ServerRegisterModule,

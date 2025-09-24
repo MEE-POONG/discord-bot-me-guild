@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Context, On, Once, ContextOf } from 'necord';
 import { VoiceState } from 'discord.js';
 import { VoiceTimeService } from './voice-time/voice-time.service';
-import { PlayerService } from './music/player.service';
 
 @Injectable()
 export class AppUpdate {
@@ -11,7 +10,6 @@ export class AppUpdate {
 
   constructor(
     private readonly voiceTimeService: VoiceTimeService,
-    private readonly playerService: PlayerService,
   ) {}
 
   @Once('ready')
@@ -19,7 +17,6 @@ export class AppUpdate {
     this.logger.log(`app.update Bot logged in as ${client.user.username}`);
     
     // Initialize the music player
-    this.playerService.initializePlayer(client);
   }
 
   @On('warn')

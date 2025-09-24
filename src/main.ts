@@ -1,3 +1,6 @@
+// Import polyfills first to fix Node.js v18 compatibility
+import './polyfills';
+
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';

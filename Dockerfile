@@ -1,7 +1,7 @@
 # Use Node.js base image (Alpine for smaller size)
 FROM node:22.14.0-alpine
 
-# Install required system dependencies
+# Install required system dependencies including FFmpeg and Opus
 RUN apk add --no-cache \
     python3 \
     make \
@@ -14,7 +14,10 @@ RUN apk add --no-cache \
     pixman-dev \
     pangomm-dev \
     libjpeg-turbo-dev \
-    freetype-dev
+    freetype-dev \
+    ffmpeg \
+    opus-dev \
+    opus
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -24,7 +27,8 @@ WORKDIR /app
 
 # Set Node.js memory limits to prevent heap out of memory
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-ENV NODE_ENV=development
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
@@ -32,11 +36,15 @@ COPY package.json pnpm-lock.yaml ./
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy the application code
+# Copy the application code (now tsconfig.json and sources are available)
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client before building (types needed at compile time)
+ENV PRISMA_SKIP_DATABASE_URL_VALIDATION=true
 RUN npx prisma generate
+
+# Build the application (compile TypeScript)
+RUN pnpm run build
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -53,5 +61,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node healthcheck.js
 
-# Start the application with optimized TypeScript compilation
-CMD ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm start:dev"]
+# Start the compiled application
+CMD ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm start:prod"]

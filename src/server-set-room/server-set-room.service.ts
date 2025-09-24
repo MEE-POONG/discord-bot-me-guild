@@ -173,8 +173,21 @@ export class ServerSetRoomService {
   public async handleRoomRegistration(@Context() [interaction]: StringSelectContext) {
     this.logger.debug('handleRoomRegistration called with interaction:', interaction);
 
-    // Defer reply เพื่อป้องกัน timeout
-    await interaction.deferReply({ ephemeral: true });
+    // อัปเดตข้อความทันทีเมื่อเลือกรายการ
+    await interaction.update({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('⚡ กำลังดำเนินการ...')
+          .setDescription(
+            `🔄 **กำลังประมวลผลคำสั่งของคุณ**\n\n` +
+            `📋 **รายการที่เลือก:** ${interaction.values[0].toUpperCase()}\n` +
+            `⏳ **สถานะ:** กำลังตรวจสอบข้อมูลและสร้างห้อง...\n\n` +
+            `⏰ **หมายเหตุ:** ข้อความนี้จะหายไปอัตโนมัติใน 20 วินาที`
+          )
+          .setColor(0xffa500),
+      ],
+      components: [],
+    });
 
     const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) {
@@ -230,15 +243,32 @@ export class ServerSetRoomService {
         this.logger.error('Missing Permissions');
         errorMessage = '❌ กรุณาให้สิทธิ์บทบาทขั้นสูงกับ Bot';
       }
-      return interaction.editReply({
+      const reply = await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('⚠️ ข้อผิดพลาด')
-            .setDescription(errorMessage)
+            .setDescription(errorMessage + '\n\n⏰ **ข้อความนี้จะหายไปใน 20 วินาที**')
             .setColor(0xff0000),
         ],
         components: [],
       });
+
+      // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 20 วินาที
+      setTimeout(
+        async () => {
+          try {
+            if (interaction.message) {
+              await interaction.message.delete();
+              this.logger.debug('Auto-deleted room creation error after 20 seconds');
+            }
+          } catch (error) {
+            this.logger.warn('Failed to auto-delete room creation error:', error.message);
+          }
+        },
+        20 * 1000,
+      ); // 20 วินาที
+
+      return reply;
     }
   }
 
@@ -1132,6 +1162,7 @@ export class ServerSetRoomService {
       }
 
       descriptionParts.push(`\n🎉 **การตั้งค่าเสร็จสิ้น!** เซิร์ฟเวอร์ของคุณพร้อมใช้งานแล้ว`);
+      descriptionParts.push(`⏰ **ข้อความนี้จะหายไปใน 20 วินาที**`);
 
       const embed = new EmbedBuilder()
         .setTitle('🏗️ ผลลัพธ์การสร้างห้องทั้งหมด')
@@ -1143,27 +1174,62 @@ export class ServerSetRoomService {
           iconURL: interaction.user.displayAvatarURL(),
         });
 
-      return interaction.editReply({
+      const reply = await interaction.editReply({
         embeds: [embed],
         components: [],
       });
 
+      // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 20 วินาที
+      setTimeout(
+        async () => {
+          try {
+            if (interaction.message) {
+              await interaction.message.delete();
+              this.logger.debug('Auto-deleted setup all rooms result after 20 seconds');
+            }
+          } catch (error) {
+            this.logger.warn('Failed to auto-delete setup all rooms result:', error.message);
+          }
+        },
+        20 * 1000,
+      ); // 20 วินาที
+
+      return reply;
+
     } catch (error) {
       this.logger.error('Critical error in setupAllRooms:', error);
-      return interaction.editReply({
+      const reply = await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle('❌ เกิดข้อผิดพลาดร้ายแรง')
             .setDescription(
               '💥 **ไม่สามารถดำเนินการสร้างห้องได้**\n\n' +
               `**ข้อผิดพลาด:** ${error.message}\n\n` +
-              '🔧 กรุณาลองใช้คำสั่งสร้างห้องทีละประเภทแทน'
+              '🔧 กรุณาลองใช้คำสั่งสร้างห้องทีละประเภทแทน\n\n' +
+              '⏰ **ข้อความนี้จะหายไปใน 20 วินาที**'
             )
             .setColor(0xff0000)
             .setTimestamp(),
         ],
         components: [],
       });
+
+      // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 20 วินาที
+      setTimeout(
+        async () => {
+          try {
+            if (interaction.message) {
+              await interaction.message.delete();
+              this.logger.debug('Auto-deleted critical error message after 20 seconds');
+            }
+          } catch (error) {
+            this.logger.warn('Failed to auto-delete critical error message:', error.message);
+          }
+        },
+        20 * 1000,
+      ); // 20 วินาที
+
+      return reply;
     }
   }
 
@@ -1487,46 +1553,102 @@ export class ServerSetRoomService {
     return this.editReplySuccess(interaction, 'busking');
   }
 
-  private editReplyStopCreate(
+  private async editReplyStopCreate(
     interaction: StringSelectMenuInteraction<CacheType>,
     roomType: string,
     existingChannelName: string,
   ) {
-    return interaction.editReply({
+    const reply = await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
             `**${existingChannelName}**\n` +
-            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน\n\n` +
+            `⏰ **ข้อความนี้จะหายไปใน 20 วินาที**`,
           )
           .setColor(0xffa500),
       ],
       components: [],
     });
+
+    // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 20 วินาที
+    setTimeout(
+      async () => {
+        try {
+          if (interaction.message) {
+            await interaction.message.delete();
+            this.logger.debug('Auto-deleted stop create message after 20 seconds');
+          }
+        } catch (error) {
+          this.logger.warn('Failed to auto-delete stop create message:', error.message);
+        }
+      },
+      20 * 1000,
+    ); // 20 วินาที
+
+    return reply;
   }
 
-  private editReplyError(interaction: any, message: string) {
-    return interaction.editReply({
+  private async editReplyError(interaction: any, message: string) {
+    const reply = await interaction.editReply({
       embeds: [
-        new EmbedBuilder().setTitle('❌ เกิดข้อผิดพลาด').setDescription(message).setColor(0xff0000),
+        new EmbedBuilder()
+          .setTitle('❌ เกิดข้อผิดพลาด')
+          .setDescription(message + '\n\n⏰ **ข้อความนี้จะหายไปใน 20 วินาที**')
+          .setColor(0xff0000),
       ],
     });
+
+    // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 20 วินาที
+    setTimeout(
+      async () => {
+        try {
+          if (interaction.message) {
+            await interaction.message.delete();
+            this.logger.debug('Auto-deleted error message after 20 seconds');
+          }
+        } catch (error) {
+          this.logger.warn('Failed to auto-delete error message:', error.message);
+        }
+      },
+      20 * 1000,
+    ); // 20 วินาที
+
+    return reply;
   }
 
-  private editReplySuccess(interaction: StringSelectMenuInteraction<CacheType>, roomType: string) {
-    return interaction.editReply({
+  private async editReplySuccess(interaction: StringSelectMenuInteraction<CacheType>, roomType: string) {
+    const reply = await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle('✅ การสร้างห้องสำเร็จ')
           .setDescription(
-            `🎉 ห้อง **${this.roomName}** สำหรับประเภท **${roomType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!`,
+            `🎉 ห้อง **${this.roomName}** สำหรับประเภท **${roomType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!\n\n` +
+            `⏰ **ข้อความนี้จะหายไปใน 20 วินาที**`,
           )
           .setColor(0x00ff00),
       ],
       components: [],
     });
+
+    // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 20 วินาที
+    setTimeout(
+      async () => {
+        try {
+          if (interaction.message) {
+            await interaction.message.delete();
+            this.logger.debug('Auto-deleted success message after 20 seconds');
+          }
+        } catch (error) {
+          this.logger.warn('Failed to auto-delete success message:', error.message);
+        }
+      },
+      20 * 1000,
+    ); // 20 วินาที
+
+    return reply;
   }
 
   private replyError(interaction: any, message: string) {

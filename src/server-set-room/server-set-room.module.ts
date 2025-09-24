@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
 import { ServerSetRoomCommands } from './server-set-room.commands';
 import { ServerSetRoomService } from './server-set-room.service';
 import { ServerRepository } from 'src/repository/server';
@@ -7,7 +7,7 @@ import { StageChannelService } from 'src/stage-channel/stage-channel.service';
 
 @Module({
   providers: [
-    PrismaClient,
+    PrismaService,
     ServerRepository,
     ServerSetRoomCommands,
     ServerSetRoomService,

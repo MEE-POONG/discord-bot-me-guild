@@ -344,7 +344,7 @@ model ServerDB {
   eccentricRoleId       String?
   openUntilAt           DateTime  @db.Date
   meguildPositionCreate String?
-  welcomechannel        String?
+  welcomeChannel        String?
   newsChannel           String?
   registerChannel       String?
   complaintChannel      String?

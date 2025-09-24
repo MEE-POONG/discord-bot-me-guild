@@ -68,8 +68,9 @@ export class ServerSetRoomService {
         .setCustomId('SELECT_MENU_ROOM_TYPE')
         .setPlaceholder('เลือกบทบาทที่ต้องการจัดการ')
         .addOptions([
+          // เพิ่มเซ็ตห้องทั้งหมด
           {
-            label: '🏗️ All Room',
+            label: '🏗️ เซ็ตห้องทั้งหมด',
             value: 'setup_all',
             description: 'สร้างห้องครบชุดทั้งหมดในคำสั่งเดียว',
           },
@@ -88,21 +89,7 @@ export class ServerSetRoomService {
             value: 'register',
             description: 'สร้างห้อง Register',
           },
-          // {
-          //   label: 'Complaint Room',
-          //   value: 'complaint',
-          //   description: 'สร้างห้องแจ้งความร้องทุกข์',
-          // },
-          // {
-          //   label: 'Suggestion Room',
-          //   value: 'suggestion',
-          //   description: 'สร้างห้องข้อเสนอแนะ',
-          // },
-          // {
-          //   label: 'Trade Room',
-          //   value: 'trade',
-          //   description: 'สร้างห้อง Trade',
-          // },
+
           {
             label: 'Talk Room',
             value: 'talk',
@@ -123,6 +110,22 @@ export class ServerSetRoomService {
             value: 'gamematch',
             description: 'สร้างห้อง GameMatch',
           },
+          // เก็บส่วนนี้ไว้ก่อน เผื่อมีการใช้งานในอนาคต
+          // {
+          //   label: 'Complaint Room',
+          //   value: 'complaint',
+          //   description: 'สร้างห้องแจ้งความร้องทุกข์',
+          // },
+          // {
+          //   label: 'Suggestion Room',
+          //   value: 'suggestion',
+          //   description: 'สร้างห้องข้อเสนอแนะ',
+          // },
+          // {
+          //   label: 'Trade Room',
+          //   value: 'trade',
+          //   description: 'สร้างห้อง Trade',
+          // },
         ]),
     );
 
@@ -134,7 +137,7 @@ export class ServerSetRoomService {
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการด้านล่าง:\n\n` +
-            `- **All Room**: ห้องทั้งหมดของ MeGuild\n` +
+            `- **🏗️ เซ็ตห้องทั้งหมด**: สร้างห้องครบชุดทั้งหมดในคำสั่งเดียว\n` +
             `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่ของ MeGuild\n` +
             `- **News Room**: ห้องสำหรับโพสต์ข่าวสารและอัปเดตเกี่ยวกับ MeGuild\n` +
             `- **Register Room**: ห้องสำหรับลงทะเบียนและสมัครสมาชิกระบบ MeGuild\n` +
@@ -190,37 +193,37 @@ export class ServerSetRoomService {
     const roomFieldMapping = this.getRoomFieldMapping();
     const defaultRoomNames = this.getDefaultRoomNames();
 
+    // ข้าม existing channel check สำหรับ setup_all
+    if (roomType !== 'setup_all') {
+      const existingChannel = interaction.guild.channels.cache.find(
+        (channel) => channel.id === server[roomFieldMapping[roomType]],
+      );
+
+      if (existingChannel) {
+        this.logger.warn('Existing channel found:', existingChannel.name);
+        return this.editReplyStopCreate(interaction, roomType, existingChannel.name);
+      }
+    }
+
     try {
       if (roomType === 'setup_all') {
         this.logger.debug('Setting up all rooms');
         await this.setupAllRooms(interaction);
+      } else if (roomType === 'gamematch') {
+        this.logger.debug('Creating GameMatch rooms');
+        await this.createGameMatchRooms(interaction, defaultRoomNames);
+      } else if (roomType === 'busking') {
+        this.logger.debug('Creating Busking room');
+        await this.createBuskingRoom(interaction);
+      } else if (roomType === 'talk') {
+        this.logger.debug('Creating Talk rooms');
+        await this.createTalkRooms(interaction);
+      } else if (roomType === 'guild') {
+        this.logger.debug('Creating Guild room with roles');
+        await this.createGuildRoom(interaction, defaultRoomNames, roomFieldMapping);
       } else {
-        // ตรวจสอบห้องที่มีอยู่แล้วสำหรับการสร้างห้องทีละประเภท
-        const existingChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping[roomType]],
-        );
-
-        if (existingChannel) {
-          this.logger.warn('Existing channel found:', existingChannel.name);
-          return this.editReplyStopCreate(interaction, roomType, existingChannel.name);
-        }
-
-        if (roomType === 'gamematch') {
-          this.logger.debug('Creating GameMatch rooms');
-          await this.createGameMatchRooms(interaction, defaultRoomNames);
-        } else if (roomType === 'busking') {
-          this.logger.debug('Creating Busking room');
-          await this.createBuskingRoom(interaction);
-        } else if (roomType === 'talk') {
-          this.logger.debug('Creating Talk rooms');
-          await this.createTalkRooms(interaction);
-        } else if (roomType === 'guild') {
-          this.logger.debug('Creating Guild room with roles');
-          await this.createGuildRoom(interaction, defaultRoomNames, roomFieldMapping);
-        } else {
-          this.logger.debug('Creating single room of type:', roomType);
-          await this.createSingleRoom(interaction, roomType, defaultRoomNames, roomFieldMapping);
-        }
+        this.logger.debug('Creating single room of type:', roomType);
+        await this.createSingleRoom(interaction, roomType, defaultRoomNames, roomFieldMapping);
       }
     } catch (error) {
       this.logger.error(`Error creating room: ${error.message}`);
@@ -947,6 +950,7 @@ export class ServerSetRoomService {
       });
     }
   }
+
   private async setupAllRooms(interaction: StringSelectMenuInteraction<CacheType>) {
     this.logger.debug('setupAllRooms called');
 
@@ -976,27 +980,14 @@ export class ServerSetRoomService {
     const roomFieldMapping = this.getRoomFieldMapping();
     const defaultRoomNames = this.getDefaultRoomNames();
     const results = [];
-    const skipped = [];
     let errors = [];
-
-    // ดึงข้อมูล server เพื่อตรวจสอบห้องที่มีอยู่แล้ว
-    const server = await this.serverRepository.getServerById(interaction.guildId);
 
     try {
       // 1. สร้าง Welcome Room
       try {
-        const existingWelcomeChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping.welcome],
-        );
-
-        if (existingWelcomeChannel) {
-          this.logger.debug('Welcome Room already exists, skipping...');
-          skipped.push(`⏭️ Welcome Room (มีอยู่แล้ว: ${existingWelcomeChannel.name})`);
-        } else {
-          this.logger.debug('Creating Welcome Room...');
-          await this.createWelcomeRoom(interaction, defaultRoomNames, roomFieldMapping);
-          results.push('✅ Welcome Room');
-        }
+        this.logger.debug('Creating Welcome Room...');
+        await this.createWelcomeRoom(interaction, defaultRoomNames, roomFieldMapping);
+        results.push('✅ Welcome Room');
       } catch (error) {
         this.logger.error('Failed to create Welcome Room:', error);
         errors.push(`❌ Welcome Room: ${error.message}`);
@@ -1004,18 +995,9 @@ export class ServerSetRoomService {
 
       // 2. สร้าง News Room
       try {
-        const existingNewsChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping.news],
-        );
-
-        if (existingNewsChannel) {
-          this.logger.debug('News Room already exists, skipping...');
-          skipped.push(`⏭️ News Room (มีอยู่แล้ว: ${existingNewsChannel.name})`);
-        } else {
-          this.logger.debug('Creating News Room...');
-          await this.createSingleRoom(interaction, 'news', defaultRoomNames, roomFieldMapping);
-          results.push('✅ News Room');
-        }
+        this.logger.debug('Creating News Room...');
+        await this.createSingleRoom(interaction, 'news', defaultRoomNames, roomFieldMapping);
+        results.push('✅ News Room');
       } catch (error) {
         this.logger.error('Failed to create News Room:', error);
         errors.push(`❌ News Room: ${error.message}`);
@@ -1023,18 +1005,9 @@ export class ServerSetRoomService {
 
       // 3. สร้าง Register Room
       try {
-        const existingRegisterChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping.register],
-        );
-
-        if (existingRegisterChannel) {
-          this.logger.debug('Register Room already exists, skipping...');
-          skipped.push(`⏭️ Register Room (มีอยู่แล้ว: ${existingRegisterChannel.name})`);
-        } else {
-          this.logger.debug('Creating Register Room...');
-          await this.createRegisterRoom(interaction, defaultRoomNames, roomFieldMapping);
-          results.push('✅ Register Room');
-        }
+        this.logger.debug('Creating Register Room...');
+        await this.createRegisterRoom(interaction, defaultRoomNames, roomFieldMapping);
+        results.push('✅ Register Room');
       } catch (error) {
         this.logger.error('Failed to create Register Room:', error);
         errors.push(`❌ Register Room: ${error.message}`);
@@ -1042,18 +1015,9 @@ export class ServerSetRoomService {
 
       // 4. สร้าง Guild Room
       try {
-        const existingGuildChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping.guild],
-        );
-
-        if (existingGuildChannel) {
-          this.logger.debug('Guild Room already exists, skipping...');
-          skipped.push(`⏭️ Guild Room (มีอยู่แล้ว: ${existingGuildChannel.name})`);
-        } else {
-          this.logger.debug('Creating Guild Room...');
-          await this.createGuildRoom(interaction, defaultRoomNames, roomFieldMapping);
-          results.push('✅ Guild Room');
-        }
+        this.logger.debug('Creating Guild Room...');
+        await this.createGuildRoom(interaction, defaultRoomNames, roomFieldMapping);
+        results.push('✅ Guild Room');
       } catch (error) {
         this.logger.error('Failed to create Guild Room:', error);
         errors.push(`❌ Guild Room: ${error.message}`);
@@ -1061,18 +1025,9 @@ export class ServerSetRoomService {
 
       // 5. สร้าง Talk Room
       try {
-        const existingTalkChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping.talk],
-        );
-
-        if (existingTalkChannel) {
-          this.logger.debug('Talk Room already exists, skipping...');
-          skipped.push(`⏭️ Talk Room (มีอยู่แล้ว: ${existingTalkChannel.name})`);
-        } else {
-          this.logger.debug('Creating Talk Room...');
-          await this.createTalkRooms(interaction);
-          results.push('✅ Talk Room + 30 Voice Channels');
-        }
+        this.logger.debug('Creating Talk Room...');
+        await this.createTalkRooms(interaction);
+        results.push('✅ Talk Room + 30 Voice Channels');
       } catch (error) {
         this.logger.error('Failed to create Talk Room:', error);
         errors.push(`❌ Talk Room: ${error.message}`);
@@ -1080,18 +1035,9 @@ export class ServerSetRoomService {
 
       // 6. สร้าง Busking Room
       try {
-        const existingBuskingChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server.buskingChannel,
-        );
-
-        if (existingBuskingChannel) {
-          this.logger.debug('Busking Room already exists, skipping...');
-          skipped.push(`⏭️ Busking Room (มีอยู่แล้ว: ${existingBuskingChannel.name})`);
-        } else {
-          this.logger.debug('Creating Busking Room...');
-          await this.createBuskingRoom(interaction);
-          results.push('✅ Busking Room + 5 Voice Channels');
-        }
+        this.logger.debug('Creating Busking Room...');
+        await this.createBuskingRoom(interaction);
+        results.push('✅ Busking Room + 5 Voice Channels');
       } catch (error) {
         this.logger.error('Failed to create Busking Room:', error);
         errors.push(`❌ Busking Room: ${error.message}`);
@@ -1099,43 +1045,24 @@ export class ServerSetRoomService {
 
       // 7. สร้าง Game Center
       try {
-        const existingGameChannel = interaction.guild.channels.cache.find(
-          (channel) => channel.id === server[roomFieldMapping.gamematch],
-        );
-
-        if (existingGameChannel) {
-          this.logger.debug('Game Center already exists, skipping...');
-          skipped.push(`⏭️ Game Center (มีอยู่แล้ว: ${existingGameChannel.name})`);
-        } else {
-          this.logger.debug('Creating Game Center...');
-          await this.createGameMatchRooms(interaction, defaultRoomNames);
-          results.push('✅ Game Center + GameMatch Room');
-        }
+        this.logger.debug('Creating Game Center...');
+        await this.createGameMatchRooms(interaction, defaultRoomNames);
+        results.push('✅ Game Center + GameMatch Room');
       } catch (error) {
         this.logger.error('Failed to create Game Center:', error);
         errors.push(`❌ Game Center: ${error.message}`);
       }
 
       // สร้าง summary embed
-      let descriptionParts = [];
-
-      if (results.length > 0) {
-        descriptionParts.push(`**✅ สร้างสำเร็จ ${results.length} รายการ:**\n${results.join('\n')}`);
-      }
-
-      if (skipped.length > 0) {
-        descriptionParts.push(`**⏭️ ข้ามแล้ว ${skipped.length} รายการ:**\n${skipped.join('\n')}`);
-      }
-
-      if (errors.length > 0) {
-        descriptionParts.push(`**❌ ล้มเหลว ${errors.length} รายการ:**\n${errors.join('\n')}`);
-      }
-
-      descriptionParts.push(`\n🎉 **การตั้งค่าเสร็จสิ้น!** เซิร์ฟเวอร์ของคุณพร้อมใช้งานแล้ว`);
-
       const embed = new EmbedBuilder()
         .setTitle('🏗️ ผลลัพธ์การสร้างห้องทั้งหมด')
-        .setDescription(descriptionParts.join('\n\n'))
+        .setDescription(
+          `**✅ สำเร็จ ${results.length} รายการ:**\n${results.join('\n')}\n\n` +
+          (errors.length > 0
+            ? `**❌ ล้มเหลว ${errors.length} รายการ:**\n${errors.join('\n')}\n\n`
+            : '') +
+          `🎉 **การตั้งค่าเสร็จสิ้น!** เซิร์ฟเวอร์ของคุณพร้อมใช้งานแล้ว`
+        )
         .setColor(errors.length === 0 ? 0x00ff00 : 0xffa500)
         .setTimestamp()
         .setFooter({
@@ -1524,6 +1451,27 @@ export class ServerSetRoomService {
             `🎉 ห้อง **${this.roomName}** สำหรับประเภท **${roomType.toUpperCase()}** ถูกสร้างและบันทึกเรียบร้อยแล้ว!`,
           )
           .setColor(0x00ff00),
+      ],
+      components: [],
+    });
+  }
+
+  // เก็บ methods เดิมไว้เพื่อความเข้ากันได้
+  private replyStopCreate(
+    interaction: StringSelectMenuInteraction<CacheType>,
+    roomType: string,
+    existingChannelName: string,
+  ) {
+    return interaction.update({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
+          .setDescription(
+            `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
+            `**${existingChannelName}**\n` +
+            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+          )
+          .setColor(0xffa500),
       ],
       components: [],
     });

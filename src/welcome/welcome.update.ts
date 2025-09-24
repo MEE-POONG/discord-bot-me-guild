@@ -122,12 +122,12 @@ export class WelcomeUpdate {
         return;
       }
 
-      if (!server.welcomechannel) {
+      if (!server.welcomeChannel) {
         this.logger.warn(`No welcome channel configured for server ID ${member.guild.id}`);
         return;
       }
       const channel = (await member.guild.channels.fetch(
-        server.welcomechannel,
+        server.welcomeChannel,
       )) as TextBasedChannel;
       if (channel && channel.isTextBased() && 'send' in channel) {
         await channel.send({

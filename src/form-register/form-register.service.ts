@@ -155,15 +155,18 @@ export class FormRegisterService {
       const member = interaction.member as GuildMember;
 
       // 🔍 ตรวจสอบว่าผู้ใช้มี Adventurer Role อยู่หรือไม่
-      const hasAdventurerRole = server.adventurerRoleId && member.roles.cache.has(server.adventurerRoleId);
+      const hasAdventurerRole =
+        server.adventurerRoleId && member.roles.cache.has(server.adventurerRoleId);
       const hasVisitorRole = server.visitorRoleId && member.roles.cache.has(server.visitorRoleId);
-      
-      this.logger.debug(`[registerModal] User has adventurer role: ${hasAdventurerRole}, visitor role: ${hasVisitorRole}`);
+
+      this.logger.debug(
+        `[registerModal] User has adventurer role: ${hasAdventurerRole}, visitor role: ${hasVisitorRole}`,
+      );
 
       // ✅ ถ้าไม่มี Adventurer Role ให้เพิ่มให้ (ผู้ใช้เคยลงทะเบียนแล้ว)
       if (!hasAdventurerRole && server.adventurerRoleId) {
         this.logger.debug(`[registerModal] Adding adventurer role to existing user`);
-        
+
         // ลบ Visitor Role ถ้ามี
         if (hasVisitorRole && server.visitorRoleId) {
           await member.roles.remove(server.visitorRoleId).catch((e) => {
@@ -175,7 +178,7 @@ export class FormRegisterService {
         await member.roles.add(server.adventurerRoleId).catch((e) => {
           this.logger.warn(`⚠️ ไม่สามารถเพิ่ม Adventurer Role: ${e.message}`);
         });
-        
+
         this.logger.log(`✅ Added adventurer role to existing user: ${interaction.user.tag}`);
       }
 

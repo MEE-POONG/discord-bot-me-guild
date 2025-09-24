@@ -17,10 +17,12 @@ export class ValidationService {
   async validateInviteRequest(
     target: GuildMember,
     inviter: ChatInputCommandInteraction<CacheType>,
-    targetProfile: UserProfile | null
+    targetProfile: UserProfile | null,
   ): Promise<ValidationResult> {
     const startTime = Date.now();
-    this.logger.log(`[DEBUG] Starting validation - Target: ${target.id}, Inviter: ${inviter.user.id}`);
+    this.logger.log(
+      `[DEBUG] Starting validation - Target: ${target.id}, Inviter: ${inviter.user.id}`,
+    );
 
     try {
       // Check if user is trying to invite themselves
@@ -40,7 +42,7 @@ export class ValidationService {
           userId: target.id,
         },
       });
-      
+
       if (isInGuild) {
         this.logger.log(`[DEBUG] Target already in guild - Target: ${target.id}`);
         return {
@@ -58,7 +60,9 @@ export class ValidationService {
         };
       }
 
-      this.logger.log(`[DEBUG] Validation passed - Target: ${target.id}, Inviter: ${inviter.user.id}`);
+      this.logger.log(
+        `[DEBUG] Validation passed - Target: ${target.id}, Inviter: ${inviter.user.id}`,
+      );
       return { isValid: true };
     } catch (error) {
       this.logger.error(

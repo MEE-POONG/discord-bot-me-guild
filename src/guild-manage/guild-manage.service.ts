@@ -33,7 +33,7 @@ export class GuildManageService {
     private readonly users: UserManager,
     private readonly client: Client,
     private readonly serverRepository: ServerRepository,
-  ) { }
+  ) {}
 
   private createDismissButton(): ActionRowBuilder<ButtonBuilder> {
     return new ActionRowBuilder<ButtonBuilder>().setComponents(
@@ -57,7 +57,7 @@ export class GuildManageService {
     confirmedMembers: string[],
     status: 'progress' | 'completed' | 'failed',
     invitedMembers?: string[],
-    reason?: string
+    reason?: string,
   ): Promise<void> {
     try {
       const creator = await this.users.fetch(creatorId);
@@ -72,9 +72,9 @@ export class GuildManageService {
             .setTitle('🎊 กิลด์ก่อตั้งสำเร็จ!')
             .setDescription(
               `🏰 **กิลด์ "${guildName}" ได้รับการก่อตั้งอย่างเป็นทางการแล้ว!**\n\n` +
-              `🎯 **สมาชิกผู้ก่อตั้ง:**\n${confirmedMembers.map(id => `👑 <@${id}>`).join('\n')}\n\n` +
-              `✨ **สถานะ:** เสร็จสมบูรณ์\n` +
-              `🎮 **ห้องกิลด์:** ได้ถูกสร้างขึ้นแล้ว`
+                `🎯 **สมาชิกผู้ก่อตั้ง:**\n${confirmedMembers.map((id) => `👑 <@${id}>`).join('\n')}\n\n` +
+                `✨ **สถานะ:** เสร็จสมบูรณ์\n` +
+                `🎮 **ห้องกิลด์:** ได้ถูกสร้างขึ้นแล้ว`,
             )
             .setColor(0x00ff7f)
             .setFooter({ text: '🌟 ขอแสดงความยินดี! เริ่มต้นการผจญภัยได้เลย' })
@@ -91,10 +91,15 @@ export class GuildManageService {
             .setTitle('📈 อัปเดตความคืบหน้ากิลด์')
             .setDescription(
               `🏰 **กิลด์ "${guildName}"**\n\n` +
-              `${progressBar} **${confirmedMembers.length}/${totalInvited}** (${progressPercentage}%)\n\n` +
-              `✅ **ยืนยันแล้ว:**\n${confirmedMembers.map(id => `🟢 <@${id}>`).join('\n')}\n\n` +
-              `⏳ **รอการยืนยัน:**\n${invitedMembers?.filter(id => !confirmedMembers.includes(id)).map(id => `🟡 <@${id}>`).join('\n') || 'ไม่มี'}\n\n` +
-              `💡 **สถานะ:** ${totalInvited - confirmedMembers.length} คนเหลือ`
+                `${progressBar} **${confirmedMembers.length}/${totalInvited}** (${progressPercentage}%)\n\n` +
+                `✅ **ยืนยันแล้ว:**\n${confirmedMembers.map((id) => `🟢 <@${id}>`).join('\n')}\n\n` +
+                `⏳ **รอการยืนยัน:**\n${
+                  invitedMembers
+                    ?.filter((id) => !confirmedMembers.includes(id))
+                    .map((id) => `🟡 <@${id}>`)
+                    .join('\n') || 'ไม่มี'
+                }\n\n` +
+                `💡 **สถานะ:** ${totalInvited - confirmedMembers.length} คนเหลือ`,
             )
             .setColor(0xffa500)
             .setFooter({ text: '⏰ รอสมาชิกคนอื่นยืนยันการเข้าร่วม' })
@@ -107,10 +112,10 @@ export class GuildManageService {
             .setTitle('❌ การก่อตั้งกิลด์ล้มเหลว')
             .setDescription(
               `🏰 **กิลด์ "${guildName}"**\n\n` +
-              `💔 **สถานะ:** ยกเลิกแล้ว\n` +
-              `📝 **เหตุผล:** ${reason || 'มีสมาชิกปฏิเสธการเชิญ'}\n\n` +
-              `🔄 **คำแนะนำ:** คุณสามารถลองสร้างกิลด์ใหม่ได้อีกครั้ง\n` +
-              `💡 **เคล็ดลับ:** ลองเชิญสมาชิกคนอื่นที่อาจสนใจเข้าร่วมมากกว่า`
+                `💔 **สถานะ:** ยกเลิกแล้ว\n` +
+                `📝 **เหตุผล:** ${reason || 'มีสมาชิกปฏิเสธการเชิญ'}\n\n` +
+                `🔄 **คำแนะนำ:** คุณสามารถลองสร้างกิลด์ใหม่ได้อีกครั้ง\n` +
+                `💡 **เคล็ดลับ:** ลองเชิญสมาชิกคนอื่นที่อาจสนใจเข้าร่วมมากกว่า`,
             )
             .setColor(0xff4444)
             .setFooter({ text: '💪 อย่าท้อแท้! ลองอีกครั้งได้เสมอ' })
@@ -121,7 +126,7 @@ export class GuildManageService {
 
       const message = await creator.send({
         embeds: [embed],
-        components: [this.createDismissButton()]
+        components: [this.createDismissButton()],
       });
 
       // Auto delete notification
@@ -132,7 +137,6 @@ export class GuildManageService {
           // Message might already be deleted
         }
       }, autoDeleteTime);
-
     } catch (error) {
       this.logger.error(`Failed to send progress update to creator ${creatorId}:`, error);
     }
@@ -167,7 +171,9 @@ export class GuildManageService {
   }
 
   async checkGuild(userData: UserProfile) {
-    this.logger.debug(`[checkGuild] Checking guild for user: ${userData.discord_id} (${userData.username})`);
+    this.logger.debug(
+      `[checkGuild] Checking guild for user: ${userData.discord_id} (${userData.username})`,
+    );
     try {
       const result = await this.prisma.guildMembers.findFirst({
         where: { userId: userData.discord_id },
@@ -184,20 +190,27 @@ export class GuildManageService {
       });
 
       if (result) {
-        this.logger.log(`✅ User ${userData.discord_id} already has guild: ${result.guildDB?.guild_name} (${result.guildId})`);
+        this.logger.log(
+          `✅ User ${userData.discord_id} already has guild: ${result.guildDB?.guild_name} (${result.guildId})`,
+        );
       } else {
         this.logger.log(`❌ User ${userData.discord_id} has no guild - can create new one`);
       }
 
       return result;
     } catch (error) {
-      this.logger.error(`[checkGuild] Error checking guild for user ${userData.discord_id}:`, error);
+      this.logger.error(
+        `[checkGuild] Error checking guild for user ${userData.discord_id}:`,
+        error,
+      );
       throw error;
     }
   }
 
   async cancelInviteCreate(interaction: ButtonInteraction, GuildCreateReportId: string) {
-    this.logger.debug(`[cancelInviteCreate] Starting cancel for GuildCreateReportId: ${GuildCreateReportId} by user: ${interaction.user.id}`);
+    this.logger.debug(
+      `[cancelInviteCreate] Starting cancel for GuildCreateReportId: ${GuildCreateReportId} by user: ${interaction.user.id}`,
+    );
     try {
       const report = await this.prisma.guildCreateReport.findFirst({
         where: { id: GuildCreateReportId },
@@ -214,14 +227,14 @@ export class GuildManageService {
       }
 
       this.logger.debug(`[cancelInviteCreate] Deleting message and replying to user`);
-      interaction.message.delete().catch(() => { });
+      interaction.message.delete().catch(() => {});
       const cancelEmbed = new EmbedBuilder()
         .setTitle('❌ ปฏิเสธการเชิญเข้าร่วมกิลด์')
         .setDescription(
           `🎯 **คุณได้ปฏิเสธการเชิญเข้าร่วมก่อตั้งกิลด์แล้ว**\n\n` +
-          `💭 **เหตุผล:** การตัดสินใจของคุณได้ถูกบันทึกแล้ว\n` +
-          `📨 **การแจ้งเตือน:** ผู้สร้างกิลด์จะได้รับแจ้งเตือนเกี่ยวกับการตัดสินใจของคุณ\n\n` +
-          `💫 **ขอบคุณ:** ขอบคุณที่สละเวลาในการพิจารณา`
+            `💭 **เหตุผล:** การตัดสินใจของคุณได้ถูกบันทึกแล้ว\n` +
+            `📨 **การแจ้งเตือน:** ผู้สร้างกิลด์จะได้รับแจ้งเตือนเกี่ยวกับการตัดสินใจของคุณ\n\n` +
+            `💫 **ขอบคุณ:** ขอบคุณที่สละเวลาในการพิจารณา`,
         )
         .setColor(0xff6b6b)
         .setFooter({ text: '💨 ข้อความนี้จะหายไปในอีกไม่กี่วินาที' })
@@ -243,7 +256,9 @@ export class GuildManageService {
       }, 3000);
 
       if ('ownerId' in report && 'guildName' in report) {
-        this.logger.debug(`[cancelInviteCreate] Notifying owner: ${report.ownerId} about cancellation`);
+        this.logger.debug(
+          `[cancelInviteCreate] Notifying owner: ${report.ownerId} about cancellation`,
+        );
 
         // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
         await this.sendProgressUpdateToCreator(
@@ -252,7 +267,7 @@ export class GuildManageService {
           [],
           'failed',
           report.invitedMembers,
-          `<@${interaction.user.id}> ได้ปฏิเสธการเชิญ`
+          `<@${interaction.user.id}> ได้ปฏิเสธการเชิญ`,
         );
 
         this.logger.debug(`[cancelInviteCreate] Deleting report from database`);
@@ -260,18 +275,18 @@ export class GuildManageService {
           .delete({
             where: { id: GuildCreateReportId },
           })
-          .catch(() => { });
+          .catch(() => {});
       }
     } catch (error) {
       this.logger.error(`[cancelInviteCreate] Error during cancellation:`, error);
-      interaction.message.delete().catch(() => { });
+      interaction.message.delete().catch(() => {});
       const errorEmbed = new EmbedBuilder()
         .setTitle('❌ ปฏิเสธการเชิญเข้าร่วมกิลด์')
         .setDescription(
           `🎯 **คุณได้ปฏิเสธการเชิญเข้าร่วมก่อตั้งกิลด์แล้ว**\n\n` +
-          `💭 **เหตุผล:** การตัดสินใจของคุณได้ถูกบันทึกแล้ว\n` +
-          `📨 **การแจ้งเตือน:** ผู้สร้างกิลด์จะได้รับแจ้งเตือนเกี่ยวกับการตัดสินใจของคุณ\n\n` +
-          `💫 **ขอบคุณ:** ขอบคุณที่สละเวลาในการพิจารณา`
+            `💭 **เหตุผล:** การตัดสินใจของคุณได้ถูกบันทึกแล้ว\n` +
+            `📨 **การแจ้งเตือน:** ผู้สร้างกิลด์จะได้รับแจ้งเตือนเกี่ยวกับการตัดสินใจของคุณ\n\n` +
+            `💫 **ขอบคุณ:** ขอบคุณที่สละเวลาในการพิจารณา`,
         )
         .setColor(0xff6b6b)
         .setFooter({ text: '💨 ข้อความนี้จะหายไปในอีกไม่กี่วินาที' })
@@ -295,7 +310,9 @@ export class GuildManageService {
   }
 
   async acceptInviteCreate(interaction: ButtonInteraction, GuildCreateReportId: string) {
-    this.logger.debug(`128 [acceptInviteCreate] Starting accept for GuildCreateReportId: ${GuildCreateReportId} by user: ${interaction.user.id} `);
+    this.logger.debug(
+      `128 [acceptInviteCreate] Starting accept for GuildCreateReportId: ${GuildCreateReportId} by user: ${interaction.user.id} `,
+    );
     try {
       await interaction.deferReply({ ephemeral: true });
       console.log(131);
@@ -317,12 +334,17 @@ export class GuildManageService {
       console.log(147);
 
       if (report.confirmedMembers.length >= 1) {
-        this.logger.debug(`[acceptInviteCreate] Creating guild with ${report.confirmedMembers.length} confirmed members`);
+        this.logger.debug(
+          `[acceptInviteCreate] Creating guild with ${report.confirmedMembers.length} confirmed members`,
+        );
         const membersList = [...report.confirmedMembers, interaction.user.id];
         this.logger.debug(`[acceptInviteCreate] Members list:`, membersList);
         console.log(153);
         // สร้าง Discord guild ก่อนเพื่อได้ category ID
-        this.logger.debug(155, `[acceptInviteCreate] Creating Discord guild first to get category ID for: ${report.guildName}`);
+        this.logger.debug(
+          155,
+          `[acceptInviteCreate] Creating Discord guild first to get category ID for: ${report.guildName}`,
+        );
         const res = await this.createGuild(report.guildName, report.serverId);
         this.logger.debug(157, `[acceptInviteCreate] Create guild result:`, res);
         console.log(158);
@@ -337,7 +359,7 @@ export class GuildManageService {
             [],
             'failed',
             report.invitedMembers,
-            `ไม่สามารถสร้างห้องกิลด์ได้: ${res.message}`
+            `ไม่สามารถสร้างห้องกิลด์ได้: ${res.message}`,
           );
 
           return interaction.editReply({
@@ -365,7 +387,9 @@ export class GuildManageService {
         this.logger.debug(181, ` [acceptInviteCreate] Created guild:`, guild);
 
         if (!guild) {
-          this.logger.error(`[acceptInviteCreate] Failed to create guild for report: ${GuildCreateReportId}`);
+          this.logger.error(
+            `[acceptInviteCreate] Failed to create guild for report: ${GuildCreateReportId}`,
+          );
 
           // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
           await this.sendProgressUpdateToCreator(
@@ -374,7 +398,7 @@ export class GuildManageService {
             [],
             'failed',
             report.invitedMembers,
-            'ไม่สามารถบันทึกข้อมูลกิลด์ลงฐานข้อมูลได้'
+            'ไม่สามารถบันทึกข้อมูลกิลด์ลงฐานข้อมูลได้',
           );
 
           return interaction.editReply({
@@ -382,7 +406,10 @@ export class GuildManageService {
           });
         }
         console.log(190);
-        this.logger.debug(191, `[acceptInviteCreate] Creating guild members for guild: ${guild.id}`);
+        this.logger.debug(
+          191,
+          `[acceptInviteCreate] Creating guild members for guild: ${guild.id}`,
+        );
         const members = await this.prisma.guildMembers.createMany({
           data: membersList.map((userId) => ({
             userId,
@@ -394,7 +421,9 @@ export class GuildManageService {
         this.logger.debug(196, `[acceptInviteCreate] Created ${members.count} guild members`);
 
         if (!members.count) {
-          this.logger.error(`[acceptInviteCreate] Failed to create guild members for guild: ${guild.id}`);
+          this.logger.error(
+            `[acceptInviteCreate] Failed to create guild members for guild: ${guild.id}`,
+          );
 
           // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ล้มเหลว
           await this.sendProgressUpdateToCreator(
@@ -403,7 +432,7 @@ export class GuildManageService {
             [],
             'failed',
             report.invitedMembers,
-            'ไม่สามารถเพิ่มสมาชิกลงในกิลด์ได้'
+            'ไม่สามารถเพิ่มสมาชิกลงในกิลด์ได้',
           );
 
           await this.deleteData(guild);
@@ -417,16 +446,18 @@ export class GuildManageService {
           .setTitle('🎊 ยินดีด้วย! กิลด์ก่อตั้งสำเร็จ!')
           .setDescription(
             `🏰 **กิลด์ "${report.guildName}" ได้รับการก่อตั้งอย่างเป็นทางการแล้ว!**\n\n` +
-            `🎯 **สถานะของคุณ:** ผู้ร่วมก่อตั้งกิลด์\n` +
-            `💎 **สิทธิพิเศษ:** คุณได้รับสิทธิ์เข้าถึงพื้นที่ส่วนตัวของกิลด์แล้ว\n` +
-            `🎮 **ห้องกิลด์:** ห้องพูดคุยและกิจกรรมของกิลด์ได้ถูกสร้างขึ้นแล้ว\n` +
-            `👑 **บทบาท:** คุณได้รับบทบาทผู้ร่วมก่อตั้งพร้อมสิทธิพิเศษทั้งหมด!\n\n` +
-            `✨ **ขั้นตอนต่อไป:** เริ่มต้นการผจญภัยกับสมาชิกกิลด์ได้เลย!`
+              `🎯 **สถานะของคุณ:** ผู้ร่วมก่อตั้งกิลด์\n` +
+              `💎 **สิทธิพิเศษ:** คุณได้รับสิทธิ์เข้าถึงพื้นที่ส่วนตัวของกิลด์แล้ว\n` +
+              `🎮 **ห้องกิลด์:** ห้องพูดคุยและกิจกรรมของกิลด์ได้ถูกสร้างขึ้นแล้ว\n` +
+              `👑 **บทบาท:** คุณได้รับบทบาทผู้ร่วมก่อตั้งพร้อมสิทธิพิเศษทั้งหมด!\n\n` +
+              `✨ **ขั้นตอนต่อไป:** เริ่มต้นการผจญภัยกับสมาชิกกิลด์ได้เลย!`,
           )
           .setColor(0x00ff7f)
           .setFooter({ text: '🌟 ขอบคุณที่เป็นส่วนหนึ่งของการก่อตั้งกิลด์!' })
           .setTimestamp()
-          .setThumbnail('https://media.discordapp.net/attachments/861491684214833182/1224408324922015876/DALLE_2024-04-02_00.21.20_-_A_vibrant_watercolor_of_an_elven_archer_a_human_mage_and_a_dwarf_warrior_standing_triumphantly_atop_a_hill_looking_towards_the_horizon_at_dawn._The.webp?ex=661d621d&is=660aed1d&hm=29e373d7dea2b16ceddf3e45271ca343bf01c5e5b2bbfc1ee263503f04900ca7&=&format=webp&width=839&height=479');
+          .setThumbnail(
+            'https://media.discordapp.net/attachments/861491684214833182/1224408324922015876/DALLE_2024-04-02_00.21.20_-_A_vibrant_watercolor_of_an_elven_archer_a_human_mage_and_a_dwarf_warrior_standing_triumphantly_atop_a_hill_looking_towards_the_horizon_at_dawn._The.webp?ex=661d621d&is=660aed1d&hm=29e373d7dea2b16ceddf3e45271ca343bf01c5e5b2bbfc1ee263503f04900ca7&=&format=webp&width=839&height=479',
+          );
 
         await interaction.editReply({
           embeds: [successEmbed],
@@ -445,7 +476,9 @@ export class GuildManageService {
         this.logger.debug(217, `[acceptInviteCreate] Fetching Discord guild: ${report.serverId}`);
         const Interguild = await this.client.guilds.fetch(report.serverId);
         if (!Interguild) {
-          this.logger.error(`[acceptInviteCreate] Failed to fetch Discord guild: ${report.serverId}`);
+          this.logger.error(
+            `[acceptInviteCreate] Failed to fetch Discord guild: ${report.serverId}`,
+          );
           return interaction.editReply({
             content: 'ไม่สามารถเข้าถึงดิสกิลด์ได้',
           });
@@ -480,7 +513,11 @@ export class GuildManageService {
         });
         console.log(235);
         const coFounders = membersList.filter((id) => id !== report.ownerId);
-        this.logger.debug(238, `[acceptInviteCreate] Processing ${coFounders.length} co-founders:`, coFounders);
+        this.logger.debug(
+          238,
+          `[acceptInviteCreate] Processing ${coFounders.length} co-founders:`,
+          coFounders,
+        );
         console.log(238);
         for (const id of coFounders) {
           this.logger.debug(241, `[acceptInviteCreate] Processing co-founder: ${id}`);
@@ -506,16 +543,26 @@ export class GuildManageService {
         this.updateMessage(report.channelId, report.messageId, report.guildName, membersList);
 
         // แจ้งเตือนผู้ส่งคำเชิญว่ากิลด์ก่อตั้งสำเร็จ
-        await this.sendProgressUpdateToCreator(report.ownerId, report.guildName, membersList, 'completed');
+        await this.sendProgressUpdateToCreator(
+          report.ownerId,
+          report.guildName,
+          membersList,
+          'completed',
+        );
 
         console.log(286);
-        await this.prisma.guildCreateReport.delete({ where: { id: GuildCreateReportId } }).catch(() => { });
+        await this.prisma.guildCreateReport
+          .delete({ where: { id: GuildCreateReportId } })
+          .catch(() => {});
         console.log(287);
         interaction.message.delete().catch(() => {
           this.logger.error('Failed to delete interaction message');
         });
       } else {
-        this.logger.debug(274, ` [acceptInviteCreate] Adding user to confirmed members (not enough members yet)`);
+        this.logger.debug(
+          274,
+          ` [acceptInviteCreate] Adding user to confirmed members (not enough members yet)`,
+        );
         await this.prisma.guildCreateReport.update({
           data: { confirmedMembers: { push: interaction.user.id } },
           where: { id: GuildCreateReportId },
@@ -527,12 +574,12 @@ export class GuildManageService {
           .setTitle('✅ ยืนยันการเข้าร่วมสำเร็จ!')
           .setDescription(
             `🎯 **คุณได้ยืนยันการเข้าร่วมก่อตั้งกิลด์ "${report.guildName}" แล้ว**\n\n` +
-            `📊 **สถานะปัจจุบัน:**\n` +
-            `✅ ยืนยันแล้ว: **${report.confirmedMembers.length + 1}** คน\n` +
-            `⏳ รอการยืนยัน: **${remainingCount}** คน\n\n` +
-            `🎮 **ขั้นตอนต่อไป:** รอสมาชิกคนอื่นยืนยันการเข้าร่วม\n` +
-            `🏰 **เมื่อครบจำนวน:** กิลด์จะถูกสร้างทันที!\n\n` +
-            `💡 **หมายเหตุ:** คุณจะได้รับแจ้งเตือนเมื่อกิลด์ก่อตั้งเสร็จสิ้น`
+              `📊 **สถานะปัจจุบัน:**\n` +
+              `✅ ยืนยันแล้ว: **${report.confirmedMembers.length + 1}** คน\n` +
+              `⏳ รอการยืนยัน: **${remainingCount}** คน\n\n` +
+              `🎮 **ขั้นตอนต่อไป:** รอสมาชิกคนอื่นยืนยันการเข้าร่วม\n` +
+              `🏰 **เมื่อครบจำนวน:** กิลด์จะถูกสร้างทันที!\n\n` +
+              `💡 **หมายเหตุ:** คุณจะได้รับแจ้งเตือนเมื่อกิลด์ก่อตั้งเสร็จสิ้น`,
           )
           .setColor(0x4caf50)
           .setFooter({ text: '⏰ กำลังรอสมาชิกคนอื่นตัดสินใจ...' })
@@ -562,7 +609,13 @@ export class GuildManageService {
 
         // แจ้งเตือนผู้ส่งคำเชิญว่ามีความคืบหน้า
         const updatedMembers = [...report.confirmedMembers, interaction.user.id];
-        await this.sendProgressUpdateToCreator(report.ownerId, report.guildName, updatedMembers, 'progress', report.invitedMembers);
+        await this.sendProgressUpdateToCreator(
+          report.ownerId,
+          report.guildName,
+          updatedMembers,
+          'progress',
+          report.invitedMembers,
+        );
 
         console.log(311);
       }
@@ -572,7 +625,7 @@ export class GuildManageService {
       // พยายามแจ้งเตือนผู้ส่งคำเชิญถ้าเป็นไปได้
       try {
         const report = await this.prisma.guildCreateReport.findFirst({
-          where: { id: GuildCreateReportId }
+          where: { id: GuildCreateReportId },
         });
 
         if (report) {
@@ -582,7 +635,7 @@ export class GuildManageService {
             [],
             'failed',
             report.invitedMembers,
-            'เกิดข้อผิดพลาดในระบบระหว่างการสร้างกิลด์'
+            'เกิดข้อผิดพลาดในระบบระหว่างการสร้างกิลด์',
           );
         }
       } catch (notifyError) {
@@ -596,7 +649,9 @@ export class GuildManageService {
   }
 
   async deleteData(guildDB: GuildDB) {
-    this.logger.debug(`[deleteData] Starting cleanup for guild: ${guildDB.id} (${guildDB.guild_name})`);
+    this.logger.debug(
+      `[deleteData] Starting cleanup for guild: ${guildDB.id} (${guildDB.guild_name})`,
+    );
     await this.prisma.guildDB.delete({ where: { id: guildDB.id } }).catch(() => {
       this.logger.error(`Failed to delete guild: ${guildDB.id}`);
     });
@@ -607,11 +662,15 @@ export class GuildManageService {
   }
 
   async updateMessage(channelId: string, messageId: string, guildName: string, members: string[]) {
-    this.logger.debug(`[updateMessage] Updating message for guild: ${guildName} with ${members.length} members`);
+    this.logger.debug(
+      `[updateMessage] Updating message for guild: ${guildName} with ${members.length} members`,
+    );
     try {
       // ตรวจสอบว่า channelId และ messageId มีค่าหรือไม่
       if (!channelId || !messageId) {
-        this.logger.warn(`[updateMessage] Missing channelId or messageId: channelId=${channelId}, messageId=${messageId}`);
+        this.logger.warn(
+          `[updateMessage] Missing channelId or messageId: channelId=${channelId}, messageId=${messageId}`,
+        );
         return;
       }
 
@@ -633,7 +692,9 @@ export class GuildManageService {
 
       const message = await channel.messages.fetch(messageId).catch((error) => {
         if (error.code === 10008) {
-          this.logger.warn(`[updateMessage] Message ${messageId} not found - it may have been deleted or expired`);
+          this.logger.warn(
+            `[updateMessage] Message ${messageId} not found - it may have been deleted or expired`,
+          );
         } else {
           this.logger.warn(`[updateMessage] Failed to fetch message ${messageId}:`, error.message);
         }
@@ -659,7 +720,7 @@ export class GuildManageService {
 
       // Get the original guild report to determine total invited
       const report = await this.prisma.guildCreateReport.findFirst({
-        where: { messageId: messageId }
+        where: { messageId: messageId },
       });
 
       const totalInvited = report ? report.invitedMembers.length : 4;
@@ -667,12 +728,16 @@ export class GuildManageService {
 
       const embed = new EmbedBuilder(message.embeds[0].toJSON());
       if (confirmedCount >= totalInvited) {
-        this.logger.debug(`[updateMessage] Guild ${guildName} is complete with ${confirmedCount} members`);
+        this.logger.debug(
+          `[updateMessage] Guild ${guildName} is complete with ${confirmedCount} members`,
+        );
         embed
           .setDescription(`# 🎉 กิลด์ ${guildName} ได้รับการก่อตั้งอย่างเป็นทางการแล้ว`)
           .setColor('Gold');
       } else {
-        this.logger.debug(`[updateMessage] Guild ${guildName} progress: ${confirmedCount}/${totalInvited}`);
+        this.logger.debug(
+          `[updateMessage] Guild ${guildName} progress: ${confirmedCount}/${totalInvited}`,
+        );
 
         const progressBar = this.createProgressBar(confirmedCount, totalInvited);
         const progressPercentage = Math.round((confirmedCount / totalInvited) * 100);
@@ -687,24 +752,27 @@ export class GuildManageService {
           invitedList += '\n⏰ **ข้อความนี้จะปิดตัวเองใน 3 นาที**';
         }
 
-        embed.setTitle(`🏰 คำร้องขอก่อตั้งกิลด์ "${guildName}"`)
+        embed
+          .setTitle(`🏰 คำร้องขอก่อตั้งกิลด์ "${guildName}"`)
           .setDescription(
             // `${progressBar} **${confirmedCount}/${totalInvited}** (${progressPercentage}%)\n\n` +
             `📊 **สถานะปัจจุบัน:**\n` +
-            `✅ ยืนยันแล้ว: **${confirmedCount}** คน\n` +
-            `⏳ รอการยืนยัน: **${totalInvited - confirmedCount}** คน${invitedList}`
+              `✅ ยืนยันแล้ว: **${confirmedCount}** คน\n` +
+              `⏳ รอการยืนยัน: **${totalInvited - confirmedCount}** คน${invitedList}`,
           )
           .setColor(confirmedCount === totalInvited ? 0x00ff00 : 0xffa500)
           .setFooter({
             text: `🎮 กิลด์ ${guildName} • กำลังรอการยืนยันจากสมาชิก`,
-            iconURL: 'https://cdn.discordapp.com/emojis/1234567890123456789.png'
+            iconURL: 'https://cdn.discordapp.com/emojis/1234567890123456789.png',
           })
           .setTimestamp();
       }
       // ปิดตัวเองใน 15 วินาที
       await message.edit({ embeds: [embed] }).catch((error) => {
         if (error.code === 10008) {
-          this.logger.warn(`[updateMessage] Message ${messageId} not found - it may have been deleted`);
+          this.logger.warn(
+            `[updateMessage] Message ${messageId} not found - it may have been deleted`,
+          );
         } else {
           this.logger.error(`[updateMessage] Failed to edit message ${messageId}:`, error.message);
         }
@@ -725,12 +793,10 @@ export class GuildManageService {
   ): Promise<{ role: Role | undefined; message: string; categoryId?: string }> {
     this.logger.debug(`[createGuild] Starting guild creation for: ${guildName}`);
 
-    const guildServer = await this.client.guilds
-      .fetch(guildId)
-      .catch((error) => {
-        this.logger.error('Failed to fetch guild:', error);
-        return undefined;
-      });
+    const guildServer = await this.client.guilds.fetch(guildId).catch((error) => {
+      this.logger.error('Failed to fetch guild:', error);
+      return undefined;
+    });
 
     if (!guildServer) {
       this.logger.error(`[createGuild] Failed to fetch Discord guild: ${guildId}`);
@@ -751,7 +817,10 @@ export class GuildManageService {
         color: '#A4F1FF',
       });
 
-      this.logger.debug(395, ` [createGuild] Created role: ${role.name} (${role.id}) ${guildServer.id}`);
+      this.logger.debug(
+        395,
+        ` [createGuild] Created role: ${role.name} (${role.id}) ${guildServer.id}`,
+      );
       this.logger.debug(396, `[createGuild] Creating channels for guild: ${role.name}`);
 
       const channelResult = await this.createChannel(role, guildServer.id);
@@ -768,12 +837,14 @@ export class GuildManageService {
   private async createPrivateVoiceChannel(
     category: CategoryChannel,
     name: string,
-    state: 0 | 1 | 2 = 0,       // 0 = Voice, 1 = Stage, 2 = Text
-    server?: any,               // ถ้ามี type ของ ServerDB ให้ใส่แทน any
+    state: 0 | 1 | 2 = 0, // 0 = Voice, 1 = Stage, 2 = Text
+    server?: any, // ถ้ามี type ของ ServerDB ให้ใส่แทน any
     guildServer?: Guild,
-    roles?: Role                // Guild role สำหรับ permission
+    roles?: Role, // Guild role สำหรับ permission
   ) {
-    this.logger.debug(`[createVoiceChannel] Creating channel: ${name} (state: ${state}, category: ${category.id}`);
+    this.logger.debug(
+      `[createVoiceChannel] Creating channel: ${name} (state: ${state}, category: ${category.id}`,
+    );
     try {
       const type =
         state === 0
@@ -785,29 +856,45 @@ export class GuildManageService {
       const permissionOverwrites = [
         // @everyone - มองไม่เห็น
         {
-          id: guildServer!.roles.everyone.id,
+          id: guildServer.roles.everyone.id,
           deny: ['ViewChannel'],
         },
         // 🎭 ผู้มีเอกลักษณ์ - มองไม่เห็น
-        ...(server?.eccentricRoleId ? [{
-          id: server.eccentricRoleId,
-          deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server?.eccentricRoleId
+          ? [
+              {
+                id: server.eccentricRoleId,
+                deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // ⚔️ นักผจญภัย - มองไม่เห็น
-        ...(server?.adventurerRoleId ? [{
-          id: server.adventurerRoleId,
-          deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server?.adventurerRoleId
+          ? [
+              {
+                id: server.adventurerRoleId,
+                deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // 👥 ผู้เยี่ยมชม - มองไม่เห็น
-        ...(server?.visitorRoleId ? [{
-          id: server.visitorRoleId,
-          deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server?.visitorRoleId
+          ? [
+              {
+                id: server.visitorRoleId,
+                deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // 🕍 ชื่อกิลด์ - มองเห็น (เฉพาะสมาชิกกิลด์)
-        ...(roles ? [{
-          id: roles.id, // Guild role ID
-          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(roles
+          ? [
+              {
+                id: roles.id, // Guild role ID
+                allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
       ];
 
       const ch = await category.children.create({
@@ -827,12 +914,14 @@ export class GuildManageService {
   private async createPublicVoiceChannel(
     category: CategoryChannel,
     name: string,
-    state: 0 | 1 | 2 = 0,       // 0 = Voice, 1 = Stage, 2 = Text
-    server?: any,               // ถ้ามี type ของ ServerDB ให้ใส่แทน any
+    state: 0 | 1 | 2 = 0, // 0 = Voice, 1 = Stage, 2 = Text
+    server?: any, // ถ้ามี type ของ ServerDB ให้ใส่แทน any
     guildServer?: Guild,
-    roles?: Role                // Guild role สำหรับ permission
+    roles?: Role, // Guild role สำหรับ permission
   ) {
-    this.logger.debug(`[createVoiceChannel] Creating channel: ${name} (state: ${state}, category: ${category.id}`);
+    this.logger.debug(
+      `[createVoiceChannel] Creating channel: ${name} (state: ${state}, category: ${category.id}`,
+    );
     try {
       const type =
         state === 0
@@ -844,29 +933,45 @@ export class GuildManageService {
       const permissionOverwrites = [
         // @everyone - มองไม่เห็น
         {
-          id: guildServer!.roles.everyone.id,
+          id: guildServer.roles.everyone.id,
           allow: ['ViewChannel'],
         },
         // 🎭 ผู้มีเอกลักษณ์ - มองไม่เห็น
-        ...(server?.eccentricRoleId ? [{
-          id: server.eccentricRoleId,
-          deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server?.eccentricRoleId
+          ? [
+              {
+                id: server.eccentricRoleId,
+                deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // ⚔️ นักผจญภัย - มองไม่เห็น
-        ...(server?.adventurerRoleId ? [{
-          id: server.adventurerRoleId,
-          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server?.adventurerRoleId
+          ? [
+              {
+                id: server.adventurerRoleId,
+                allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // 👥 ผู้เยี่ยมชม - มองไม่เห็น
-        ...(server?.visitorRoleId ? [{
-          id: server.visitorRoleId,
-          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server?.visitorRoleId
+          ? [
+              {
+                id: server.visitorRoleId,
+                allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // 🕍 ชื่อกิลด์ - มองเห็น (เฉพาะสมาชิกกิลด์)
-        ...(roles ? [{
-          id: roles.id, // Guild role ID
-          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(roles
+          ? [
+              {
+                id: roles.id, // Guild role ID
+                allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
       ];
 
       const ch = await category.children.create({
@@ -883,7 +988,9 @@ export class GuildManageService {
     }
   }
   private async createGiftHouseChannel(roles: Role, guildId: string): Promise<void> {
-    this.logger.debug(`[createGiftHouseChannel] Creating gift house channel for category: ${guildId}`);
+    this.logger.debug(
+      `[createGiftHouseChannel] Creating gift house channel for category: ${guildId}`,
+    );
     try {
       const guildServer = await this.client.guilds.fetch(guildId);
       if (!guildServer) {
@@ -908,25 +1015,37 @@ export class GuildManageService {
           deny: ['ViewChannel'],
         },
         // 🎭 นอกรีต - มองไม่เห็น (ยกเว้น Guild ตัวเอง)
-        ...(server.eccentricRoleId ? [{
-          id: server.eccentricRoleId,
-          deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server.eccentricRoleId
+          ? [
+              {
+                id: server.eccentricRoleId,
+                deny: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // 🕍 ชื่อกิลด์ - มองเห็น (เจ้าของ Guild)
         {
           id: roles.id,
           allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
         },
         // ⚔️ นักผจญภัย - มองเห็น
-        ...(server.adventurerRoleId ? [{
-          id: server.adventurerRoleId,
-          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server.adventurerRoleId
+          ? [
+              {
+                id: server.adventurerRoleId,
+                allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
         // 👥 ผู้เยี่ยมชม - มองเห็น
-        ...(server.visitorRoleId ? [{
-          id: server.visitorRoleId,
-          allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
-        }] : []),
+        ...(server.visitorRoleId
+          ? [
+              {
+                id: server.visitorRoleId,
+                allow: ['ViewChannel', 'Connect', 'SendMessages', 'ReadMessageHistory'],
+              },
+            ]
+          : []),
       ];
 
       const channel = await guildServer.channels.create({
@@ -936,14 +1055,18 @@ export class GuildManageService {
         permissionOverwrites: permissionOverwrites as OverwriteResolvable[],
       });
 
-      this.logger.debug(`[createGiftHouseChannel] Created gift house channel: ${channel.name} (${channel.id})`);
+      this.logger.debug(
+        `[createGiftHouseChannel] Created gift house channel: ${channel.name} (${channel.id})`,
+      );
     } catch (error) {
       this.logger.error('Failed to create gift house channel:', error);
     }
   }
 
   private async createGuildEventChannel(roles: Role, guildId: string): Promise<void> {
-    this.logger.debug(`[createGuildEventChannel] Creating guild event channel for category: ${guildId}`);
+    this.logger.debug(
+      `[createGuildEventChannel] Creating guild event channel for category: ${guildId}`,
+    );
     try {
       const guildServer = await this.client.guilds.fetch(guildId);
       if (!guildServer) {
@@ -963,14 +1086,21 @@ export class GuildManageService {
         ],
       });
 
-      this.logger.debug(`[createGuildEventChannel] Created guild event channel: ${channel.name} (${channel.id})`);
+      this.logger.debug(
+        `[createGuildEventChannel] Created guild event channel: ${channel.name} (${channel.id})`,
+      );
     } catch (error) {
       this.logger.error('Failed to create guild event channel:', error);
     }
   }
 
-  private async createChannel(roles: Role, guildId: string): Promise<{ message: string; categoryId?: string }> {
-    this.logger.debug(`[createChannel] Starting channel creation for role: ${roles.name} (${roles.id})`);
+  private async createChannel(
+    roles: Role,
+    guildId: string,
+  ): Promise<{ message: string; categoryId?: string }> {
+    this.logger.debug(
+      `[createChannel] Starting channel creation for role: ${roles.name} (${roles.id})`,
+    );
     try {
       const guildServer = await this.client.guilds.fetch(guildId);
       if (!guildServer) {
@@ -986,7 +1116,9 @@ export class GuildManageService {
       }
 
       // ตำแหน่งสร้างกิลด์
-      this.logger.debug(`[createChannel] Getting position guild from register channel: ${server.registerChannel}`);
+      this.logger.debug(
+        `[createChannel] Getting position guild from register channel: ${server.registerChannel}`,
+      );
       const positionGuild = guildServer.channels.cache.get(
         server.registerChannel,
       ) as CategoryChannel;
@@ -998,7 +1130,7 @@ export class GuildManageService {
         ...(positionGuild ? { position: positionGuild.position + 1 } : {}),
         permissionOverwrites: [
           {
-            id: guildServer!.roles.everyone.id,
+            id: guildServer.roles.everyone.id,
             allow: ['ViewChannel'],
           },
           {
@@ -1032,7 +1164,9 @@ export class GuildManageService {
         // this.createVoiceChannel(category, '📣・ประชาสัมพันธ์', 2, true, server, guildServer, roles),
       ]);
 
-      this.logger.debug(`[createChannel] All channels created successfully for role: ${roles.name}`);
+      this.logger.debug(
+        `[createChannel] All channels created successfully for role: ${roles.name}`,
+      );
       return { message: 'success', categoryId: category.id };
     } catch (error: any) {
       this.logger.error('Error in createChannel:', error);
@@ -1046,8 +1180,8 @@ export class GuildManageService {
       .setTitle('🗑️ การแจ้งเตือนถูกปิดแล้ว')
       .setDescription(
         `✅ **ข้อความได้ถูกซ่อนแล้ว**\n\n` +
-        `💡 **คำแนะนำ:** หากต้องการข้อมูลเพิ่มเติม สามารถใช้คำสั่งต่างๆ ของบอทได้\n` +
-        `🔄 **หมายเหตุ:** ข้อความนี้จะหายไปอัตโนมัติในอีกไม่กี่วินาที`
+          `💡 **คำแนะนำ:** หากต้องการข้อมูลเพิ่มเติม สามารถใช้คำสั่งต่างๆ ของบอทได้\n` +
+          `🔄 **หมายเหตุ:** ข้อความนี้จะหายไปอัตโนมัติในอีกไม่กี่วินาที`,
       )
       .setColor(0x95a5a6)
       .setFooter({ text: '💫 ขอบคุณที่ใช้บริการ' })
@@ -1059,15 +1193,17 @@ export class GuildManageService {
     });
 
     // Auto delete after 3 minutes
-    setTimeout(async () => {
-      try {
-        await interaction.deleteReply();
-      } catch (error) {
-        // Message might already be deleted
-      }
-    }, 3 * 60 * 1000);
+    setTimeout(
+      async () => {
+        try {
+          await interaction.deleteReply();
+        } catch (error) {
+          // Message might already be deleted
+        }
+      },
+      3 * 60 * 1000,
+    );
   }
-
 }
 
 export interface UserProfile extends UserDB {

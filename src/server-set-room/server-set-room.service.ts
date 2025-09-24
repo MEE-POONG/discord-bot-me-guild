@@ -14,7 +14,14 @@ import {
   CommandInteraction,
   PermissionFlagsBits,
 } from 'discord.js';
-import { Button, ButtonContext, Context, SlashCommandContext, StringSelect, StringSelectContext } from 'necord';
+import {
+  Button,
+  ButtonContext,
+  Context,
+  SlashCommandContext,
+  StringSelect,
+  StringSelectContext,
+} from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -28,7 +35,7 @@ export class ServerSetRoomService {
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
     private readonly stageChannelService: StageChannelService,
-  ) { }
+  ) {}
 
   public onModuleInit() {
     this.logger.log('ServerSetRoomService initialized');
@@ -122,17 +129,17 @@ export class ServerSetRoomService {
           .setTitle('📋 เลือกประเภทห้องที่ต้องการสร้าง')
           .setDescription(
             `กรุณาเลือกประเภทห้องที่คุณต้องการจากรายการด้านล่าง:\n\n` +
-            `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่ของ MeGuild\n` +
-            `- **News Room**: ห้องสำหรับโพสต์ข่าวสารและอัปเดตเกี่ยวกับ MeGuild\n` +
-            `- **Register Room**: ห้องสำหรับลงทะเบียนและสมัครสมาชิกระบบ MeGuild\n` +
-            `- **Talk Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
-            // `- **Complaint Room**: ห้องสำหรับแจ้งปัญหาและร้องเรียนเกี่ยวกับระบบ\n` +
-            // `- **Suggestion Room**: ห้องสำหรับเสนอแนะไอเดียหรือปรับปรุงระบบ MeGuild\n` +
-            // `- **Trade Room**: ห้องสำหรับการซื้อขายและแลกเปลี่ยนภายใน MeGuild\n` +
-            `- **Guild Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
-            `- **GameMatch Room**: ห้องแจ้งเตือนและจัดการจับคู่เกมสำหรับสมาชิก\n` +
-            `- **Busking Room**: ห้องแจ้งเตือนและจัดกิจกรรมการแสดงสดภายใน MeGuild\n\n` +
-            `⏰ **หมายเหตุ**: ข้อความนี้จะหายไปอัตโนมัติใน 1 นาที`,
+              `- **Welcome Room**: ห้องสำหรับต้อนรับสมาชิกใหม่ของ MeGuild\n` +
+              `- **News Room**: ห้องสำหรับโพสต์ข่าวสารและอัปเดตเกี่ยวกับ MeGuild\n` +
+              `- **Register Room**: ห้องสำหรับลงทะเบียนและสมัครสมาชิกระบบ MeGuild\n` +
+              `- **Talk Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
+              // `- **Complaint Room**: ห้องสำหรับแจ้งปัญหาและร้องเรียนเกี่ยวกับระบบ\n` +
+              // `- **Suggestion Room**: ห้องสำหรับเสนอแนะไอเดียหรือปรับปรุงระบบ MeGuild\n` +
+              // `- **Trade Room**: ห้องสำหรับการซื้อขายและแลกเปลี่ยนภายใน MeGuild\n` +
+              `- **Guild Room**: ห้องสำหรับพูดคุยและบริหารจัดการกิลด์ภายในระบบ\n` +
+              `- **GameMatch Room**: ห้องแจ้งเตือนและจัดการจับคู่เกมสำหรับสมาชิก\n` +
+              `- **Busking Room**: ห้องแจ้งเตือนและจัดกิจกรรมการแสดงสดภายใน MeGuild\n\n` +
+              `⏰ **หมายเหตุ**: ข้อความนี้จะหายไปอัตโนมัติใน 1 นาที`,
           )
           .setColor(0x00bfff),
       ],
@@ -143,14 +150,17 @@ export class ServerSetRoomService {
     this.logger.debug('Reply sent with room selection menu');
 
     // ตั้งเวลาให้ลบข้อความอัตโนมัติหลังจาก 1 นาที
-    setTimeout(async () => {
-      try {
-        await reply.delete();
-        this.logger.debug('Auto-deleted room selection message after 1 minute');
-      } catch (error) {
-        this.logger.warn('Failed to auto-delete room selection message:', error.message);
-      }
-    }, 1 * 60 * 1000); // 1 นาที
+    setTimeout(
+      async () => {
+        try {
+          await reply.delete();
+          this.logger.debug('Auto-deleted room selection message after 1 minute');
+        } catch (error) {
+          this.logger.warn('Failed to auto-delete room selection message:', error.message);
+        }
+      },
+      1 * 60 * 1000,
+    ); // 1 นาที
   }
 
   @StringSelect('SELECT_MENU_ROOM_TYPE')
@@ -318,7 +328,11 @@ export class ServerSetRoomService {
       if (visitorRole) {
         permissionOverwrites.push({
           id: visitorRole.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.SendMessages,
+          ],
           deny: [],
         });
       }
@@ -329,7 +343,11 @@ export class ServerSetRoomService {
       if (adventurerRole) {
         permissionOverwrites.push({
           id: adventurerRole.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.SendMessages,
+          ],
           deny: [],
         });
       }
@@ -433,12 +451,20 @@ export class ServerSetRoomService {
       },
       {
         id: userRole.id,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
+        ],
         deny: [],
       },
       {
         id: eccentricRole.id,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory],
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
+        ],
         deny: [],
       },
     ];
@@ -449,7 +475,11 @@ export class ServerSetRoomService {
       if (visitorRole) {
         welcomePermissionOverwrites.push({
           id: visitorRole.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.SendMessages,
+          ],
           deny: [],
         });
       }
@@ -460,7 +490,11 @@ export class ServerSetRoomService {
       if (adventurerRole) {
         welcomePermissionOverwrites.push({
           id: adventurerRole.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.ReadMessageHistory,
+            PermissionFlagsBits.SendMessages,
+          ],
           deny: [],
         });
       }
@@ -739,12 +773,12 @@ export class ServerSetRoomService {
       .setTitle('🎩 ศูนย์กิจกรรมบันเทิง')
       .setDescription(
         '🌟 **ยินดีต้อนรับสู่โซนบันเทิง!** 🌟\n\n' +
-        '📋 **ขอสร้างกิจกรรมบันเทิง:**\n' +
-        '• กิจกรรมการแสดงสด (Live Performance)\n' +
-        '• การแข่งขันความสามารถ (Talent Competition)\n' +
-        '• Workshop สอนทักษะ (Skill Workshop)\n' +
-        '• กิจกรรมสันทนาการ (Entertainment Events)\n\n' +
-        '🎭 คลิกปุ่มด้านล่างเพื่อขอสร้างกิจกรรมของคุณ!'
+          '📋 **ขอสร้างกิจกรรมบันเทิง:**\n' +
+          '• กิจกรรมการแสดงสด (Live Performance)\n' +
+          '• การแข่งขันความสามารถ (Talent Competition)\n' +
+          '• Workshop สอนทักษะ (Skill Workshop)\n' +
+          '• กิจกรรมสันทนาการ (Entertainment Events)\n\n' +
+          '🎭 คลิกปุ่มด้านล่างเพื่อขอสร้างกิจกรรมของคุณ!',
       )
       .setColor(0xffb347) // สีส้มทอง
       .setFooter({ text: 'แสดงความสามารถของคุณและสร้างความสนุกให้กับชุมชน!' })
@@ -785,9 +819,11 @@ export class ServerSetRoomService {
       if (activities.length === 0) {
         const noActivitiesEmbed = new EmbedBuilder()
           .setTitle('📅 ตารางกิจกรรมบันเทิง')
-          .setDescription('❌ **ยังไม่มีกิจกรรมที่กำหนดไว้**\n\n' +
-                         '🎭 กิจกรรมบันเทิงจะแสดงที่นี่เมื่อมีการสร้างกิจกรรมใหม่\n' +
-                         '💡 ใช้ปุ่ม "ขอสร้างกิจกรรมบันเทิง" เพื่อสร้างกิจกรรมของคุณ')
+          .setDescription(
+            '❌ **ยังไม่มีกิจกรรมที่กำหนดไว้**\n\n' +
+              '🎭 กิจกรรมบันเทิงจะแสดงที่นี่เมื่อมีการสร้างกิจกรรมใหม่\n' +
+              '💡 ใช้ปุ่ม "ขอสร้างกิจกรรมบันเทิง" เพื่อสร้างกิจกรรมของคุณ',
+          )
           .setColor(0xff6b6b)
           .setThumbnail('https://cdn-icons-png.flaticon.com/512/3515/3515174.png')
           .setTimestamp();
@@ -801,8 +837,10 @@ export class ServerSetRoomService {
       // Create activity list embed
       const scheduleEmbed = new EmbedBuilder()
         .setTitle('📅 ตารางกิจกรรมบันเทิง')
-        .setDescription('🎭 **รายการกิจกรรมบันเทิงที่กำหนดไว้**\n\n' +
-                       '📋 กิจกรรมทั้งหมดที่กำลังจะเกิดขึ้นในชุมชน')
+        .setDescription(
+          '🎭 **รายการกิจกรรมบันเทิงที่กำหนดไว้**\n\n' +
+            '📋 กิจกรรมทั้งหมดที่กำลังจะเกิดขึ้นในชุมชน',
+        )
         .setColor(0x4ecdc4)
         .setThumbnail('https://cdn-icons-png.flaticon.com/512/3515/3515174.png')
         .setTimestamp();
@@ -812,10 +850,10 @@ export class ServerSetRoomService {
         const startDate = new Date(activity.startdate);
         const endDate = new Date(activity.enddate);
         const now = new Date();
-        
+
         let status = '🟡 กำลังรอ';
         let statusColor = 0xffff00;
-        
+
         if (now >= startDate && now <= endDate) {
           status = '🟢 กำลังดำเนินการ';
           statusColor = 0x00ff00;
@@ -826,12 +864,13 @@ export class ServerSetRoomService {
 
         scheduleEmbed.addFields({
           name: `${index + 1}. ${activity.title}`,
-          value: `**ประเภท:** ${activity.actType?.name || 'ไม่ระบุ'}\n` +
-                 `**รายละเอียด:** ${activity.description}\n` +
-                 `**เริ่มต้น:** <t:${Math.floor(startDate.getTime() / 1000)}:F>\n` +
-                 `**สิ้นสุด:** <t:${Math.floor(endDate.getTime() / 1000)}:F>\n` +
-                 `**สถานะ:** ${status}\n` +
-                 `**ผู้จัด:** ${activity.disname || 'ไม่ระบุ'}`,
+          value:
+            `**ประเภท:** ${activity.actType?.name || 'ไม่ระบุ'}\n` +
+            `**รายละเอียด:** ${activity.description}\n` +
+            `**เริ่มต้น:** <t:${Math.floor(startDate.getTime() / 1000)}:F>\n` +
+            `**สิ้นสุด:** <t:${Math.floor(endDate.getTime() / 1000)}:F>\n` +
+            `**สถานะ:** ${status}\n` +
+            `**ผู้จัด:** ${activity.disname || 'ไม่ระบุ'}`,
           inline: false,
         });
       });
@@ -839,21 +878,21 @@ export class ServerSetRoomService {
       // Add footer with total count
       scheduleEmbed.setFooter({
         text: `รวม ${activities.length} กิจกรรม • อัพเดทล่าสุด`,
-        iconURL: 'https://cdn-icons-png.flaticon.com/512/3515/3515174.png'
+        iconURL: 'https://cdn-icons-png.flaticon.com/512/3515/3515174.png',
       });
 
       return interaction.reply({
         embeds: [scheduleEmbed],
         ephemeral: true,
       });
-
     } catch (error) {
       this.logger.error('Error fetching busking schedule:', error);
-      
+
       const errorEmbed = new EmbedBuilder()
         .setTitle('❌ เกิดข้อผิดพลาด')
-        .setDescription('ไม่สามารถโหลดตารางกิจกรรมได้ในขณะนี้\n\n' +
-                       '🔄 กรุณาลองใหม่อีกครั้งในภายหลัง')
+        .setDescription(
+          'ไม่สามารถโหลดตารางกิจกรรมได้ในขณะนี้\n\n' + '🔄 กรุณาลองใหม่อีกครั้งในภายหลัง',
+        )
         .setColor(0xff0000)
         .setTimestamp();
 
@@ -866,8 +905,6 @@ export class ServerSetRoomService {
 
   @Button('busking-request-activity')
   public async createBuskingRequestActivity(@Context() [interaction]: ButtonContext) {
-
-
     const member = interaction.member as GuildMember;
     const voiceChannel = member.voice.channel;
     if (!voiceChannel) {
@@ -1230,8 +1267,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-            `**${existingChannelName}**\n` +
-            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+              `**${existingChannelName}**\n` +
+              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],
@@ -1273,8 +1310,8 @@ export class ServerSetRoomService {
           .setTitle('❌ ไม่สามารถสร้างห้องใหม่ได้')
           .setDescription(
             `ห้อง **${roomType.toUpperCase()}** มีอยู่แล้วในเซิร์ฟเวอร์:\n` +
-            `**${existingChannelName}**\n` +
-            `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
+              `**${existingChannelName}**\n` +
+              `หากต้องการสร้างใหม่ กรุณาลบห้องนี้ก่อน`,
           )
           .setColor(0xffa500),
       ],

@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  ChannelType,
-  GuildMember,
-} from 'discord.js';
+import { ChannelType, GuildMember } from 'discord.js';
 import { SlashCommandContext } from 'necord';
 @Injectable()
 export class BuskingService {

@@ -365,7 +365,7 @@ export class GameJoinService {
 
     try {
       const channelData = await this.collectVoiceChannels(interaction);
-      
+
       // สร้าง pattern ตาม mode และ rank
       let matchPattern: RegExp;
       if (mode === 'RANKED' && rankName) {
@@ -374,9 +374,7 @@ export class GameJoinService {
         matchPattern = new RegExp(`^🎮・\\s*${roomName.trim()}\\s*-\\s*RMG`);
       }
 
-      const gameChannel = channelData.filter((channel) =>
-        matchPattern.test(channel.name),
-      );
+      const gameChannel = channelData.filter((channel) => matchPattern.test(channel.name));
 
       if (gameChannel.length < 1) {
         return interaction.update({
@@ -387,7 +385,7 @@ export class GameJoinService {
 
       const selectedChannel = gameChannel[Math.floor(Math.random() * gameChannel.length)];
       await member.voice.setChannel(selectedChannel);
-      
+
       await interaction.update({
         content: `✅ เข้าร่วมห้องเกมส์ **${selectedChannel.name}** เรียบร้อยแล้ว!`,
         components: [],
@@ -405,7 +403,12 @@ export class GameJoinService {
               },
               {
                 name: 'โหมด',
-                value: mode === 'RANKED' ? `จัดอันดับ (${rankName})` : mode === 'NORMAL' ? 'ปกติ' : 'กำหนดเอง',
+                value:
+                  mode === 'RANKED'
+                    ? `จัดอันดับ (${rankName})`
+                    : mode === 'NORMAL'
+                      ? 'ปกติ'
+                      : 'กำหนดเอง',
                 inline: true,
               },
             )

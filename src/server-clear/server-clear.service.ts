@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmbedBuilder, Guild, TextChannel } from 'discord.js';
+import { EmbedBuilder, Guild, TextChannel, PermissionFlagsBits } from 'discord.js';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
@@ -18,7 +18,9 @@ export class ServerclearService {
   }
 
   async ServerclearSystem(interaction: any) {
-    this.logger.debug(`[ServerclearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`);
+    this.logger.debug(
+      `[ServerclearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`,
+    );
     const roleCheck = 'admin';
     this.logger.debug(`[ServerclearSystem] Validating server and role: ${roleCheck}`);
     const validationError = await validateServerAndRole(
@@ -43,9 +45,13 @@ export class ServerclearService {
     }
 
     // ✅ เพิ่มเงื่อนไขตรวจสอบเจ้าของเซิร์ฟเวอร์
-    this.logger.debug(`[ServerclearSystem] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`);
+    this.logger.debug(
+      `[ServerclearSystem] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`,
+    );
     if (guild.ownerId !== interaction.user.id) {
-      this.logger.warn(`[ServerclearSystem] User ${interaction.user.id} is not the owner of guild ${guild.id}`);
+      this.logger.warn(
+        `[ServerclearSystem] User ${interaction.user.id} is not the owner of guild ${guild.id}`,
+      );
       return interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -60,16 +66,22 @@ export class ServerclearService {
       this.logger.debug(`[ServerclearSystem] Starting channel deletion process`);
       const channels = guild.channels.cache;
       const excludeChannels = ['test', 'rules', 'moderator-only'];
-      this.logger.debug(`[ServerclearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`);
+      this.logger.debug(
+        `[ServerclearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`,
+      );
 
       let testChannel = channels.find(
         (channel) => channel.name === 'test' && channel.isTextBased(),
       );
-      this.logger.debug(`[ServerclearSystem] Test channel found: ${testChannel ? testChannel.name : 'none'}`);
+      this.logger.debug(
+        `[ServerclearSystem] Test channel found: ${testChannel ? testChannel.name : 'none'}`,
+      );
 
       for (const [channelId, channel] of channels) {
         if (excludeChannels.includes(channel.name)) {
-          this.logger.debug(`[ServerclearSystem] Skipped deleting channel: ${channel.name} (${channelId})`);
+          this.logger.debug(
+            `[ServerclearSystem] Skipped deleting channel: ${channel.name} (${channelId})`,
+          );
           continue;
         }
 
@@ -86,13 +98,30 @@ export class ServerclearService {
 
       if (!testChannel) {
         this.logger.debug(`[ServerclearSystem] Creating test channel`);
+        // กำหนดให้แอดมินเท่านั้นที่เห็นห้องนี้
         testChannel = await guild.channels.create({
           name: 'test',
           type: 0,
           reason: `Created by ${interaction.user.tag} after clearing other channels`,
+          permissionOverwrites: [
+            {
+              id: guild.id, // @everyone role
+              deny: [PermissionFlagsBits.ViewChannel],
+            },
+            {
+              id: interaction.user.id, // Channel creator (server owner)
+              allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ManageChannels,
+              ],
+            },
+          ],
         });
 
-        this.logger.log(`[ServerclearSystem] Created channel: ${testChannel.name} (${testChannel.id})`);
+        this.logger.log(
+          `[ServerclearSystem] Created channel: ${testChannel.name} (${testChannel.id})`,
+        );
       }
 
       this.logger.debug(`[ServerclearSystem] Sending success response`);

@@ -1,10 +1,5 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import {
-  ButtonInteraction,
-  CacheType,
-  ChatInputCommandInteraction,
-  GuildMember,
-} from 'discord.js';
+import { ButtonInteraction, CacheType, ChatInputCommandInteraction, GuildMember } from 'discord.js';
 import { InviteRequestDto } from './dto/invite-request.dto';
 import { Button, ButtonContext, Context } from 'necord';
 import { PermissionService } from './services/permission.service';
@@ -31,9 +26,14 @@ export class GuildInviteService implements OnModuleInit {
     this.logger.log('GuildInviteService initialized');
   }
 
-  private async handleInteractionError(interaction: ChatInputCommandInteraction<CacheType>, error: Error): Promise<void> {
-    this.logger.error(`[DEBUG] Interaction error - User: ${interaction.user.id}, Error: ${error.message}`);
-    
+  private async handleInteractionError(
+    interaction: ChatInputCommandInteraction<CacheType>,
+    error: Error,
+  ): Promise<void> {
+    this.logger.error(
+      `[DEBUG] Interaction error - User: ${interaction.user.id}, Error: ${error.message}`,
+    );
+
     if (error.message.includes('Unknown interaction') || error.message.includes('10062')) {
       this.logger.error(`[DEBUG] Interaction expired - User: ${interaction.user.id}`);
       return;
@@ -41,11 +41,16 @@ export class GuildInviteService implements OnModuleInit {
     throw error;
   }
 
-  private async sendResponse(interaction: ChatInputCommandInteraction<CacheType>, message: string): Promise<void> {
+  private async sendResponse(
+    interaction: ChatInputCommandInteraction<CacheType>,
+    message: string,
+  ): Promise<void> {
     try {
       await interaction.editReply({ content: message });
     } catch (error) {
-      this.logger.error(`[DEBUG] Failed to send response - User: ${interaction.user.id}, Error: ${error.message}`);
+      this.logger.error(
+        `[DEBUG] Failed to send response - User: ${interaction.user.id}, Error: ${error.message}`,
+      );
     }
   }
 
@@ -58,7 +63,9 @@ export class GuildInviteService implements OnModuleInit {
     return null;
   }
 
-  private async deferInteraction(interaction: ChatInputCommandInteraction<CacheType>): Promise<void> {
+  private async deferInteraction(
+    interaction: ChatInputCommandInteraction<CacheType>,
+  ): Promise<void> {
     if (interaction.replied || interaction.deferred) {
       this.logger.warn(`[DEBUG] Interaction already acknowledged - User: ${interaction.user.id}`);
       return;
@@ -103,26 +110,30 @@ export class GuildInviteService implements OnModuleInit {
       const targetProfile = await this.profileService.getProfile(target);
 
       // Validate invite request
-      const validation = await this.validationService.validateInviteRequest(target, interaction, targetProfile);
+      const validation = await this.validationService.validateInviteRequest(
+        target,
+        interaction,
+        targetProfile,
+      );
       if (!validation.isValid) {
         await this.sendResponse(interaction, validation.message || 'ไม่สามารถเชิญสมาชิกได้');
         return;
       }
 
       // Create invite
-      const inviteResult = await this.inviteService.createInvite(targetProfile!, interaction);
+      const inviteResult = await this.inviteService.createInvite(targetProfile, interaction);
       if (inviteResult.status === 'fail') {
         await this.sendResponse(interaction, inviteResult.message);
         return;
       }
 
       // Store invite data
-      this.inviteService.storeInviteData(inviteResult.inviteId!, {
+      this.inviteService.storeInviteData(inviteResult.inviteId, {
         userId: target.user.id,
         targetId: target.id,
-        inviteId: inviteResult.inviteId!,
+        inviteId: inviteResult.inviteId,
         member: options.member,
-        guild: interaction.guild!,
+        guild: interaction.guild,
       });
 
       // Create buttons and send notification
@@ -131,15 +142,17 @@ export class GuildInviteService implements OnModuleInit {
         target,
         interaction.user.toString(),
         interaction.guild?.name || 'ไม่ระบุชื่อกิลด์',
-        buttons
+        buttons,
       );
 
       if (notificationSent) {
         await this.sendResponse(interaction, 'ส่งข้อความเชิญชวนไปยังสมาชิกแล้ว');
       } else {
-        await this.sendResponse(interaction, 'ไม่สามารถส่งข้อความไปยังสมาชิกได้เนื่องจาก สมาชิกปิดรับข้อความ');
+        await this.sendResponse(
+          interaction,
+          'ไม่สามารถส่งข้อความไปยังสมาชิกได้เนื่องจาก สมาชิกปิดรับข้อความ',
+        );
       }
-
     } catch (error) {
       this.logger.error(
         `[DEBUG] Error in inviteMember - User: ${interaction.user.id}, Error: ${error.message}`,
@@ -160,13 +173,15 @@ export class GuildInviteService implements OnModuleInit {
 
     try {
       if (interaction.replied || interaction.deferred) {
-        this.logger.warn(`[DEBUG] Button interaction already acknowledged - User: ${interaction.user.id}`);
+        this.logger.warn(
+          `[DEBUG] Button interaction already acknowledged - User: ${interaction.user.id}`,
+        );
         return;
       }
 
       const userId = interaction.user.id;
       const inviteId = this.findInviteIdByUserId(userId);
-      
+
       if (inviteId) {
         await this.inviteService.cancelInvite(inviteId, userId);
       }
@@ -177,12 +192,15 @@ export class GuildInviteService implements OnModuleInit {
         embeds: [],
         files: [],
       });
-
     } catch (error) {
-      this.logger.error(`[DEBUG] Error in cancelInvite - User: ${interaction.user.id}, Error: ${error.message}`);
+      this.logger.error(
+        `[DEBUG] Error in cancelInvite - User: ${interaction.user.id}, Error: ${error.message}`,
+      );
     } finally {
       const endTime = Date.now();
-      this.logger.log(`[DEBUG] cancelInvite completed - User: ${interaction.user.id}, Duration: ${endTime - startTime}ms`);
+      this.logger.log(
+        `[DEBUG] cancelInvite completed - User: ${interaction.user.id}, Duration: ${endTime - startTime}ms`,
+      );
     }
   }
 
@@ -193,7 +211,9 @@ export class GuildInviteService implements OnModuleInit {
 
     try {
       if (interaction.replied || interaction.deferred) {
-        this.logger.warn(`[DEBUG] Button interaction already acknowledged - User: ${interaction.user.id}`);
+        this.logger.warn(
+          `[DEBUG] Button interaction already acknowledged - User: ${interaction.user.id}`,
+        );
         return;
       }
 
@@ -235,14 +255,16 @@ export class GuildInviteService implements OnModuleInit {
 
       // Accept the invite
       const result = await this.inviteService.acceptInvite(inviteId, userId);
-      
+
       if (result.status === 'success') {
         // Clean up invite data
         this.inviteService.removeInviteData(inviteId);
-        
+
         // Remove components from message
         interaction.message.edit({ components: [] }).catch((error) => {
-          this.logger.error(`[DEBUG] Error editing message - Error: ${error.message}, User: ${userId}`);
+          this.logger.error(
+            `[DEBUG] Error editing message - Error: ${error.message}, User: ${userId}`,
+          );
         });
 
         await interaction.update({
@@ -259,10 +281,11 @@ export class GuildInviteService implements OnModuleInit {
           files: [],
         });
       }
-
     } catch (error) {
-      this.logger.error(`[DEBUG] Error in acceptInvite - User: ${interaction.user.id}, Error: ${error.message}`);
-      
+      this.logger.error(
+        `[DEBUG] Error in acceptInvite - User: ${interaction.user.id}, Error: ${error.message}`,
+      );
+
       // Clean up invite data on error
       const userId = interaction.user.id;
       const inviteId = this.findInviteIdByUserId(userId);
@@ -280,7 +303,9 @@ export class GuildInviteService implements OnModuleInit {
       }
     } finally {
       const endTime = Date.now();
-      this.logger.log(`[DEBUG] acceptInvite completed - User: ${interaction.user.id}, Duration: ${endTime - startTime}ms`);
+      this.logger.log(
+        `[DEBUG] acceptInvite completed - User: ${interaction.user.id}, Duration: ${endTime - startTime}ms`,
+      );
     }
   }
 }

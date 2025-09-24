@@ -9,10 +9,12 @@ export class NotificationService {
     target: GuildMember,
     inviter: string,
     guildName: string,
-    buttons: ActionRowBuilder<ButtonBuilder>
+    buttons: ActionRowBuilder<ButtonBuilder>,
   ): Promise<boolean> {
     const startTime = Date.now();
-    this.logger.log(`[DEBUG] Starting sendInviteNotification - Target: ${target.id}, Inviter: ${inviter}`);
+    this.logger.log(
+      `[DEBUG] Starting sendInviteNotification - Target: ${target.id}, Inviter: ${inviter}`,
+    );
 
     try {
       const embeds = new EmbedBuilder()
@@ -34,9 +36,7 @@ export class NotificationService {
       this.logger.log(`[DEBUG] DM sent successfully - Target: ${target.id}`);
       return true;
     } catch (error) {
-      this.logger.error(
-        `[DEBUG] Error sending DM - Target: ${target.id}, Error: ${error.message}`,
-      );
+      this.logger.error(`[DEBUG] Error sending DM - Target: ${target.id}, Error: ${error.message}`);
       return false;
     } finally {
       const endTime = Date.now();

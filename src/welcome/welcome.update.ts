@@ -10,7 +10,9 @@ export class WelcomeUpdate {
 
   @On('guildMemberAdd')
   public async onGuildMemberAdd(@Context() [member]: ContextOf<'guildMemberAdd'>) {
-    this.logger.debug(`New member joined: ${member.user.tag} (${member.user.id}) in guild: ${member.guild.name}`);
+    this.logger.debug(
+      `New member joined: ${member.user.tag} (${member.user.id}) in guild: ${member.guild.name}`,
+    );
 
     try {
       // Auto-assign visitor role
@@ -26,7 +28,7 @@ export class WelcomeUpdate {
   private async assignVisitorRole(member: GuildMember) {
     try {
       const server = await this.serverRepository.getServerById(member.guild.id);
-      
+
       if (!server) {
         this.logger.warn(`Server data not found for guild: ${member.guild.id}`);
         return;
@@ -34,22 +36,26 @@ export class WelcomeUpdate {
 
       // ตรวจสอบว่าผู้ใช้เคยลงทะเบียนแล้วหรือไม่
       const isRegistered = await this.checkUserRegistration(member.user.id);
-      
+
       if (isRegistered) {
         // ถ้าเคยลงทะเบียนแล้ว ให้บทบาท adventurer
         if (server.adventurerRoleId) {
           const adventurerRole = member.guild.roles.cache.get(server.adventurerRoleId);
-          
+
           if (adventurerRole) {
             await member.roles.add(adventurerRole);
-            this.logger.log(`✅ Added adventurer role to registered user ${member.user.tag} in ${member.guild.name}`);
+            this.logger.log(
+              `✅ Added adventurer role to registered user ${member.user.tag} in ${member.guild.name}`,
+            );
           } else {
             this.logger.warn(`Adventurer role not found in Discord: ${server.adventurerRoleId}`);
             // ถ้าไม่พบ adventurer role ให้ visitor role แทน
             await this.assignVisitorRoleFallback(member, server);
           }
         } else {
-          this.logger.warn(`No adventurerRoleId found in server data for guild: ${member.guild.id}`);
+          this.logger.warn(
+            `No adventurerRoleId found in server data for guild: ${member.guild.id}`,
+          );
           // ถ้าไม่มี adventurer role ให้ visitor role แทน
           await this.assignVisitorRoleFallback(member, server);
         }
@@ -66,7 +72,7 @@ export class WelcomeUpdate {
     // ให้บทบาท visitor เป็น fallback สำหรับทุกคน
     if (server.visitorRoleId) {
       const visitorRole = member.guild.roles.cache.get(server.visitorRoleId);
-      
+
       if (visitorRole) {
         await member.roles.add(visitorRole);
         this.logger.log(`✅ Added visitor role to user ${member.user.tag} in ${member.guild.name}`);
@@ -84,13 +90,13 @@ export class WelcomeUpdate {
       // ใช้ PrismaService เพื่อตรวจสอบ UserData
       const { PrismaService } = await import('../prisma.service');
       const prisma = new PrismaService();
-      
+
       const userData = await prisma.userDB.findFirst({
-        where: { discord_id: userId }
+        where: { discord_id: userId },
       });
 
       await prisma.$disconnect();
-      
+
       return !!userData; // return true ถ้าพบข้อมูลผู้ใช้
     } catch (error) {
       this.logger.error(`Error checking user registration for ${userId}:`, error);
@@ -143,7 +149,7 @@ export class WelcomeUpdate {
     try {
       // ดึงข้อมูล server
       const server = await this.serverRepository.getServerById(guildId);
-      
+
       if (!server) {
         this.logger.warn(`Server data not found for guild: ${guildId}`);
         return false;
@@ -186,7 +192,7 @@ export class WelcomeUpdate {
     try {
       // ดึงข้อมูล server
       const server = await this.serverRepository.getServerById(guildId);
-      
+
       if (!server) {
         this.logger.warn(`Server data not found for guild: ${guildId}`);
         return false;

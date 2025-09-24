@@ -91,7 +91,9 @@ export async function validateServerAndRole(
   }
 
   // เจ้าของเซิร์ฟเวอร์ (owner) สามารถใช้งานได้ทุกคำสั่ง
-  console.log(`[validateServerAndRole] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`);
+  console.log(
+    `[validateServerAndRole] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`,
+  );
   if (guild.ownerId === interaction.user.id) {
     console.log(`[validateServerAndRole] User is owner, validation passed`);
     return null; // Validation ผ่าน
@@ -120,11 +122,16 @@ export async function validateServerAndRole(
   }
 
   // หากไม่มีสิทธิ์
+  const errorMessage =
+    roleCheck === 'owner' || roleCheck === 'admin'
+      ? '🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์หรือแอดมินเท่านั้น'
+      : '🔒 คุณไม่มีสิทธิ์ในการใช้งานคำสั่งนี้ กรุณาติดต่อแอดมินหรือผู้ดูแลเซิร์ฟเวอร์';
+
   return interaction.reply({
     embeds: [
       new EmbedBuilder()
         .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
-        .setDescription('🔒 คุณไม่มีสิทธิ์ในการใช้งานคำสั่งนี้')
+        .setDescription(errorMessage)
         .setColor(0xff0000), // สีแดง
     ],
     ephemeral: true,

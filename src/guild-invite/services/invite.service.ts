@@ -26,7 +26,7 @@ export class InviteService {
 
   async createInvite(
     userData: UserProfile,
-    interaction: ChatInputCommandInteraction<CacheType>
+    interaction: ChatInputCommandInteraction<CacheType>,
   ): Promise<InviteResult> {
     const startTime = Date.now();
     this.logger.log(
@@ -93,13 +93,17 @@ export class InviteService {
     this.logger.log(`[DEBUG] Starting acceptInvite - InviteId: ${inviteId}, User: ${userId}`);
 
     try {
-      this.logger.log(`[DEBUG] Finding guild invite data in DB - InviteId: ${inviteId}, User: ${userId}`);
+      this.logger.log(
+        `[DEBUG] Finding guild invite data in DB - InviteId: ${inviteId}, User: ${userId}`,
+      );
       const guildInviteDataDB = await this.prisma.guildInviteDataDB.findFirst({
         where: { id: inviteId },
       });
 
       if (!guildInviteDataDB) {
-        this.logger.log(`[DEBUG] Guild invite data not found in DB - InviteId: ${inviteId}, User: ${userId}`);
+        this.logger.log(
+          `[DEBUG] Guild invite data not found in DB - InviteId: ${inviteId}, User: ${userId}`,
+        );
         return {
           status: 'fail',
           message: 'ไม่พบคำเชิญที่คุณต้องการยอมรับ',
@@ -115,7 +119,9 @@ export class InviteService {
       });
 
       if (!guildData) {
-        this.logger.log(`[DEBUG] Guild data not found - GuildId: ${guildInviteDataDB.guildId}, User: ${userId}`);
+        this.logger.log(
+          `[DEBUG] Guild data not found - GuildId: ${guildInviteDataDB.guildId}, User: ${userId}`,
+        );
         return {
           status: 'fail',
           message: 'ไม่พบกิลด์ที่คุณจะเข้าร่วมในระบบ',
@@ -134,7 +140,7 @@ export class InviteService {
       this.logger.log(
         `[DEBUG] Guild member count - Current: ${memberSize}, Max: ${guildData.guild_size}, User: ${userId}`,
       );
-      
+
       if (memberSize >= guildData.guild_size) {
         this.logger.log(
           `[DEBUG] Guild is full - MemberSize: ${memberSize}, MaxSize: ${guildData.guild_size}, User: ${userId}`,
@@ -163,13 +169,15 @@ export class InviteService {
 
       // Get invite data to add role
       const inviteData = this.inviteData.get(inviteId);
-      if (inviteData && inviteData.guild) {
+      if (inviteData?.guild) {
         this.logger.log(
           `[DEBUG] Adding role to user - User: ${userId}, RoleId: ${guildData.guild_roleId}`,
         );
         const member = await inviteData.guild.members.fetch(userId);
         await member.roles.add(guildData.guild_roleId);
-        this.logger.log(`[DEBUG] Role added successfully - User: ${userId}, RoleId: ${guildData.guild_roleId}`);
+        this.logger.log(
+          `[DEBUG] Role added successfully - User: ${userId}, RoleId: ${guildData.guild_roleId}`,
+        );
       }
 
       this.logger.log(

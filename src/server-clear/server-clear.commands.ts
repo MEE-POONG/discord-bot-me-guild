@@ -13,11 +13,13 @@ export class ServerclearCommands {
     defaultMemberPermissions: '8',
   })
   async handleServerclear(@Context() [interaction]: SlashCommandContext) {
-    this.logger.debug(`[handleServerclear] Command triggered by user: ${interaction.user.id} (${interaction.user.username})`);
-    
+    this.logger.debug(
+      `[handleServerclear] Command triggered by user: ${interaction.user.id} (${interaction.user.username})`,
+    );
+
     // Defer reply เพื่อป้องกัน Unknown interaction error
     await interaction.deferReply({ ephemeral: true });
-    
+
     try {
       this.logger.debug(`[handleServerclear] Calling ServerclearSystem`);
       await this.serverclearService.ServerclearSystem(interaction);

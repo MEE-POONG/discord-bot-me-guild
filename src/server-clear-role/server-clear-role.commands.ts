@@ -16,7 +16,7 @@ export class ServerclearRoleCommands {
     try {
       // Defer reply เพื่อป้องกัน Unknown interaction error
       await interaction.deferReply({ ephemeral: true });
-      
+
       await this.serverclearroleService.ServerclearRoleSystem(interaction);
     } catch (error) {
       this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');

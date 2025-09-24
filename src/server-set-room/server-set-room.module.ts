@@ -6,6 +6,12 @@ import { ServerRepository } from 'src/repository/server';
 import { StageChannelService } from 'src/stage-channel/stage-channel.service';
 
 @Module({
-  providers: [PrismaClient, ServerRepository, ServerSetRoomCommands, ServerSetRoomService, StageChannelService],
+  providers: [
+    PrismaClient,
+    ServerRepository,
+    ServerSetRoomCommands,
+    ServerSetRoomService,
+    StageChannelService,
+  ],
 })
 export class ServerSetRoomModule {}

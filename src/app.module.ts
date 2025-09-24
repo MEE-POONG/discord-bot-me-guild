@@ -6,6 +6,7 @@ import { NecordModule } from 'necord';
 import { AppService } from './app.service';
 import { AppUpdate } from './app.update';
 import { PrismaService } from './prisma.service';
+import { ServerRepository } from './repository/server';
 
 // Feature modules
 import { BlogModule } from './blog/blog.module';
@@ -110,7 +111,7 @@ import { WelcomeModule } from './welcome/welcome.module';
     TransferModule,
     StageChannelModule,
   ],
-  providers: [PrismaService, AppUpdate, AppService],
-  exports: [PrismaService, AppService],
+  providers: [PrismaService, ServerRepository, AppUpdate, AppService],
+  exports: [PrismaService, ServerRepository, AppService],
 })
 export class AppModule {}

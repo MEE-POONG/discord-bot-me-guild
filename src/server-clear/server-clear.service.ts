@@ -65,16 +65,16 @@ export class ServerclearService {
     try {
       this.logger.debug(`[ServerclearSystem] Starting channel deletion process`);
       const channels = guild.channels.cache;
-      const excludeChannels = ['test', 'rules', 'moderator-only'];
+      const excludeChannels = ['Me-Guild-Set-Server', 'rules', 'moderator-only'];
       this.logger.debug(
         `[ServerclearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`,
       );
 
-      let testChannel = channels.find(
-        (channel) => channel.name === 'test' && channel.isTextBased(),
+      let meguildChannel = channels.find(
+        (channel) => channel.name === 'Me-Guild-Set-Server' && channel.isTextBased(),
       );
       this.logger.debug(
-        `[ServerclearSystem] Test channel found: ${testChannel ? testChannel.name : 'none'}`,
+        `[ServerclearSystem] Me-Guild-Set-Server channel found: ${meguildChannel ? meguildChannel.name : 'none'}`,
       );
 
       for (const [channelId, channel] of channels) {
@@ -96,11 +96,11 @@ export class ServerclearService {
         }
       }
 
-      if (!testChannel) {
-        this.logger.debug(`[ServerclearSystem] Creating test channel`);
+      if (!meguildChannel) {
+        this.logger.debug(`[ServerclearSystem] Creating Me-Guild-Set-Server channel`);
         // กำหนดให้แอดมินเท่านั้นที่เห็นห้องนี้
-        testChannel = await guild.channels.create({
-          name: 'test',
+        meguildChannel = await guild.channels.create({
+          name: 'Me-Guild-Set-Server',
           type: 0,
           reason: `Created by ${interaction.user.tag} after clearing other channels`,
           permissionOverwrites: [
@@ -120,7 +120,7 @@ export class ServerclearService {
         });
 
         this.logger.log(
-          `[ServerclearSystem] Created channel: ${testChannel.name} (${testChannel.id})`,
+          `[ServerclearSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
         );
       }
 
@@ -131,8 +131,8 @@ export class ServerclearService {
             .setTitle('✅ ลบห้องสำเร็จ')
             .setDescription(
               `🎉 ห้องทั้งหมดในเซิร์ฟเวอร์ถูกลบเรียบร้อยแล้ว (ยกเว้นห้องที่ได้รับการยกเว้น)\n` +
-                `- ยกเว้น: "test", "rules", และ "moderator-only"\n` +
-                `ห้อง "test" ถูกสร้างใหม่ถ้ายังไม่มี`,
+                `- ยกเว้น: "Me-Guild-Set-Server", "rules", และ "moderator-only"\n` +
+                `ห้อง "Me-Guild-Set-Server" ถูกสร้างใหม่ถ้ายังไม่มี`,
             )
             .setColor(0x00ff00),
         ],

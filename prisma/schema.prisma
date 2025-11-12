@@ -1,50 +1,66 @@
+// ========================================
+// 🔧 Prisma Configuration
+// ========================================
+// กำหนดค่า Prisma Client และการเชื่อมต่อฐานข้อมูล
+
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js" // สร้าง Prisma Client สำหรับ JavaScript/TypeScript
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider = "mongodb" // ใช้ MongoDB เป็นฐานข้อมูล
+  url      = env("DATABASE_URL") // URL เชื่อมต่อจาก environment variable
 }
 
+// ========================================
+// 📅 Activity Management (กิจกรรม)
+// ========================================
+
+// รายละเอียดกิจกรรม - เก็บข้อมูลกิจกรรมต่างๆ ในระบบ
 model ActDetailDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  dislink     String
-  disname     String
-  img         String
-  type        String
-  point       String
-  startdate   String
-  enddate     String
+  title       String   // ชื่อกิจกรรม
+  description String   // รายละเอียดกิจกรรม
+  dislink     String   // ลิงก์ Discord
+  disname     String   // ชื่อใน Discord
+  img         String   // รูปภาพกิจกรรม
+  type        String   // ประเภทกิจกรรม
+  point       String   // คะแนนที่ได้รับ
+  startdate   String   // วันที่เริ่มต้น
+  enddate     String   // วันที่สิ้นสุด
   createdAt   DateTime @db.Date
   createdBy   String
   updatedAt   DateTime @db.Date
   updatedBy   String
   deleteBy    String
-  actType     ActType? @relation(fields: [actTypeId], references: [id])
+  actType     ActType? @relation(fields: [actTypeId], references: [id]) // ความสัมพันธ์กับประเภทกิจกรรม
   actTypeId   String   @db.ObjectId
 }
 
+// ประเภทกิจกรรม - จัดหมวดหมู่กิจกรรม
 model ActType {
   id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
+  name        String        // ชื่อประเภทกิจกรรม
   createdAt   DateTime      @db.Date
   createdBy   String
   updatedAt   DateTime      @db.Date
   updatedBy   String
   deleteBy    String
-  ActDetailDB ActDetailDB[]
+  ActDetailDB ActDetailDB[] // กิจกรรมทั้งหมดในประเภทนี้
 }
 
+// ========================================
+// 📝 Blog & Content (บล็อกและคอนเทนต์)
+// ========================================
+
+// บล็อก - เก็บบทความและเนื้อหา
 model BlogDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  creditlink  String
-  description String
-  img         String
-  video       String
+  title       String   // หัวข้อบล็อก
+  creditlink  String   // ลิงก์อ้างอิง/เครดิต
+  description String   // เนื้อหาบล็อก
+  img         String   // รูปภาพประกอบ
+  video       String   // วิดีโอประกอบ
   createdAt   DateTime @db.Date
   createdBy   String
   updatedAt   DateTime @db.Date
@@ -52,12 +68,17 @@ model BlogDB {
   deleteBy    String
 }
 
+// ========================================
+// ⏱️ User Activity Tracking (ติดตามกิจกรรมผู้ใช้)
+// ========================================
+
+// ระบบเช็คออนไลน์ - บันทึกเวลาออนไลน์ของผู้ใช้
 model CheckOnlineDB {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  discord_id      String?
-  checkIn         DateTime  @default(now())
-  checkOut        DateTime?
-  totalOnlineTime Int       @default(0)
+  discord_id      String?   // Discord ID ของผู้ใช้
+  checkIn         DateTime  @default(now()) // เวลาที่เข้าระบบ
+  checkOut        DateTime? // เวลาที่ออกจากระบบ
+  totalOnlineTime Int       @default(0) // ระยะเวลาออนไลน์ทั้งหมด (วินาที)
   createdAt       DateTime  @default(now())
   createdBy       String?
   updatedAt       DateTime  @updatedAt
@@ -65,25 +86,31 @@ model CheckOnlineDB {
   deleteBy        String
 }
 
+// ความคิดเห็น - เก็บคอมเมนต์จากผู้ใช้
 model CommentDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  userID    String
-  content   String
+  name      String   // ชื่อผู้แสดงความคิดเห็น
+  userID    String   // ID ของผู้ใช้
+  content   String   // เนื้อหาความคิดเห็น
   createdAt DateTime @default(now())
   createdBy String?
   updatedAt DateTime @updatedAt
-  updatedBy String? // Make this optional
-  deleteBy  String? // Make this optional
+  updatedBy String?
+  deleteBy  String?
 }
 
+// ========================================
+// 👥 Customer Management (ลูกค้า)
+// ========================================
+
+// ข้อมูลลูกค้า - เก็บข้อมูลลูกค้าที่ลงทะเบียน
 model CustomerDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  discord_id String   @unique
-  username   String
-  email      String   @unique
-  password   String
-  server     String   @unique
+  discord_id String   @unique // Discord ID (ไม่ซ้ำกัน)
+  username   String   // ชื่อผู้ใช้
+  email      String   @unique // อีเมล (ไม่ซ้ำกัน)
+  password   String   // รหัสผ่าน
+  server     String   @unique // เซิร์ฟเวอร์ (ไม่ซ้ำกัน)
   createdAt  DateTime @db.Date
   createdBy  String
   updatedAt  DateTime @db.Date
@@ -91,13 +118,18 @@ model CustomerDB {
   deleteBy   String
 }
 
+// ========================================
+// 🎮 Game Management (จัดการเกม)
+// ========================================
+
+// เกมออนไลน์ - เก็บข้อมูลเกมที่รองรับในระบบ
 model GameOnlineDB {
   id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
-  game_name            String
-  logo                 String?
-  numberMatch          String?
-  partyLimit           BigInt
-  ranking              Boolean
+  game_name            String                 // ชื่อเกม
+  logo                 String?                // โลโก้เกม
+  numberMatch          String?                // จำนวนแมทช์
+  partyLimit           BigInt                 // จำนวนผู้เล่นสูงสุดต่อปาร์ตี้
+  ranking              Boolean                // มีระบบแรงค์หรือไม่
   createdAt            DateTime               @db.Date
   createdBy            String?
   updatedAt            DateTime               @db.Date
@@ -105,14 +137,15 @@ model GameOnlineDB {
   deleteBy             String
   // ความสัมพันธ์ many-to-many ผ่าน GameTypeGame
   gameTypeGame         GameTypeGame[]         @relation("GameOnlineToGameTypeGame")
-  GameRankDB           GameRankDB[]
-  GameConditionMatchDB GameConditionMatchDB[]
+  GameRankDB           GameRankDB[]           // แรงค์ของเกม
+  GameConditionMatchDB GameConditionMatchDB[] // เงื่อนไขการจับคู่
 }
 
+// เงื่อนไขการจับคู่เกม - กำหนดเงื่อนไขสำหรับการจับคู่ผู้เล่น
 model GameConditionMatchDB {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  maxParty     Int
-  limitNumber  Int           @default(0)
+  maxParty     Int           // จำนวนปาร์ตี้สูงสุด
+  limitNumber  Int           @default(0) // จำนวนผู้เล่นจำกัด
   gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
   gameId       String        @db.ObjectId
   createdAt    DateTime      @default(now())
@@ -122,9 +155,10 @@ model GameConditionMatchDB {
   deleteBy     String
 }
 
+// หมวดหมู่เกม - จัดหมวดหมู่เกม
 model GameCategoryDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  title     String   @unique
+  title     String   @unique // ชื่อหมวดหมู่ (ไม่ซ้ำกัน)
   createdAt DateTime @db.Date
   createdBy String
   updatedAt DateTime @db.Date
@@ -132,17 +166,18 @@ model GameCategoryDB {
   deleteBy  String
 }
 
+// การจับคู่เกม - เก็บข้อมูลการจับคู่ผู้เล่น
 model GameMatchDB {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String
-  gameId       String   @db.ObjectId
-  rank         Boolean
-  selectRankID String?  @db.ObjectId
-  channel_id   String
-  partyLimit   Int
-  limitNumber  Int
-  status       Boolean
-  members      String[]
+  userId       String   // ID ผู้ใช้ที่สร้างแมทช์
+  gameId       String   @db.ObjectId // ID เกม
+  rank         Boolean  // เป็นแมทช์แรงค์หรือไม่
+  selectRankID String?  @db.ObjectId // แรงค์ที่เลือก
+  channel_id   String   // ID ช่อง Discord
+  partyLimit   Int      // จำนวนผู้เล่นสูงสุด
+  limitNumber  Int      // จำนวนจำกัด
+  status       Boolean  // สถานะแมทช์ (เปิด/ปิด)
+  members      String[] // รายชื่อสมาชิกในแมทช์
   createdAt    DateTime @default(now())
   createdBy    String?
   updatedAt    DateTime @updatedAt
@@ -150,10 +185,11 @@ model GameMatchDB {
   deleteBy     String
 }
 
+// ประเภทเกม - ประเภทย่อยของเกม (เช่น MOBA, FPS, RPG)
 model GameTypeDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
-  categoryId String   @db.ObjectId
+  title      String   // ชื่อประเภทเกม
+  categoryId String   @db.ObjectId // หมวดหมู่ของประเภทเกม
   createdAt  DateTime @db.Date
   createdBy  String
   updatedAt  DateTime @db.Date
@@ -164,6 +200,7 @@ model GameTypeDB {
   gameTypeGame GameTypeGame[] @relation("GameTypeToGameTypeGame")
 }
 
+// ตารางเชื่อมโยง - เชื่อมโยงเกมกับประเภทเกม (Many-to-Many)
 model GameTypeGame {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @db.Date
@@ -181,14 +218,15 @@ model GameTypeGame {
   gameTypeDB GameTypeDB? @relation(fields: [typeId], references: [id], onDelete: Cascade, name: "GameTypeToGameTypeGame")
 }
 
+// แรงค์ของเกม - เก็บข้อมูลระดับแรงค์ในเกม
 model GameRankDB {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   gameOnlineDB GameOnlineDB? @relation(fields: [gameId], references: [id])
   gameId       String?       @db.ObjectId
-  imgRank      String
-  selcetShow   String?
-  nameRank     String
-  number       Int
+  imgRank      String        // รูปภาพแรงค์
+  selcetShow   String?       // แสดงในการเลือกหรือไม่
+  nameRank     String        // ชื่อแรงค์ (เช่น Bronze, Silver, Gold)
+  number       Int           // ลำดับแรงค์
   createdAt    DateTime      @db.Date
   createdBy    String
   updatedAt    DateTime      @db.Date
@@ -196,66 +234,75 @@ model GameRankDB {
   deleteBy     String
 }
 
+// ========================================
+// 🏰 Guild System (ระบบกิลด์)
+// ========================================
+
+// ข้อมูลกิลด์ - เก็บข้อมูลกิลด์หลัก
 model GuildDB {
   id                       String         @id @default(auto()) @map("_id") @db.ObjectId
-  Logo                     String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg")
-  guild_copper             BigInt?
-  guild_leader             String?
-  guild_level              BigInt?
-  guild_name               String?
-  guild_roleId             String?
-  guild_size               BigInt?
-  guild_room_chat          String?
-  guild_room_mainHall      String?
-  guild_room_secondaryHall String?
-  guild_room_activity      String?
-  guild_room_visiting      String?
+  Logo                     String         @default("https://www.design365print.com/UploadFile/Blog/blog_941976621.jpg") // โลโก้กิลด์
+  guild_copper             BigInt?        // เหรียญทองแดงของกิลด์
+  guild_leader             String?        // หัวหน้ากิลด์
+  guild_level              BigInt?        // เลเวลกิลด์
+  guild_name               String?        // ชื่อกิลด์
+  guild_roleId             String?        // ID บทบาทกิลด์ใน Discord
+  guild_size               BigInt?        // ขนาดกิลด์
+  guild_room_chat          String?        // ห้องแชท
+  guild_room_mainHall      String?        // ห้องโถงหลัก
+  guild_room_secondaryHall String?        // ห้องโถงรอง
+  guild_room_activity      String?        // ห้องกิจกรรม
+  guild_room_visiting      String?        // ห้องเยี่ยมชม
   guild_categoryId         String?        // Discord category ID
-  GuildMembers             GuildMembers[]
+  GuildMembers             GuildMembers[] // สมาชิกกิลด์
 }
 
+// รายงานการสร้างกิลด์ - ติดตามกระบวนการสร้างกิลด์
 model GuildCreateReport {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId         String
+  ownerId         String   // ID เจ้าของกิลด์
   serverId        String   // Discord server ID where guild is being created
-  channelId       String
-  messageId       String
-  guildName       String
-  invitedMembers  String[] // All members who were invited
-  confirmedMembers String[] @default([]) // Members who confirmed (starts with owner)
+  channelId       String   // ID ช่องที่สร้าง
+  messageId       String   // ID ข้อความ
+  guildName       String   // ชื่อกิลด์ที่จะสร้าง
+  invitedMembers  String[] // สมาชิกที่ถูกเชิญทั้งหมด
+  confirmedMembers String[] @default([]) // สมาชิกที่ยืนยันแล้ว (เริ่มจากเจ้าของ)
   createdAt       DateTime @default(now())
-  expiresAt       DateTime // 5 minutes from creation
+  expiresAt       DateTime // หมดอายุหลังจาก 5 นาที
 }
 
+// สมาชิกกิลด์ - เก็บข้อมูลสมาชิกในกิลด์
 model GuildMembers {
   id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  guildId  String?  @db.ObjectId
-  position String
-  userId   String
+  guildId  String?  @db.ObjectId // ID กิลด์
+  position String   // ตำแหน่งในกิลด์ (เช่น หัวหน้า, รองหัวหน้า, สมาชิก)
+  userId   String   // ID ผู้ใช้
   guildDB  GuildDB? @relation(fields: [guildId], references: [id])
 }
 
+// โปรไฟล์กิลด์ - ข้อมูลโปรไฟล์และรายละเอียดกิลด์
 model GuildProfileDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  avatar      String
-  backdrop    String
+  avatar      String   // รูปโปรไฟล์กิลด์
+  backdrop    String   // ภาพพื้นหลัง
   createdAt   DateTime @db.Date
   createdBy   String
   deleteBy    String
-  description String
-  discordlink String
-  guildId     String?
-  guildname   String
-  rule        String
+  description String   // คำอธิบายกิลด์
+  discordlink String   // ลิงก์ Discord กิลด์
+  guildId     String?  // ID กิลด์
+  guildname   String   // ชื่อกิลด์
+  rule        String   // กฎกติกากิลด์
   updatedAt   DateTime @db.Date
   updatedBy   String
 }
 
+// รายการรูปภาพ - เก็บรูปภาพที่ใช้ในระบบ
 model ImageList {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  nameFile  String
-  imageUrl  String   @unique
-  modalName String
+  nameFile  String   // ชื่อไฟล์
+  imageUrl  String   @unique // URL รูปภาพ (ไม่ซ้ำกัน)
+  modalName String   // ชื่อโมดูล/หน้าที่ใช้
   createdAt DateTime @db.Date
   createdBy String
   updatedAt DateTime @db.Date
@@ -263,47 +310,56 @@ model ImageList {
   deleteBy  String
 }
 
+// ข้อมูลคำเชิญกิลด์ - เก็บข้อมูลการเชิญเข้ากิลด์
 model GuildInviteDataDB {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  guildId String
-  userId  String
+  guildId String // ID กิลด์
+  userId  String // ID ผู้ใช้ที่ถูกเชิญ
 }
 
+// คำขอเข้ากิลด์ - เก็บคำขอเข้าร่วมกิลด์
 model GuildInviteRequest {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  guildId String
-  userId  String
+  guildId String // ID กิลด์
+  userId  String // ID ผู้ใช้ที่ขอเข้า
 }
 
+// ========================================
+// 📰 News System (ระบบข่าวสาร)
+// ========================================
+
+// ข่าวสาร - เก็บข้อมูลข่าวสารและอัพเดท
 model NewsUpdateDB {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  title        String
-  img          String
-  creditlink   String
-  description  String
+  title        String         // หัวข้อข่าว
+  img          String         // รูปภาพประกอบข่าว
+  creditlink   String         // ลิงก์อ้างอิง
+  description  String         // รายละเอียดข่าว
   createdAt    DateTime       @db.Date
   createdBy    String?
   updatedAt    DateTime?      @db.Date
   updatedBy    String?
   deleteBy     String?
-  newsTypeNews NewsTypeNews[]
+  newsTypeNews NewsTypeNews[] // ประเภทของข่าว
 }
 
+// หมวดหมู่ข่าว - จัดหมวดหมู่ข่าว
 model NewsCategoryDB {
   id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
+  title      String       // ชื่อหมวดหมู่
   createdAt  DateTime     @db.Date
   createdBy  String
   updatedAt  DateTime     @db.Date
   updatedBy  String
   deleteBy   String
-  newsTypeDB NewsTypeDB[]
+  newsTypeDB NewsTypeDB[] // ประเภทข่าวในหมวดหมู่นี้
 }
 
+// ประเภทข่าว - ประเภทย่อยของข่าว
 model NewsTypeDB {
   id               String          @id @default(auto()) @map("_id") @db.ObjectId
-  title            String
-  categoryId       String?         @db.ObjectId
+  title            String          // ชื่อประเภท
+  categoryId       String?         @db.ObjectId // ID หมวดหมู่
   createdAt        DateTime        @db.Date
   createdBy        String
   updatedAt        DateTime        @db.Date
@@ -314,6 +370,7 @@ model NewsTypeDB {
   newsCategoryDBId String?         @db.ObjectId
 }
 
+// ตารางเชื่อมโยง - เชื่อมโยงข่าวกับประเภทข่าว (Many-to-Many)
 model NewsTypeNews {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   typeId       String?       @db.ObjectId
@@ -328,91 +385,111 @@ model NewsTypeNews {
   newsTypeId   String?       @db.ObjectId
 }
 
+// ========================================
+// 🖥️ Server Configuration (การตั้งค่าเซิร์ฟเวอร์)
+// ========================================
+
+// ข้อมูลเซิร์ฟเวอร์ - เก็บการตั้งค่าเซิร์ฟเวอร์ Discord
 model ServerDB {
   id                    String    @id @default(auto()) @map("_id") @db.ObjectId
-  ownerId               String
-  serverId              String    @unique
-  serverName            String
-  Master                Boolean   @default(false)
-  openBot               Boolean   @default(false) // เพิ่มค่าเริ่มต้นเป็น false
-  adminRoleId           String? // ฟิลด์สำหรับเก็บรหัสบทบาทแอดมิน (optional)
-  userRoleId            String? // ฟิลด์สำหรับเก็บรหัสบทบาทผู้ใช้ (optional)
-  adventurerRoleId      String?
-  visitorRoleId         String?
-  guildHeadRoleId       String? // บทบาทหัวหน้ากิล (optional)
-  guildCoRoleId         String? // บทบาทรองหัวหน้ากิล (optional)
-  eccentricRoleId       String?
-  openUntilAt           DateTime  @db.Date
-  meguildPositionCreate String?
-  welcomeChannel        String?
-  newsChannel           String?
-  registerChannel       String?
-  complaintChannel      String?
-  suggestionChannel     String?
-  tradeChannel          String?
-  guildChannel          String?
-  talkChannel           String?
-  talkPositionCreate    String?
-  gamePositionCreate    String?
-  gameChannel           String?
-  gamePostChannel       String?
-  buskingPositionCreate String?
-  buskingChannel        String?
+  ownerId               String    // ID เจ้าของเซิร์ฟเวอร์
+  serverId              String    @unique // Discord Server ID (ไม่ซ้ำกัน)
+  serverName            String    // ชื่อเซิร์ฟเวอร์
+  Master                Boolean   @default(false) // เซิร์ฟเวอร์หลักหรือไม่
+  openBot               Boolean   @default(false) // เปิดใช้งานบอทหรือไม่
+  // บทบาท (Roles)
+  adminRoleId           String?   // ID บทบาทแอดมิน
+  userRoleId            String?   // ID บทบาทผู้ใช้
+  adventurerRoleId      String?   // ID บทบาทนักผจญภัย
+  visitorRoleId         String?   // ID บทบาทผู้เยี่ยมชม
+  guildHeadRoleId       String?   // ID บทบาทหัวหน้ากิลด์
+  guildCoRoleId         String?   // ID บทบาทรองหัวหน้ากิลด์
+  eccentricRoleId       String?   // ID บทบาทพิเศษ
+  openUntilAt           DateTime  @db.Date // เปิดใช้งานจนถึงวันที่
+  // ตำแหน่งสร้างห้อง (Position Create)
+  meguildPositionCreate String?   // ตำแหน่งสร้างห้อง MeGuild
+  talkPositionCreate    String?   // ตำแหน่งสร้างห้องพูดคุย
+  gamePositionCreate    String?   // ตำแหน่งสร้างห้องเกม
+  buskingPositionCreate String?   // ตำแหน่งสร้างห้องบัสกิ้ง
+  // ช่อง (Channels)
+  welcomeChannel        String?   // ช่องต้อนรับ
+  newsChannel           String?   // ช่องข่าวสาร
+  registerChannel       String?   // ช่องลงทะเบียน
+  complaintChannel      String?   // ช่องร้องเรียน
+  suggestionChannel     String?   // ช่องแนะนำ
+  tradeChannel          String?   // ช่องซื้อขาย
+  guildChannel          String?   // ช่องกิลด์
+  talkChannel           String?   // ช่องพูดคุย
+  gameChannel           String?   // ช่องเกม
+  gamePostChannel       String?   // ช่องโพสต์เกม
+  buskingChannel        String?   // ช่องบัสกิ้ง
   createdAt             DateTime  @db.Date
   updatedAt             DateTime  @db.Date
-  AdminDB               AdminDB[]
+  AdminDB               AdminDB[] // ผู้ดูแลระบบ
 }
 
+// ========================================
+// 👤 User Management (จัดการผู้ใช้)
+// ========================================
+
+// ข้อมูลผู้ใช้ - เก็บข้อมูลผู้ใช้ในระบบ
 model UserDB {
   id                String        @id @default(auto()) @map("_id") @db.ObjectId
-  username          String?
-  password          String?
-  discord_id        String        @unique
-  img               String?
-  firstname         String?
-  lastname          String?
-  nickname          String?
-  email             String        @unique
-  tel               String?
-  birthday          DateTime?     @db.Date
-  gender            String? //เพศสภาพ
-  alternativeGender String? //เพศที่เป็น
+  username          String?       // ชื่อผู้ใช้
+  password          String?       // รหัสผ่าน
+  discord_id        String        @unique // Discord ID (ไม่ซ้ำกัน)
+  img               String?       // รูปโปรไฟล์
+  firstname         String?       // ชื่อจริง
+  lastname          String?       // นามสกุล
+  nickname          String?       // ชื่อเล่น
+  email             String        @unique // อีเมล (ไม่ซ้ำกัน)
+  tel               String?       // เบอร์โทรศัพท์
+  birthday          DateTime?     @db.Date // วันเกิด
+  gender            String?       // เพศสภาพ
+  alternativeGender String?       // เพศที่เป็น
   createdAt         DateTime      @db.Date
   createdBy         String
   deleteBy          String
   updatedAt         DateTime      @db.Date
   updatedBy         String
-  AdminDB           AdminDB[]
-  OrderItemDB       OrderItemDB[]
+  AdminDB           AdminDB[]     // บัญชีแอดมิน (ถ้ามี)
+  OrderItemDB       OrderItemDB[] // รายการสั่งซื้อ
 }
 
+// แรงค์เกมของผู้ใช้ - เก็บข้อมูลแรงค์ในเกมของผู้ใช้
 model UserGameRank {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  gameId     String   @db.ObjectId
-  gameRankId String   @db.ObjectId
-  invitation Boolean
+  gameId     String   @db.ObjectId // ID เกม
+  gameRankId String   @db.ObjectId // ID แรงค์
+  invitation Boolean  // เปิดรับคำเชิญหรือไม่
   createdAt  DateTime @db.Date
   createdBy  String
   updatedAt  DateTime @db.Date
   updatedBy  String
   deleteBy   String
   /// Multiple data types found: String: 85.7%, String (ObjectId): 14.3% out of 14 sampled entries
-  userId     Json
+  userId     Json     // ID ผู้ใช้ (รองรับหลายประเภท)
 }
 
+// ========================================
+// 🌐 Website Settings (การตั้งค่าเว็บไซต์)
+// ========================================
+
+// การตั้งค่าเริ่มต้นเว็บ - เก็บการตั้งค่าพื้นฐานของเว็บไซต์
 model WebDefaultDB {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  logoSquare     String? // โลโก้ที่เป็นสี่เหลี่ยม, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
-  logoCircle     String? // โลโก้ที่เป็นวงกลม, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
-  logoWide       String? // โลโก้ที่เป็น wide, ค่าเริ่มต้นเป็น null โดยไม่ต้องใส่ @default
-  defaultImg     String?
-  defaultProfile String?
-  facebook       String?
-  instagram      String?
-  youtube        String?
-  tiktok         String?
-  gmail          String?
-  discordLink    String?
+  logoSquare     String?  // โลโก้รูปสี่เหลี่ยม
+  logoCircle     String?  // โลโก้รูปวงกลม
+  logoWide       String?  // โลโก้แบบกว้าง
+  defaultImg     String?  // รูปภาพเริ่มต้น
+  defaultProfile String?  // รูปโปรไฟล์เริ่มต้น
+  // โซเชียลมีเดีย
+  facebook       String?  // ลิงก์ Facebook
+  instagram      String?  // ลิงก์ Instagram
+  youtube        String?  // ลิงก์ YouTube
+  tiktok         String?  // ลิงก์ TikTok
+  gmail          String?  // อีเมล Gmail
+  discordLink    String?  // ลิงก์ Discord
   createdAt      DateTime @default(now())
   createdBy      String?
   updatedAt      DateTime @updatedAt
@@ -420,13 +497,14 @@ model WebDefaultDB {
   deleteBy       String
 }
 
+// บทบาท Discord - เก็บข้อมูลบทบาทใน Discord
 model RoleDiscord {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  img             String?
-  name            String // ชื่อบทบาท
-  roldID          String // ไอดีบทบาทในดิส
-  discordServerID String // ไอดีดิสครอส
-  type            String? // กิจกรรม, ขาย, แจก ไม่บังคับระบุ ค่าเริ่มต้นเป็น null
+  img             String?  // รูปภาพบทบาท
+  name            String   // ชื่อบทบาท
+  roldID          String   // ID บทบาทใน Discord
+  discordServerID String   // ID เซิร์ฟเวอร์ Discord
+  type            String?  // ประเภท (กิจกรรม, ขาย, แจก)
   createdAt       DateTime @default(now())
   createdBy       String?
   updatedAt       DateTime @updatedAt
@@ -434,99 +512,118 @@ model RoleDiscord {
   deleteBy        String
 }
 
+// ========================================
+// 🛒 E-Commerce System (ระบบซื้อขาย)
+// ========================================
+
+// สินค้า Discord - เก็บข้อมูลสินค้าที่ขายในระบบ
 model ProductDiscordDB {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  img             String?
-  description     String
-  discordServerID String?
-  type            String
-  singlePurchase  Boolean       @default(false) // ✅ สินค้านี้ซื้อได้แค่ 1 ชิ้น
-  roleId          String?
-  price           Float
+  name            String        // ชื่อสินค้า
+  img             String?       // รูปภาพสินค้า
+  description     String        // รายละเอียดสินค้า
+  discordServerID String?       // ID เซิร์ฟเวอร์ Discord
+  type            String        // ประเภทสินค้า
+  singlePurchase  Boolean       @default(false) // ซื้อได้แค่ 1 ชิ้นต่อคน
+  roleId          String?       // ID บทบาทที่ได้รับเมื่อซื้อ
+  price           Float         // ราคา
   createdAt       DateTime      @default(now())
   createdBy       String?
   updatedAt       DateTime?     @updatedAt
   updatedBy       String?
   deleteBy        String?
-  OrderItemDB     OrderItemDB[]
+  OrderItemDB     OrderItemDB[] // รายการสั่งซื้อ
 }
 
+// ออเดอร์ - เก็บข้อมูลคำสั่งซื้อ
 model OrderDB {
   id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  buyerDiscordID String // Discord ID ของผู้ซื้อ
-  name           String // Discord ID ของผู้ซื้อ
-  email          String // Discord ID ของผู้ซื้อ
-  tel            String? // Discord ID ของผู้ซื้อ
-  totalPrice     Float // ราคาทั้งหมดของออเดอร์
+  buyerDiscordID String        // Discord ID ของผู้ซื้อ
+  name           String        // ชื่อผู้ซื้อ
+  email          String        // อีเมลผู้ซื้อ
+  tel            String?       // เบอร์โทรศัพท์ผู้ซื้อ
+  totalPrice     Float         // ราคารวมทั้งหมด
   seller         AdminDB       @relation(fields: [sellerID], references: [id])
   sellerID       String        @db.ObjectId // ID ผู้ขาย
-  sellerName     String // ชื่อผู้ขาย
-  status         OrderStatus   @default(DRAFT) // สถานะการชำระเงิน
-  note           String? //หมายเหตุถ้ามี
+  sellerName     String        // ชื่อผู้ขาย
+  status         OrderStatus   @default(DRAFT) // สถานะออเดอร์
+  note           String?       // หมายเหตุ
   createdAt      DateTime      @default(now())
   createdBy      String?
   updatedAt      DateTime?     @updatedAt
   updatedBy      String?
   deleteBy       String?
-  items          OrderItemDB[] // สินค้าในออเดอร์
-  payment        PaymentDB?
+  items          OrderItemDB[] // รายการสินค้าในออเดอร์
+  payment        PaymentDB?    // ข้อมูลการชำระเงิน
 }
 
+// รายการสินค้าในออเดอร์ - เก็บรายละเอียดสินค้าแต่ละชิ้นในออเดอร์
 model OrderItemDB {
   id           String           @id @default(auto()) @map("_id") @db.ObjectId
-  orderId      String           @db.ObjectId
+  orderId      String           @db.ObjectId // ID ออเดอร์
   recipient    UserDB           @relation(fields: [recipientId], references: [id])
-  recipientId  String           @db.ObjectId
+  recipientId  String           @db.ObjectId // ผู้รับสินค้า
   order        OrderDB          @relation(fields: [orderId], references: [id])
-  productId    String           @db.ObjectId
+  productId    String           @db.ObjectId // ID สินค้า
   product      ProductDiscordDB @relation(fields: [productId], references: [id])
-  quantity     Int              @default(1) // จำนวนสินค้าที่สั่งซื้อ
-  pricePerItem Float // ราคาต่อชิ้น (เก็บตอนสั่งซื้อ)
-  totalPrice   Float // ราคาทั้งหมด (quantity * pricePerItem)
+  quantity     Int              @default(1) // จำนวนสินค้า
+  pricePerItem Float            // ราคาต่อชิ้น
+  totalPrice   Float            // ราคารวม (quantity × pricePerItem)
 }
 
+// สถานะออเดอร์ - กำหนดสถานะต่างๆ ของออเดอร์
 enum OrderStatus {
-  DRAFT //แบบร่าง yellow
-  PENDING // รอชำระเงิน orange
-  PAID // ชำระเงินแล้ว green
-  WAITING // รอชำระอีกรอบ teal
-  COMPLETED // สำเร็จ emerald
-  CANCELLED // ยกเลิก red
+  DRAFT     // แบบร่าง (สีเหลือง)
+  PENDING   // รอชำระเงิน (สีส้ม)
+  PAID      // ชำระเงินแล้ว (สีเขียว)
+  WAITING   // รอชำระอีกรอบ (สีฟ้าอมเขียว)
+  COMPLETED // สำเร็จ (สีเขียวมรกต)
+  CANCELLED // ยกเลิก (สีแดง)
 }
 
+// การชำระเงิน - เก็บข้อมูลการชำระเงิน
 model PaymentDB {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  paymentSlip   String // URL สลิปการชำระเงิน
-  paymentMethod String // วิธีการชำระเงิน (เช่น "PayPal", "TrueMoney", "Crypto")
+  paymentSlip   String    // URL สลิปการชำระเงิน
+  paymentMethod String    // วิธีการชำระเงิน (PayPal, TrueMoney, Crypto)
   auditor       AdminDB?  @relation(fields: [auditorID], references: [id])
-  auditorID     String?   @db.ObjectId //ผู้ตรวจสอบ (ถ้ามี)
-  auditorName   String? //ผู้ตรวจสอบ (ถ้ามี)
+  auditorID     String?   @db.ObjectId // ผู้ตรวจสอบ
+  auditorName   String?   // ชื่อผู้ตรวจสอบ
   createdAt     DateTime  @default(now())
   createdBy     String?
   updatedAt     DateTime? @updatedAt
   updatedBy     String?
   orderDB       OrderDB?  @relation(fields: [orderId], references: [id])
-  orderId       String?   @unique @db.ObjectId
+  orderId       String?   @unique @db.ObjectId // ID ออเดอร์ที่เชื่อมโยง
 }
 
+// ========================================
+// 💰 Currency & Economy (สกุลเงินและเศรษฐกิจ)
+// ========================================
+
+// เหรียญ MeGuild - เก็บข้อมูลสกุลเงินในเกมของผู้ใช้
 model MeGuildCoinDB {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  coin_copper  BigInt
-  coin_crystal BigInt
-  coin_diamond BigInt
-  coin_gold    BigInt
-  coin_silver  BigInt
+  coin_copper  BigInt   // เหรียญทองแดง
+  coin_crystal BigInt   // เหรียญคริสตัล
+  coin_diamond BigInt   // เหรียญเพชร
+  coin_gold    BigInt   // เหรียญทอง
+  coin_silver  BigInt   // เหรียญเงิน
   createdAt    DateTime @db.Date
   updatedAt    DateTime @db.Date
-  userId       String
+  userId       String   // ID ผู้ใช้
 }
 
+// ========================================
+// 📜 Rules & Regulations (กฎและระเบียบ)
+// ========================================
+
+// กฎ - เก็บข้อมูลกฎของกิลด์
 model RuleDB {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  topic     String
-  IssueBy   Int
-  GuildID   String
+  topic     String   // หัวข้อกฎ
+  IssueBy   Int      // ผู้ออกกฎ
+  GuildID   String   // ID กิลด์
   createdAt DateTime @default(now())
   createdBy String?
   updatedAt DateTime @updatedAt
@@ -534,11 +631,12 @@ model RuleDB {
   deleteBy  String
 }
 
+// หัวข้อ - หัวข้อย่อยของกฎ
 model topicDB {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  ruleId      Int
-  description String
+  title       String   // ชื่อหัวข้อ
+  ruleId      Int      // ID กฎที่เกี่ยวข้อง
+  description String   // คำอธิบาย
   createdAt   DateTime @default(now())
   createdBy   String?
   updatedAt   DateTime @updatedAt
@@ -546,12 +644,17 @@ model topicDB {
   deleteBy    String
 }
 
+// ========================================
+// 👥 Team Management (จัดการทีม)
+// ========================================
+
+// ทีม - เก็บข้อมูลทีมและสมาชิก
 model TeamDB {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  teamName   String // ชื่อทีม
-  represent  String // ทีมจากตัวแทนของ
-  members    String[] // รายชื่อสมาชิกในทีม (discord_id หรือ userId)
-  TeamLeader String? // ตัวแทนของทีม (optional)
+  teamName   String   // ชื่อทีม
+  represent  String   // ตัวแทนทีม/สังกัด
+  members    String[] // รายชื่อสมาชิก (discord_id หรือ userId)
+  TeamLeader String?  // หัวหน้าทีม
   createdAt  DateTime @default(now())
   createdBy  String?
   updatedAt  DateTime @updatedAt
@@ -559,39 +662,46 @@ model TeamDB {
   deleteBy   String
 }
 
+// ========================================
+// 👔 Admin Management (จัดการผู้ดูแลระบบ)
+// ========================================
+
+// ผู้ดูแลระบบ - เก็บข้อมูลแอดมิน
 model AdminDB {
   id              String           @id @default(auto()) @map("_id") @db.ObjectId
-  username        String           @unique
-  password        String
-  name            String
-  tel             String
-  email           String
+  username        String           @unique // ชื่อผู้ใช้ (ไม่ซ้ำกัน)
+  password        String           // รหัสผ่าน
+  name            String           // ชื่อ-นามสกุล
+  tel             String           // เบอร์โทรศัพท์
+  email           String           // อีเมล
   serverDB        ServerDB?        @relation(fields: [discordServerID], references: [id])
-  discordServerID String?          @db.ObjectId
+  discordServerID String?          @db.ObjectId // เซิร์ฟเวอร์ที่ดูแล
   UserDB          UserDB?          @relation(fields: [userId], references: [id])
-  userId          String?          @db.ObjectId
+  userId          String?          @db.ObjectId // เชื่อมโยงกับผู้ใช้
   createdAt       DateTime         @default(now())
   createdBy       String
   updatedAt       DateTime         @updatedAt
   updatedBy       String           @default("")
   deleteBy        String
   AdminPositionDB AdminPositionDB? @relation(fields: [adminPositionId], references: [id])
-  adminPositionId String?          @db.ObjectId
-  OrderDB         OrderDB[]
-  PaymentDB       PaymentDB[]
+  adminPositionId String?          @db.ObjectId // ตำแหน่งแอดมิน
+  OrderDB         OrderDB[]        // ออเดอร์ที่จัดการ
+  PaymentDB       PaymentDB[]      // การชำระเงินที่ตรวจสอบ
 }
 
+// สิทธิ์เริ่มต้นของแอดมิน - กำหนดสิทธิ์การเข้าถึงแต่ละหน้า
 model AdminDefaultPermissionDB {
   id                String           @id @default(auto()) @map("_id") @db.ObjectId
   AdminPositionDB   AdminPositionDB? @relation(fields: [adminPositionDBId], references: [id])
-  adminPositionDBId String?          @db.ObjectId
+  adminPositionDBId String?          @db.ObjectId // ตำแหน่งที่ได้รับสิทธิ์
   MenuPageWeb       MenuPageWebDB?   @relation(fields: [menuPageWebId], references: [id])
-  menuPageWebId     String?          @db.ObjectId
-  canAdvance        Boolean          @default(false)
-  canViews          Boolean          @default(false)
-  canCreate         Boolean          @default(false)
-  canUpdate         Boolean          @default(false)
-  canDelete         Boolean          @default(false)
+  menuPageWebId     String?          @db.ObjectId // หน้าเว็บที่ควบคุม
+  // สิทธิ์การใช้งาน
+  canAdvance        Boolean          @default(false) // ใช้ฟีเจอร์ขั้นสูง
+  canViews          Boolean          @default(false) // ดูข้อมูล
+  canCreate         Boolean          @default(false) // สร้างข้อมูล
+  canUpdate         Boolean          @default(false) // แก้ไขข้อมูล
+  canDelete         Boolean          @default(false) // ลบข้อมูล
   createdAt         DateTime         @default(now())
   createdBy         String
   updatedAt         DateTime         @updatedAt
@@ -599,18 +709,20 @@ model AdminDefaultPermissionDB {
   deleteBy          String
 }
 
+// เมนูหน้าเว็บ - กำหนดโครงสร้างเมนูและสิทธิ์การเข้าถึง
 model MenuPageWebDB {
   id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
-  name                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  description              String?
-  itOn                     Boolean                    @default(false)
-  showOrder                Int?                       @default(0)
-  head                     Boolean                    @default(false)
-  link                     String // ระบุหน้าที่สามารถควบคุมได้ เช่น "dashboard", "users", "settings"
-  icon                     String? // อาจเก็บชื่อไอคอนหรือ URL ไอคอน
-  manager                  String[]                   @default([]) //กรณีหน้านั้นมีหน้าย่อยจำเพาะ เพิม่ แก้ไข แสดง
-  subMenu                  String[] //ใช้ในการสร้างเมนูลูก โดยเช็คจาก parentId ที่แปลว่า id แม่
-  parentId                 String?                    @db.ObjectId // เก็บเป็น ObjectId ของเมนูหลัก
+  name                     String                     // ชื่อหน้า (dashboard, users, settings)
+  description              String?                    // คำอธิบาย
+  itOn                     Boolean                    @default(false) // เปิดใช้งานหรือไม่
+  showOrder                Int?                       @default(0) // ลำดับการแสดง
+  head                     Boolean                    @default(false) // เป็นหัวเมนูหรือไม่
+  link                     String                     // ลิงก์หน้า
+  icon                     String?                    // ไอคอน (ชื่อหรือ URL)
+  manager                  String[]                   @default([]) // หน้าย่อยจำเพาะ (เพิ่ม แก้ไข แสดง)
+  subMenu                  String[]                   // เมนูลูก (ตรวจสอบจาก parentId)
+  parentId                 String?                    @db.ObjectId // ID เมนูแม่
+  // สิทธิ์พื้นฐาน
   canAdvance               Boolean?                   @default(false)
   canViews                 Boolean?                   @default(false)
   canCreate                Boolean?                   @default(false)
@@ -624,11 +736,12 @@ model MenuPageWebDB {
   AdminDefaultPermissionDB AdminDefaultPermissionDB[]
 }
 
+// แผนกแอดมิน - จัดกลุ่มตำแหน่งแอดมิน
 model AdminDepartmentDB {
   id              String            @id @default(auto()) @map("_id") @db.ObjectId
-  name            String            @unique
-  managerId       String?           @db.ObjectId
-  adminPositionDB AdminPositionDB[]
+  name            String            @unique // ชื่อแผนก (ไม่ซ้ำกัน)
+  managerId       String?           @db.ObjectId // ผู้จัดการแผนก
+  adminPositionDB AdminPositionDB[] // ตำแหน่งในแผนก
   createdAt       DateTime          @default(now())
   createdBy       String
   updatedAt       DateTime          @updatedAt
@@ -636,32 +749,39 @@ model AdminDepartmentDB {
   deleteBy        String
 }
 
+// ตำแหน่งแอดมิน - กำหนดตำแหน่งและระดับสิทธิ์
 model AdminPositionDB {
   id                       String                     @id @default(auto()) @map("_id") @db.ObjectId
-  name                     String
-  priority                 Int
+  name                     String                     // ชื่อตำแหน่ง
+  priority                 Int                        // ลำดับความสำคัญ
   adminDepartmentId        String?                    @db.ObjectId
   adminDepartmentDB        AdminDepartmentDB?         @relation(fields: [adminDepartmentId], references: [id], onDelete: Cascade)
-  adminDB                  AdminDB[]
+  adminDB                  AdminDB[]                  // แอดมินในตำแหน่งนี้
   createdAt                DateTime                   @default(now())
   createdBy                String
   updatedAt                DateTime                   @updatedAt
   updatedBy                String                     @default("")
   deleteBy                 String
-  AdminDefaultPermissionDB AdminDefaultPermissionDB[]
+  AdminDefaultPermissionDB AdminDefaultPermissionDB[] // สิทธิ์ของตำแหน่ง
 }
 
+// ========================================
+// 📊 Miscellaneous (อื่นๆ)
+// ========================================
+
+// การซื้อขายแรงค์ - เก็บประวัติการซื้อขายแรงค์/บทบาท
 model TradingofRanks {
   id        String @id @default(auto()) @map("_id") @db.ObjectId
-  userID    String
-  roleID    String
-  paymentID String
+  userID    String // ID ผู้ใช้
+  roleID    String // ID บทบาท
+  paymentID String // ID การชำระเงิน
 }
 
+// เวลาในห้องเสียง - ติดตามเวลาที่ผู้ใช้อยู่ในห้องเสียง
 model VoiceTime {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  channelId String   @default("")
-  duration  Int
-  timestamp DateTime @default(now())
+  userId    String   // ID ผู้ใช้
+  channelId String   @default("") // ID ช่องเสียง
+  duration  Int      // ระยะเวลา (วินาที)
+  timestamp DateTime @default(now()) // เวลาที่บันทึก
 }

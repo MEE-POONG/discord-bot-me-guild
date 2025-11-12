@@ -6,7 +6,9 @@ import { getGuildIdsValues } from 'src/utils/guilds';
 @Injectable()
 export class FormRegisterCommands {
   private readonly logger = new Logger(FormRegisterCommands.name);
-  constructor(private readonly formRegisterService: FormRegisterService) {}
+  constructor(
+    private readonly formRegisterService: FormRegisterService
+  ) { }
 
   @SlashCommand({
     name: 'form-register',

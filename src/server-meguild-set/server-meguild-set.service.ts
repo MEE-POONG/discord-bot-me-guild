@@ -149,6 +149,25 @@ export class ServerMeguildSetService {
         .setEmoji('📝')
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
+        .setCustomId('server-code')
+        .setLabel('กรอก Code แพ็คเกจ')
+        .setEmoji('📝')
+        .setStyle(ButtonStyle.Success),
+
+    );
+
+    // สร้างปุ่มแถวที่ 2 (คำสั่งจัดการ)
+    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId('server-set-room')
+        .setLabel(`MeGuild Channel สร้างห้องกิจกรรม`)
+        .setEmoji('⚙️')
+        .setStyle(ButtonStyle.Primary),
+    );
+
+    // สร้างปุ่มแถวที่ 3 (คำสั่งเพิ่มเติม)
+    const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
         .setCustomId('server-clear')
         .setLabel('ล้างห้อง')
         .setEmoji('⭐')
@@ -160,50 +179,10 @@ export class ServerMeguildSetService {
         .setStyle(ButtonStyle.Danger),
     );
 
-    // สร้างปุ่มแถวที่ 2 (คำสั่งจัดการ)
-    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId('server-create-role')
-        .setLabel('สร้าง Roles')
-        .setEmoji('➕')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('server-update-role')
-        .setLabel('อัปเดต Roles')
-        .setEmoji('🔄')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('server-set-room')
-        .setLabel('ตั้งค่าห้อง')
-        .setEmoji('⚙️')
-        .setStyle(ButtonStyle.Primary),
-    );
-
-    // สร้างปุ่มแถวที่ 3 (คำสั่งเพิ่มเติม)
-    return channel.send({ embeds: [embed], components: [row1, row2] });
+    return channel.send({ embeds: [embed], components: [row1, row2, row3] });
   }
 
   // Button Handlers สำหรับปุ่มคำสั่งต่างๆ
-  @Button('server-set-register')
-  public async handleServerRegisterButton(@Context() [interaction]: ButtonContext) {
-    this.logger.debug('server-set-register button clicked');
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('📝 ลงทะเบียนเซิร์ฟเวอร์')
-          .setDescription(
-            '🔧 **กรุณาใช้คำสั่ง:** `/server-register`\n\n' +
-            '📋 คำสั่งนี้จะช่วยคุณ:\n' +
-            '• ลงทะเบียนเซิร์ฟเวอร์เข้าระบบ MeGuild\n' +
-            '• บันทึกข้อมูลเซิร์ฟเวอร์\n' +
-            '• เปิดใช้งานฟีเจอร์ต่างๆ',
-          )
-          .setColor(0x00ff00)
-          .setTimestamp(),
-      ],
-      ephemeral: true,
-    });
-  }
 
   @Button('server-clear')
   public async handleServerClearButton(@Context() [interaction]: ButtonContext) {
@@ -281,27 +260,6 @@ export class ServerMeguildSetService {
             '• แก้ไข roles ที่มีอยู่\n' +
             '• เปลี่ยนสิทธิ์และสีของ roles\n' +
             '• ปรับปรุงโครงสร้างสมาชิก',
-          )
-          .setColor(0x5865f2)
-          .setTimestamp(),
-      ],
-      ephemeral: true,
-    });
-  }
-
-  @Button('server-set-room')
-  public async handleServerSetRoomButton(@Context() [interaction]: ButtonContext) {
-    this.logger.debug('server-set-room button clicked');
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('⚙️ ตั้งค่าห้อง')
-          .setDescription(
-            '🔧 **กรุณาใช้คำสั่ง:** `/server-set-room`\n\n' +
-            '📋 คำสั่งนี้จะช่วยคุณ:\n' +
-            '• สร้างห้องต่างๆ (Welcome, News, Register, etc.)\n' +
-            '• ตั้งค่า categories และ channels\n' +
-            '• จัดระเบียบเซิร์ฟเวอร์ของคุณ',
           )
           .setColor(0x5865f2)
           .setTimestamp(),

@@ -40,8 +40,8 @@ export class ServerSetRoomService {
   public onModuleInit() {
     this.logger.log('ServerSetRoomService initialized');
   }
-
-  async ServerSetRoomSystem([interaction]: SlashCommandContext) {
+  @Button('server-set-room')
+  async ServerSetRoomSystem(@Context() [interaction]: SlashCommandContext | ButtonContext | any) {
     this.logger.debug('ServerSetRoomSystem called');
     // await interaction.deferReply({ ephemeral: true });
 
@@ -74,55 +74,56 @@ export class ServerSetRoomService {
             description: 'สร้างห้องครบชุดทั้งหมดในคำสั่งเดียว',
           },
           {
-            label: 'Welcome Room',
+            label: '👋 Welcome Room',
             value: 'welcome',
             description: 'สร้างห้อง Welcome',
           },
           {
-            label: 'News Room',
+            label: '📰 News Room',
             value: 'news',
             description: 'สร้างห้อง News',
           },
           {
-            label: 'Register Room',
+            label: '📝 Register Room',
             value: 'register',
             description: 'สร้างห้อง Register',
           },
           // {
-          //   label: 'Complaint Room',
+          //   label: '🚨 Complaint Room',
           //   value: 'complaint',
           //   description: 'สร้างห้องแจ้งความร้องทุกข์',
           // },
           // {
-          //   label: 'Suggestion Room',
+          //   label: '💡 Suggestion Room',
           //   value: 'suggestion',
           //   description: 'สร้างห้องข้อเสนอแนะ',
           // },
           // {
-          //   label: 'Trade Room',
+          //   label: '💱 Trade Room',
           //   value: 'trade',
           //   description: 'สร้างห้อง Trade',
           // },
           {
-            label: 'Talk Room',
+            label: '💬 Talk Room',
             value: 'talk',
             description: 'สร้างหมวดหมู่และห้องพูดคุย 30 ห้อง',
           },
           {
-            label: 'Guild Room',
+            label: '🛡️ Guild Room',
             value: 'guild',
             description: 'สร้างห้องข้อเสนอแนะ',
           },
           {
-            label: 'Busking Room',
+            label: '🎤 Busking Room',
             value: 'busking',
             description: 'สร้างหมวดหมู่และห้องแสดงความสามารถ',
           },
           {
-            label: 'GameMatch Room',
+            label: '🎮 GameMatch Room',
             value: 'gamematch',
             description: 'สร้างห้อง GameMatch',
           },
+          
         ]),
     );
 

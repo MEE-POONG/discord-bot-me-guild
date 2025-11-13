@@ -17,7 +17,7 @@ export class ServerClearService {
     this.logger.log('Serverclear initialized');
   }
 
-  async ServerclearSystem(interaction: any) {
+  async ServerClearSystem(interaction: any) {
     this.logger.debug(
       `[ServerclearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`,
     );

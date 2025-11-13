@@ -21,9 +21,9 @@ export class ServerclearCommands {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      this.logger.debug(`[handleServerclear] Calling ServerclearSystem`);
-      await this.serverClearService.ServerclearSystem(interaction);
-      this.logger.debug(`[handleServerclear] ServerclearSystem completed`);
+      this.logger.debug(`[handleServerclear] Calling ServerClearSystem`);
+      await this.serverClearService.ServerClearSystem(interaction);
+      this.logger.debug(`[handleServerclear] ServerClearSystem completed`);
     } catch (error) {
       this.logger.error(`[handleServerclear] Error in server-clear command:`, error);
       try {

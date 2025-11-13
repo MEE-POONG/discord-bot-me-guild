@@ -19,26 +19,26 @@ export class ServerClearService {
 
   async ServerClearSystem(interaction: any) {
     this.logger.debug(
-      `[ServerclearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`,
+      `[ServerClearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`,
     );
     const roleCheck = 'admin';
-    this.logger.debug(`[ServerclearSystem] Validating server and role: ${roleCheck}`);
+    this.logger.debug(`[ServerClearSystem] Validating server and role: ${roleCheck}`);
     const validationError = await validateServerAndRole(
       interaction,
       roleCheck,
       this.serverRepository,
     );
     if (validationError) {
-      this.logger.warn(`[ServerclearSystem] Validation failed:`, validationError);
+      this.logger.warn(`[ServerClearSystem] Validation failed:`, validationError);
       return validationError;
     }
-    this.logger.debug(`[ServerclearSystem] Validation passed`);
+    this.logger.debug(`[ServerClearSystem] Validation passed`);
 
     const guild: Guild = interaction.guild;
-    this.logger.debug(`[ServerclearSystem] Guild: ${guild?.name} (${guild?.id})`);
+    this.logger.debug(`[ServerClearSystem] Guild: ${guild?.name} (${guild?.id})`);
 
     if (!guild) {
-      this.logger.error(`[ServerclearSystem] No guild found`);
+      this.logger.error(`[ServerClearSystem] No guild found`);
       return interaction.editReply({
         content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
       });

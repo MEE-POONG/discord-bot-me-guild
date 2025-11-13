@@ -20,8 +20,8 @@ export class ServerMeguildSetService {
   public onModuleInit() {
     this.logger.log('ServerMeguildSet initialized');
   }
-
-  async ServerMeguildSetSystem(interaction: any) {
+  @Button('server-meguil-set')
+  async ServerMeguildSetSystem(interaction: ButtonContext | any) {
     const guild = interaction.guild as Guild;
 
     if (!guild) {

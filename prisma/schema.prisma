@@ -785,3 +785,163 @@ model VoiceTime {
   duration  Int      // ระยะเวลา (วินาที)
   timestamp DateTime @default(now()) // เวลาที่บันทึก
 }
+
+// ========================================
+// 🤖 Discord Bot Configuration (การตั้งค่า Bot)
+// ========================================
+
+// การตั้งค่า Discord Bot - เก็บ Token และ Guild ID (รองรับหลาย bot)
+model DiscordBotConfig {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  botToken    String   @unique // Discord Bot Token (ไม่ซ้ำกัน)
+  guildId     String   // Discord Guild/Server ID
+  botName     String?  // ชื่อ Bot (optional)
+  isActive    Boolean  @default(true) // เปิดใช้งานหรือไม่
+  createdAt   DateTime @default(now())
+  createdBy   String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+  deleteBy    String?
+
+  @@unique([botToken, guildId]) // ไม่ให้ token เดียวกันซ้ำใน guild เดียวกัน
+}
+
+// ========================================
+// 🎁 Event & Reward System (ระบบกิจกรรมและรางวัล)
+// ========================================
+
+// ไอเทม - รายการไอเทมในระบบ
+model ItemDB {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  name            String            // ชื่อไอเทม
+  description     String?           // คำอธิบาย
+  imageUrl        String?           // รูปภาพไอเทม
+  rarity          String?           // ความหายาก (common, rare, epic, legendary)
+  isStackable     Boolean           @default(true) // สะสมได้หรือไม่
+  maxStack        Int?              @default(99) // จำนวนสูงสุดต่อช่อง
+  createdAt       DateTime          @default(now())
+  createdBy       String?
+  updatedAt       DateTime          @updatedAt
+  updatedBy       String?
+  deleteBy        String?
+  EventReward     EventReward[]     // รางวัลที่เป็นไอเทมนี้
+  UserInventoryDB UserInventoryDB[] // คลังที่มีไอเทมนี้
+}
+
+// คลังของผู้ใช้ - เก็บไอเทมที่ผู้ใช้มี
+model UserInventoryDB {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   // Discord ID ของผู้ใช้
+  itemId    String   @db.ObjectId // ID ไอเทม
+  item      ItemDB   @relation(fields: [itemId], references: [id])
+  quantity  Int      @default(1) // จำนวนที่มี
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, itemId]) // ผู้ใช้คนเดียวมีไอเทมชิ้นเดียวได้แค่ 1 record
+}
+
+// กิจกรรม - กิจกรรมแจกของรางวัล
+model EventCampaign {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  guildId          String              // Discord Guild ID
+  title            String              // ชื่อกิจกรรม
+  description      String?             // คำอธิบายกิจกรรม
+  imageUrl         String?             // รูปภาพกิจกรรม
+  eventType        EventType           // ประเภทกิจกรรม (ACCUMULATE_TIME, LOGIN_INSTANT, SEQUENTIAL_CLAIM)
+  frequency        FrequencyType       // ความถี่ (DAILY, WEEKLY, MONTHLY, ONE_TIME)
+  startDate        DateTime            // วันเริ่มกิจกรรม
+  endDate          DateTime            // วันสิ้นสุดกิจกรรม
+  isActive         Boolean             @default(true) // เปิดใช้งานหรือไม่
+  resetOnMissed    Boolean             @default(false) // รีเซ็ต streak ถ้าพลาด (สำหรับ LOGIN_INSTANT)
+  createdAt        DateTime            @default(now())
+  createdBy        String?
+  updatedAt        DateTime            @updatedAt
+  updatedBy        String?
+  deleteBy         String?
+  EventReward      EventReward[]       // รางวัลในกิจกรรม
+  EventUserProgress EventUserProgress[] // ความคืบหน้าของผู้ใช้
+}
+
+// ประเภทกิจกรรม
+enum EventType {
+  ACCUMULATE_TIME   // แบบ A: ออนไลน์สะสมเวลา
+  LOGIN_INSTANT     // แบบ B: ล็อกอินรับทันที
+  SEQUENTIAL_CLAIM  // แบบ C: ต้องรับก่อนถึงนับต่อ
+}
+
+// ความถี่กิจกรรม
+enum FrequencyType {
+  DAILY     // รายวัน
+  WEEKLY    // รายสัปดาห์
+  MONTHLY   // รายเดือน
+  ONE_TIME  // ครั้งเดียว (ไม่รีเซ็ต)
+}
+
+// รางวัล - รายการรางวัลในกิจกรรม
+model EventReward {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId     String          @db.ObjectId // ID กิจกรรม
+  campaign       EventCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  rewardOrder    Int             // ลำดับรางวัล (1, 2, 3, ...)
+  rewardType     RewardType      // ประเภทรางวัล (COIN, ROLE, ITEM)
+  // เงื่อนไข (ใช้ตาม eventType)
+  requiredTime   Int?            // เวลาที่ต้องสะสม (วินาที) สำหรับ ACCUMULATE_TIME
+  requiredDay    Int?            // วันที่ต้องล็อกอิน (วันที่ 1, 2, 3...) สำหรับ LOGIN_INSTANT
+  // รางวัล
+  coinType       String?         // ประเภทเหรียญ (copper, silver, gold, crystal, diamond)
+  coinAmount     BigInt?         // จำนวนเหรียญ
+  roleId         String?         // Discord Role ID
+  itemId         String?         @db.ObjectId // ID ไอเทม
+  item           ItemDB?         @relation(fields: [itemId], references: [id])
+  itemQuantity   Int?            @default(1) // จำนวนไอเทม
+  createdAt      DateTime        @default(now())
+  createdBy      String?
+  updatedAt      DateTime        @updatedAt
+  updatedBy      String?
+  deleteBy       String?
+  EventUserClaim EventUserClaim[] // ประวัติการรับ
+}
+
+// ประเภทรางวัล
+enum RewardType {
+  COIN  // เหรียญ
+  ROLE  // Discord Role
+  ITEM  // ไอเทม
+}
+
+// ความคืบหน้าของผู้ใช้ - ติดตามความคืบหน้าในกิจกรรม
+model EventUserProgress {
+  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String        // Discord ID ของผู้ใช้
+  campaignId            String        @db.ObjectId // ID กิจกรรม
+  campaign              EventCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  // ความคืบหน้า (ใช้ตาม eventType)
+  accumulatedTime       Int           @default(0) // เวลาสะสม (วินาที) สำหรับ ACCUMULATE_TIME
+  loginDays             Int           @default(0) // จำนวนวันที่ล็อกอิน สำหรับ LOGIN_INSTANT
+  currentStreak         Int           @default(0) // streak ปัจจุบัน (ติดต่อกัน)
+  lastLoginDate         DateTime?     // วันที่ล็อกอินล่าสุด
+  lastRewardOrder       Int           @default(0) // รางวัลล่าสุดที่รับ (สำหรับ SEQUENTIAL_CLAIM)
+  lastCheckTime         DateTime?     // เวลาที่เช็คล่าสุด (สำหรับ notification)
+  hasBeenNotified       Boolean       @default(false) // ถูกแจ้งเตือนแล้วหรือยัง
+  // สำหรับ voice tracking (ACCUMULATE_TIME)
+  currentSessionStart   DateTime?     // เวลาเริ่มเข้า voice channel (session ปัจจุบัน)
+  isCurrentlyInVoice    Boolean       @default(false) // อยู่ใน voice หรือไม่
+  voiceChannelId        String?       // ID ของ voice channel ปัจจุบัน
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@unique([userId, campaignId]) // ผู้ใช้คนเดียวมี progress เดียวต่อกิจกรรม
+}
+
+// ประวัติการรับรางวัล - บันทึกการรับของ
+model EventUserClaim {
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String      // Discord ID ของผู้ใช้
+  rewardId   String      @db.ObjectId // ID รางวัล
+  reward     EventReward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  claimedAt  DateTime    @default(now()) // เวลาที่รับ
+  periodDate DateTime    // วัน/สัปดาห์/เดือน ที่รับ (สำหรับตรวจสอบ duplicate)
+
+  @@unique([userId, rewardId, periodDate]) // ไม่ให้รับรางวัลเดียวกันซ้ำในรอบเดียวกัน
+}

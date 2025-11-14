@@ -1,18 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EmbedBuilder, Guild } from 'discord.js';
+import { Button, ButtonContext, Context, SlashCommandContext } from 'necord';
 import { ServerRepository } from 'src/repository/server';
 
 @Injectable()
 export class ServerRegisterService {
   private readonly logger = new Logger(ServerRegisterService.name);
 
-  constructor(private readonly serverRepository: ServerRepository) {}
+  constructor(private readonly serverRepository: ServerRepository) { }
 
   public onModuleInit() {
     this.logger.log('ServerRegister initialized');
   }
-
-  async ServerRegisterSystem(interaction: any) {
+  @Button('server-register')
+  async ServerRegisterSystem(@Context() [interaction]: SlashCommandContext | ButtonContext | any) {
     const guild = interaction.guild as Guild;
 
     if (!guild) {

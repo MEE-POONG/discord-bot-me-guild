@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
-import { ServerclearService } from './server-clear.service';
+import { ServerClearService } from './server-clear.service';
 
 @Injectable()
 export class ServerclearCommands {
   private readonly logger = new Logger(ServerclearCommands.name);
-  constructor(private readonly serverclearService: ServerclearService) {}
+  constructor(private readonly serverClearService: ServerClearService) {}
 
   @SlashCommand({
     name: 'server-clear',
@@ -21,9 +21,9 @@ export class ServerclearCommands {
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      this.logger.debug(`[handleServerclear] Calling ServerclearSystem`);
-      await this.serverclearService.ServerclearSystem(interaction);
-      this.logger.debug(`[handleServerclear] ServerclearSystem completed`);
+      this.logger.debug(`[handleServerclear] Calling ServerClearSystem`);
+      await this.serverClearService.ServerClearSystem(interaction);
+      this.logger.debug(`[handleServerclear] ServerClearSystem completed`);
     } catch (error) {
       this.logger.error(`[handleServerclear] Error in server-clear command:`, error);
       try {

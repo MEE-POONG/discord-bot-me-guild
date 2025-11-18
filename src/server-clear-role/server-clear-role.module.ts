@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { ServerclearRoleCommands } from './server-clear-role.commands';
-import { ServerclearRoleService } from './server-clear-role.service';
+import { ServerClearRoleCommands } from './server-clear-role.commands';
+import { ServerClearRoleService } from './server-clear-role.service';
 import { ServerRepository } from 'src/repository/server';
 
 @Module({
-  providers: [PrismaClient, ServerRepository, ServerclearRoleCommands, ServerclearRoleService],
+  providers: [PrismaClient, ServerRepository, ServerClearRoleCommands, ServerClearRoleService],
 })
-export class ServerclearRoleModule {}
+export class ServerClearRoleModule {}

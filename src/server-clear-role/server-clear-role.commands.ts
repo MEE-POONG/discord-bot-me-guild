@@ -1,23 +1,23 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, SlashCommand, SlashCommandContext } from 'necord';
-import { ServerclearRoleService } from './server-clear-role.service';
+import { ServerClearRoleService } from './server-clear-role.service';
 
 @Injectable()
-export class ServerclearRoleCommands {
-  private readonly logger = new Logger(ServerclearRoleCommands.name);
-  constructor(private readonly serverclearroleService: ServerclearRoleService) {}
+export class ServerClearRoleCommands {
+  private readonly logger = new Logger(ServerClearRoleCommands.name);
+  constructor(private readonly serverClearroleService: ServerClearRoleService) {}
 
   @SlashCommand({
     name: 'server-clear-role',
     description: 'ล้าง role บทบาทดิส',
     defaultMemberPermissions: '8',
   })
-  async handleServerclearRole(@Context() [interaction]: SlashCommandContext) {
+  async handleServerClearRole(@Context() [interaction]: SlashCommandContext) {
     try {
       // Defer reply เพื่อป้องกัน Unknown interaction error
       await interaction.deferReply({ ephemeral: true });
 
-      await this.serverclearroleService.ServerclearRoleSystem(interaction);
+      await this.serverClearroleService.ServerClearRoleSystem(interaction);
     } catch (error) {
       this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
       try {

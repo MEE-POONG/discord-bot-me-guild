@@ -14,7 +14,7 @@ export class ServerClearService {
   ) {}
 
   public onModuleInit() {
-    this.logger.log('Serverclear initialized');
+    this.logger.log('ServerClear initialized');
   }
 
   async ServerClearSystem(interaction: any) {
@@ -46,11 +46,11 @@ export class ServerClearService {
 
     // ✅ เพิ่มเงื่อนไขตรวจสอบเจ้าของเซิร์ฟเวอร์
     this.logger.debug(
-      `[ServerclearSystem] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`,
+      `[ServerClearSystem] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`,
     );
     if (guild.ownerId !== interaction.user.id) {
       this.logger.warn(
-        `[ServerclearSystem] User ${interaction.user.id} is not the owner of guild ${guild.id}`,
+        `[ServerClearSystem] User ${interaction.user.id} is not the owner of guild ${guild.id}`,
       );
       return interaction.editReply({
         embeds: [
@@ -63,41 +63,41 @@ export class ServerClearService {
     }
 
     try {
-      this.logger.debug(`[ServerclearSystem] Starting channel deletion process`);
+      this.logger.debug(`[ServerClearSystem] Starting channel deletion process`);
       const channels = guild.channels.cache;
       const excludeChannels = ['Me-Guild-Set-Server', 'rules', 'moderator-only'];
       this.logger.debug(
-        `[ServerclearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`,
+        `[ServerClearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`,
       );
 
       let meguildChannel = channels.find(
         (channel) => channel.name === 'Me-Guild-Set-Server' && channel.isTextBased(),
       );
       this.logger.debug(
-        `[ServerclearSystem] Me-Guild-Set-Server channel found: ${meguildChannel ? meguildChannel.name : 'none'}`,
+        `[ServerClearSystem] Me-Guild-Set-Server channel found: ${meguildChannel ? meguildChannel.name : 'none'}`,
       );
 
       for (const [channelId, channel] of channels) {
         if (excludeChannels.includes(channel.name)) {
           this.logger.debug(
-            `[ServerclearSystem] Skipped deleting channel: ${channel.name} (${channelId})`,
+            `[ServerClearSystem] Skipped deleting channel: ${channel.name} (${channelId})`,
           );
           continue;
         }
 
         try {
-          this.logger.debug(`[ServerclearSystem] Deleting channel: ${channel.name} (${channelId})`);
+          this.logger.debug(`[ServerClearSystem] Deleting channel: ${channel.name} (${channelId})`);
           await channel.delete(`Deleted by ${interaction.user.tag}`);
-          this.logger.log(`[ServerclearSystem] Deleted channel: ${channel.name} (${channelId})`);
+          this.logger.log(`[ServerClearSystem] Deleted channel: ${channel.name} (${channelId})`);
         } catch (err) {
           this.logger.error(
-            `[ServerclearSystem] Failed to delete channel ${channel.name} (${channelId}): ${err.message}`,
+            `[ServerClearSystem] Failed to delete channel ${channel.name} (${channelId}): ${err.message}`,
           );
         }
       }
 
       if (!meguildChannel) {
-        this.logger.debug(`[ServerclearSystem] Creating Me-Guild-Set-Server channel`);
+        this.logger.debug(`[ServerClearSystem] Creating Me-Guild-Set-Server channel`);
         // กำหนดให้แอดมินเท่านั้นที่เห็นห้องนี้
         meguildChannel = await guild.channels.create({
           name: 'Me-Guild-Set-Server',
@@ -120,11 +120,11 @@ export class ServerClearService {
         });
 
         this.logger.log(
-          `[ServerclearSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
+          `[ServerClearSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
         );
       }
 
-      this.logger.debug(`[ServerclearSystem] Sending success response`);
+      this.logger.debug(`[ServerClearSystem] Sending success response`);
       return interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -138,7 +138,7 @@ export class ServerClearService {
         ],
       });
     } catch (error) {
-      this.logger.error(`[ServerclearSystem] Error deleting channels: ${error.message}`, error);
+      this.logger.error(`[ServerClearSystem] Error deleting channels: ${error.message}`, error);
       return interaction.editReply({
         content: '❌ เกิดข้อผิดพลาดระหว่างการลบห้อง กรุณาลองใหม่อีกครั้ง',
       });

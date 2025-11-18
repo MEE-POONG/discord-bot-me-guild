@@ -5,8 +5,8 @@ import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
 
 @Injectable()
-export class ServerclearRoleService {
-  private readonly logger = new Logger(ServerclearRoleService.name);
+export class ServerClearRoleService {
+  private readonly logger = new Logger(ServerClearRoleService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -14,10 +14,10 @@ export class ServerclearRoleService {
   ) {}
 
   public onModuleInit() {
-    this.logger.log('ServerclearRole initialized');
+    this.logger.log('ServerClearRole initialized');
   }
 
-  async ServerclearRoleSystem(interaction: any) {
+  async ServerClearRoleSystem(interaction: any) {
     const roleCheck = 'admin'; // Required role for this command
     const validationError = await validateServerAndRole(
       interaction,

@@ -14,7 +14,7 @@ export class ServerClearService {
   ) {}
 
   public onModuleInit() {
-    this.logger.log('Serverclear initialized');
+    this.logger.log('ServerClear initialized');
   }
 
   async ServerClearSystem(interaction: any) {

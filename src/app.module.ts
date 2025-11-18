@@ -26,7 +26,7 @@ import { GuildManageModule } from './guild-manage/guild-manage.module';
 import { NewsUpdateModule } from './news-update/news-update.module';
 import { PrototypeModule } from './prototype/prototype.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
-import { ServerclearRoleModule } from './server-clear-role/server-clear-role.module';
+import { ServerClearRoleModule } from './server-clear-role/server-clear-role.module';
 import { ServerCreateRoleModule } from './server-create-role/server-create-role.module';
 import { ServerMeguildSetModule } from './server-meguild-set/server-meguild-set.module';
 import { ServerRegisterModule } from './server-register/server-register.module';
@@ -103,7 +103,7 @@ import { WelcomeModule } from './welcome/welcome.module';
     ServerTryItOnModule,
     ServerCreateRoleModule,
     ServerClearModule,
-    ServerclearRoleModule,
+    ServerClearRoleModule,
     ServerUpdateRoleModule,
     ServerSetRoomModule,
     UserDataModule,

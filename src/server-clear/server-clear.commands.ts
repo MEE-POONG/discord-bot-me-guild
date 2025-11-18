@@ -3,8 +3,8 @@ import { Context, SlashCommand, SlashCommandContext } from 'necord';
 import { ServerClearService } from './server-clear.service';
 
 @Injectable()
-export class ServerclearCommands {
-  private readonly logger = new Logger(ServerclearCommands.name);
+export class ServerClearCommands {
+  private readonly logger = new Logger(ServerClearCommands.name);
   constructor(private readonly serverClearService: ServerClearService) {}
 
   @SlashCommand({

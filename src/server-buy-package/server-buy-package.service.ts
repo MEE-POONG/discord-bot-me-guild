@@ -379,7 +379,7 @@ export class ServerBuyPackageService {
         new ButtonBuilder()
           .setCustomId(`server_buy_package_music_${a.id}`)
           .setLabel(`${a.label} (${a.price}฿/เดือน)`)
-          .setStyle(ButtonStyle.Success),
+          .setStyle(ButtonStyle.Primary),
       ),
     );
 
@@ -433,7 +433,7 @@ export class ServerBuyPackageService {
         new ButtonBuilder()
           .setCustomId(`server_buy_package_extra_${a.id}`)
           .setLabel(`${a.label} (${a.price}฿/เดือน)`)
-          .setStyle(ButtonStyle.Secondary),
+          .setStyle(ButtonStyle.Primary),
       ),
     );
 

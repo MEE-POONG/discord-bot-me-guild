@@ -341,7 +341,7 @@ export class ServerBuyPackageService {
           (err as any).message,
         );
       }
-    }, 20_000);
+    }, 20000);
 
     return reply;
   }
@@ -397,7 +397,7 @@ export class ServerBuyPackageService {
           (err as any).message,
         );
       }
-    }, 20_000);
+    }, 20000);
 
     return reply;
   }
@@ -451,7 +451,7 @@ export class ServerBuyPackageService {
           (err as any).message,
         );
       }
-    }, 20_000);
+    }, 20000);
 
     return reply;
   }

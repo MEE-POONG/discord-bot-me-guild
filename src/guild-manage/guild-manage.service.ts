@@ -377,7 +377,6 @@ export class GuildManageService {
             guild_roleId: res.role.id,
             guild_size: 10,
             guild_level: 1,
-            guild_copper: 0,
             guild_leader: report.ownerId,
             Logo: '',
             guild_categoryId: categoryId, // เก็บ Discord category ID

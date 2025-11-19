@@ -109,6 +109,11 @@
   "pnpm": {
     "overrides": {
       "discord-voip": "7.1.0"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma"
+    ]
   }
 }

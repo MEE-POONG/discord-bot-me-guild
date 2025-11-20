@@ -1,8 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmbedBuilder, Guild, TextChannel, PermissionFlagsBits } from 'discord.js';
-import { PrismaService } from 'src/prisma.service';
+import {
+  EmbedBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+  CacheType,
+  Guild,
+  PermissionFlagsBits,
+} from 'discord.js';
 import { ServerRepository } from 'src/repository/server';
+import { PrismaService } from 'src/prisma.service';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
+import { StringSelect, StringSelectContext, Context } from 'necord';
 
 @Injectable()
 export class ServerClearService {
@@ -17,131 +26,260 @@ export class ServerClearService {
     this.logger.log('ServerClear initialized');
   }
 
+  // -------------------------------------------------------------
+  // เมนูเริ่มต้นเลือกการล้าง
+  // -------------------------------------------------------------
   async ServerClearSystem(interaction: any) {
-    this.logger.debug(
-      `[ServerClearSystem] Starting server clear for user: ${interaction.user.id} (${interaction.user.username})`,
-    );
     const roleCheck = 'admin';
-    this.logger.debug(`[ServerClearSystem] Validating server and role: ${roleCheck}`);
+
     const validationError = await validateServerAndRole(
       interaction,
       roleCheck,
       this.serverRepository,
     );
+
     if (validationError) {
-      this.logger.warn(`[ServerClearSystem] Validation failed:`, validationError);
-      return validationError;
+      return this.replyError(interaction, '⛔ คุณไม่มีสิทธิ์ใช้งานคำสั่งนี้');
     }
-    this.logger.debug(`[ServerClearSystem] Validation passed`);
 
     const guild: Guild = interaction.guild;
-    this.logger.debug(`[ServerClearSystem] Guild: ${guild?.name} (${guild?.id})`);
+    if (!guild) return this.replyError(interaction, '❌ ไม่พบเซิร์ฟเวอร์');
 
-    if (!guild) {
-      this.logger.error(`[ServerClearSystem] No guild found`);
-      return interaction.editReply({
-        content: '❌ ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์ได้',
-      });
-    }
-
-    // ✅ เพิ่มเงื่อนไขตรวจสอบเจ้าของเซิร์ฟเวอร์
-    this.logger.debug(
-      `[ServerClearSystem] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`,
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('SELECT_CLEAR')
+        .setPlaceholder('เลือกหัวข้อการล้างเซิร์ฟเวอร์')
+        .addOptions([
+          {
+            label: '🧨 ล้างห้อง + ลบบทบาท (ทั้งหมด)',
+            value: 'all',
+            description: 'ล้างทุกอย่าง (ไม่รวมระบบที่ยกเว้น)',
+            emoji: '🧨',
+          },
+          {
+            label: '🧹 ล้างห้องทั้งหมด',
+            value: 'channel',
+            description: 'ลบห้องทั้งหมด ยกเว้นที่ระบบยกเว้นให้',
+            emoji: '🧹',
+          },
+          {
+            label: '🗑️ ลบบทบาททั้งหมด',
+            value: 'role',
+            description: 'ลบบทบาททั้งหมด ยกเว้นที่ระบบยกเว้นให้',
+            emoji: '🗑️',
+          },
+        ]),
     );
+
+    const embed = new EmbedBuilder()
+      .setTitle('🧹✨【 ระบบล้างเซิร์ฟเวอร์ MeGuild 】✨🧹')
+      .setDescription(
+        [
+          'กรุณาเลือกประเภทการล้างด้านล่าง:',
+          '',
+          '• 🧨 ล้างห้อง + ลบบทบาท (ทั้งหมด)',
+          '• 🧹 ล้างห้องทั้งหมด',
+          '• 🗑️ ลบบทบาททั้งหมด',
+          '',
+          '⚠️ **คำเตือน:** การล้างไม่สามารถย้อนกลับได้',
+          '⏰ ข้อความนี้จะหายไปอัตโนมัติใน 60 วินาที',
+        ].join('\n'),
+      )
+      .setColor(0x3498db);
+
+    const reply = await interaction.reply({
+      embeds: [embed],
+      components: [selectMenu],
+      ephemeral: true,
+      fetchReply: true,
+    });
+
+    setTimeout(() => reply.delete().catch(() => null), 60_000);
+  }
+
+  // -------------------------------------------------------------
+  // Handler เลือกเมนูล้าง
+  // -------------------------------------------------------------
+  @StringSelect('SELECT_CLEAR')
+  async handlePackageMenu(@Context() [interaction]: StringSelectContext) {
+    const selected = interaction.values[0];
+    const guild: Guild = interaction.guild;
+
+    if (!guild) return this.replyError(interaction, '❌ ไม่พบเซิร์ฟเวอร์');
+
+    // ตรวจสอบสิทธิ์อีกครั้ง
+    const validationError = await validateServerAndRole(
+      interaction,
+      'admin',
+      this.serverRepository,
+    );
+    if (validationError) return this.replyError(interaction, '⛔ คุณไม่มีสิทธิ์ใช้งานคำสั่งนี้');
+
+    // ต้องเป็นเจ้าของเซิร์ฟเวอร์เท่านั้น
     if (guild.ownerId !== interaction.user.id) {
-      this.logger.warn(
-        `[ServerClearSystem] User ${interaction.user.id} is not the owner of guild ${guild.id}`,
+      return this.replyError(
+        interaction,
+        '🔒 เฉพาะ **เจ้าของเซิร์ฟเวอร์** เท่านั้นที่สามารถล้างเซิร์ฟเวอร์ได้',
       );
-      return interaction.editReply({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
-            .setDescription('🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้น')
-            .setColor(0xff0000),
-        ],
-      });
     }
 
-    try {
-      this.logger.debug(`[ServerClearSystem] Starting channel deletion process`);
-      const channels = guild.channels.cache;
-      const excludeChannels = ['Me-Guild-Set-Server', 'rules', 'moderator-only'];
-      this.logger.debug(
-        `[ServerClearSystem] Found ${channels.size} channels, excluding: ${excludeChannels.join(', ')}`,
-      );
+    // เลือกประเภทล้าง
+    if (selected === 'all') {
+      const ch = await this.clearChannelCore(guild, interaction.user.tag);
+      const rl = await this.clearRoleCore(guild, interaction.user.tag);
 
-      let meguildChannel = channels.find(
-        (channel) => channel.name === 'Me-Guild-Set-Server' && channel.isTextBased(),
-      );
-      this.logger.debug(
-        `[ServerClearSystem] Me-Guild-Set-Server channel found: ${meguildChannel ? meguildChannel.name : 'none'}`,
-      );
-
-      for (const [channelId, channel] of channels) {
-        if (excludeChannels.includes(channel.name)) {
-          this.logger.debug(
-            `[ServerClearSystem] Skipped deleting channel: ${channel.name} (${channelId})`,
-          );
-          continue;
-        }
-
-        try {
-          this.logger.debug(`[ServerClearSystem] Deleting channel: ${channel.name} (${channelId})`);
-          await channel.delete(`Deleted by ${interaction.user.tag}`);
-          this.logger.log(`[ServerClearSystem] Deleted channel: ${channel.name} (${channelId})`);
-        } catch (err) {
-          this.logger.error(
-            `[ServerClearSystem] Failed to delete channel ${channel.name} (${channelId}): ${err.message}`,
-          );
-        }
-      }
-
-      if (!meguildChannel) {
-        this.logger.debug(`[ServerClearSystem] Creating Me-Guild-Set-Server channel`);
-        // กำหนดให้แอดมินเท่านั้นที่เห็นห้องนี้
-        meguildChannel = await guild.channels.create({
-          name: 'Me-Guild-Set-Server',
-          type: 0,
-          reason: `Created by ${interaction.user.tag} after clearing other channels`,
-          permissionOverwrites: [
-            {
-              id: guild.id, // @everyone role
-              deny: [PermissionFlagsBits.ViewChannel],
-            },
-            {
-              id: interaction.user.id, // Channel creator (server owner)
-              allow: [
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.ManageChannels,
-              ],
-            },
-          ],
-        });
-
-        this.logger.log(
-          `[ServerClearSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
-        );
-      }
-
-      this.logger.debug(`[ServerClearSystem] Sending success response`);
-      return interaction.editReply({
+      return interaction.update({
         embeds: [
           new EmbedBuilder()
-            .setTitle('✅ ลบห้องสำเร็จ')
+            .setTitle('🧨 ล้างเซิร์ฟเวอร์เรียบร้อยแล้ว (ครบชุด)')
             .setDescription(
-              `🎉 ห้องทั้งหมดในเซิร์ฟเวอร์ถูกลบเรียบร้อยแล้ว (ยกเว้นห้องที่ได้รับการยกเว้น)\n` +
-                `- ยกเว้น: "Me-Guild-Set-Server", "rules", และ "moderator-only"\n` +
-                `ห้อง "Me-Guild-Set-Server" ถูกสร้างใหม่ถ้ายังไม่มี`,
+              [
+                `🧹 **ล้างห้อง**: ลบไปแล้ว \`${ch.deletedCount}\` ห้อง`,
+                `• ยกเว้น: ${ch.excludeChannels.join(', ')}`,
+                ch.createdMeGuild ? '• สร้างห้อง me-guild-set-server ใหม่' : '',
+                '',
+                `🗑️ **ลบบทบาท**: ลบไปแล้ว \`${rl.deletedCount}\` บทบาท`,
+                `• ยกเว้น: ${rl.excludeRoles.join(', ')}`,
+              ]
+                .filter(Boolean)
+                .join('\n'),
             )
-            .setColor(0x00ff00),
+            .setColor(0x2ecc71),
         ],
-      });
-    } catch (error) {
-      this.logger.error(`[ServerClearSystem] Error deleting channels: ${error.message}`, error);
-      return interaction.editReply({
-        content: '❌ เกิดข้อผิดพลาดระหว่างการลบห้อง กรุณาลองใหม่อีกครั้ง',
+        components: [],
       });
     }
+
+    if (selected === 'channel') {
+      const result = await this.clearChannelCore(guild, interaction.user.tag);
+
+      return interaction.update({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('🧹 เคลียร์ห้องสำเร็จ')
+            .setDescription(
+              [
+                `ลบห้องทั้งหมดแล้ว: \`${result.deletedCount}\` ห้อง`,
+                `ยกเว้น: ${result.excludeChannels.join(', ')}`,
+                result.createdMeGuild
+                  ? 'ห้อง **me-guild-set-server** ถูกสร้างใหม่'
+                  : 'ห้อง **me-guild-set-server** ถูกคงไว้',
+              ].join('\n'),
+            )
+            .setColor(0x2ecc71),
+        ],
+        components: [],
+      });
+    }
+
+    if (selected === 'role') {
+      const result = await this.clearRoleCore(guild, interaction.user.tag);
+
+      return interaction.update({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle('🗑️ ลบบทบาทสำเร็จ')
+            .setDescription(
+              [
+                `ลบบทบาทไปแล้ว \`${result.deletedCount}\` บทบาท`,
+                `ยกเว้น: ${result.excludeRoles.join(', ')}`,
+              ].join('\n'),
+            )
+            .setColor(0x2ecc71),
+        ],
+        components: [],
+      });
+    }
+
+    // ถ้า value ไม่ตรง
+    return this.replyError(interaction, '❌ ไม่พบตัวเลือกที่ระบุ');
+  }
+
+  // -------------------------------------------------------------
+  // Core: ล้างห้อง
+  // -------------------------------------------------------------
+  private async clearChannelCore(guild: Guild, userTag: string) {
+    const excludeChannels = ['me-guild-set-server', 'rules', 'moderator-only'];
+    const channels = guild.channels.cache;
+    let deletedCount = 0;
+
+    let meguildChannel = channels.find(
+      (c) => c.name === 'me-guild-set-server' && c.isTextBased(),
+    );
+
+    for (const [id, channel] of channels) {
+      if (excludeChannels.includes(channel.name)) continue;
+
+      try {
+        await channel.delete(`Deleted by ${userTag}`);
+        deletedCount++;
+      } catch (err) {
+        this.logger.error(`Delete channel failed: ${channel.name}`, err);
+      }
+    }
+
+    let createdMeGuild = false;
+
+    if (!meguildChannel) {
+      await guild.channels.create({
+        name: 'me-guild-set-server',
+        type: 0,
+        reason: `Created by ${userTag} after clearing channels`,
+        permissionOverwrites: [
+          { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+          {
+            id: guild.ownerId,
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.ManageChannels,
+            ],
+          },
+        ],
+      });
+
+      createdMeGuild = true;
+    }
+
+    return { deletedCount, excludeChannels, createdMeGuild };
+  }
+
+  // -------------------------------------------------------------
+  // Core: ลบบทบาท
+  // -------------------------------------------------------------
+  private async clearRoleCore(guild: Guild, userTag: string) {
+    const excludeRoles = ['พระเจ้าผู้สร้าง', 'แท่นขอพร', '@everyone'];
+    const roles = guild.roles.cache;
+    let deletedCount = 0;
+
+    for (const [id, role] of roles) {
+      if (excludeRoles.includes(role.name)) continue;
+      if (role.managed) continue; // เป็น system role
+      if (role.name === '@everyone') continue;
+
+      try {
+        await role.delete(`Deleted by ${userTag}`);
+        deletedCount++;
+      } catch (err) {
+        this.logger.error(`Delete role failed: ${role.name}`, err);
+      }
+    }
+
+    return { deletedCount, excludeRoles };
+  }
+
+  // -------------------------------------------------------------
+  // replyError ให้เรียกใช้แบบเดียวทุกที่
+  // -------------------------------------------------------------
+  private replyError(interaction: any, message: string) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ เกิดข้อผิดพลาด')
+          .setDescription(message)
+          .setColor(0xff0000),
+      ],
+      ephemeral: true,
+    });
   }
 }

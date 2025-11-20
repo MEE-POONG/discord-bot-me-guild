@@ -5,34 +5,25 @@ import { ServerClearService } from './server-clear.service';
 @Injectable()
 export class ServerClearCommands {
   private readonly logger = new Logger(ServerClearCommands.name);
-  constructor(private readonly serverClearService: ServerClearService) {}
+  constructor(private readonly serverclearService: ServerClearService) {}
 
   @SlashCommand({
     name: 'server-clear',
-    description: 'ล้างดิส',
-    defaultMemberPermissions: '8',
+    description: 'ระบบสำหรับลงทะเบียนนักผจญภัย',
   })
-  async handleServerclear(@Context() [interaction]: SlashCommandContext) {
-    this.logger.debug(
-      `[handleServerclear] Command triggered by user: ${interaction.user.id} (${interaction.user.username})`,
-    );
-
-    // Defer reply เพื่อป้องกัน Unknown interaction error
-    await interaction.deferReply({ ephemeral: true });
-
+  async handleServerClear(@Context() [interaction]: SlashCommandContext) {
     try {
-      this.logger.debug(`[handleServerclear] Calling ServerClearSystem`);
-      await this.serverClearService.ServerClearSystem(interaction);
-      this.logger.debug(`[handleServerclear] ServerClearSystem completed`);
+      await this.serverclearService.ServerClearSystem(interaction);
+      // return interaction.reply({
+      //   content: 'สร้างหน้าลงทะเบียนสำเร็จ',
+      //   ephemeral: true,
+      // });
     } catch (error) {
-      this.logger.error(`[handleServerclear] Error in server-clear command:`, error);
-      try {
-        await interaction.editReply({
-          content: '❌ เกิดข้อผิดพลาดในการล้างเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง',
-        });
-      } catch (editError) {
-        this.logger.error(`[handleServerclear] Failed to edit reply:`, editError);
-      }
+      this.logger.error('ไม่สามารถสร้างรูปแบบลงทะเบียนได้');
+      return interaction.reply({
+        content: 'ไม่สามารถสร้างรูปแบบลงทะเบียนได้',
+        ephemeral: true,
+      });
     }
   }
 }

@@ -8,7 +8,7 @@ export class ServerBuyPackageCommands {
   constructor(private readonly serverBuyPackageService: ServerBuyPackageService) { }
 
   @SlashCommand({
-    name: 'server-buy-pagekage',
+    name: 'server-buy-package',
     description: 'ซื้อแพ็คเกจ',
     defaultMemberPermissions: '8',
   })

@@ -53,9 +53,9 @@ export class PackageGuard implements CanActivate {
             (interaction as ModalSubmitInteraction).customId;
 
         if (
+            commandName === 'server-buy-package' ||
             commandName === 'server-code' ||
             commandName === 'PACKAGE_CODE_MODAL' ||
-            commandName === 'server-buy-pagekage' ||
             commandName?.startsWith('server_buy_package') ||
             commandName === 'SERVER_BUY_PACKAGE_MENU'
         ) {
@@ -74,7 +74,9 @@ export class PackageGuard implements CanActivate {
             try {
                 await this.serverMeguildSetService.createSystemChannel(guild, guild.members.cache.get(guild.ownerId)?.user);
             } catch (error) {
-                this.logger.error(`[PackageGuard] Failed to create system channel: ${error}`);
+                this.logger.error(`[PackageGuard] Failed to create system channel: ${error.message || error}`);
+                // Don't block the user - just log the error
+                // The user can manually create the channel using /server-meguild-set
             }
         }
 

@@ -70,7 +70,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           user: ${{ secrets.SERVER_USER }}
           private_key: ${{ secrets.SSH_KEY }}
-          command: docker run --name ${{ steps.string.outputs.lowercase }} --label io.portainer.accesscontrol.teams=discord --restart=always -d -e DATABASE_URL="${{ secrets.DATABASE_URL }}" -e DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}" -e DISCORD_DEVELOPMENT_GUILD_ID="${{ secrets.DISCORD_DEVELOPMENT_GUILD_ID }}" -e DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}" -e DISCORD_GUILD_CHANEL_ID="${{ secrets.DISCORD_GUILD_CHANEL_ID }}" -e DISCORD_GUILD_CHANEL_PARTY_ID="${{ secrets.DISCORD_GUILD_CHANEL_PARTY_ID }}" --memory=512m --memory-swap=512m --cpus=1.5 --log-opt max-size=10m --log-opt max-file=3 chunwarayut/${{ steps.string.outputs.lowercase }}:latest
+          command: docker run --name ${{ steps.string.outputs.lowercase }} --label io.portainer.accesscontrol.teams=discord --restart=always -d -e DATABASE_URL="${{ secrets.DATABASE_URL }}" -e DISCORD_BOT_TOKEN="${{ secrets.DISCORD_BOT_TOKEN }}" -e DISCORD_DEVELOPMENT_GUILD_ID="${{ secrets.DISCORD_DEVELOPMENT_GUILD_ID }}" -e DISCORD_GUILD_ID="${{ secrets.DISCORD_GUILD_ID }}" -e DISCORD_GUILD_CHANEL_ID="${{ secrets.DISCORD_GUILD_CHANEL_ID }}" -e DISCORD_GUILD_CHANEL_PARTY_ID="${{ secrets.DISCORD_GUILD_CHANEL_PARTY_ID }}" -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" --memory=512m --memory-swap=512m --cpus=1.5 --log-opt max-size=10m --log-opt max-file=3 chunwarayut/${{ steps.string.outputs.lowercase }}:latest
 
       - name: SSH Command docker image prune
         uses: D3rHase/ssh-command-action@v0.2.2

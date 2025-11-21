@@ -50,7 +50,7 @@ export async function validateServerAndRole(
           .setTitle('⛔ หมดอายุการใช้งาน')
           .setDescription(
             `การใช้งาน Bot สำหรับเซิร์ฟเวอร์ "${guild.name}" หมดอายุแล้ว\n` +
-              `โปรดติดต่อแอดมินเพื่อขยายเวลาการใช้งาน`,
+            `โปรดติดต่อแอดมินเพื่อขยายเวลาการใช้งาน`,
           )
           .setColor(0xff0000), // สีแดง
       ],
@@ -65,7 +65,7 @@ export async function validateServerAndRole(
           .setTitle('⛔ ยังไม่รับอนุญาติใช้งาน')
           .setDescription(
             `การใช้งาน Bot สำหรับเซิร์ฟเวอร์ "${guild.name}" ยังไม่รับอนุญาติใช้งาน\n` +
-              `ติดต่อผู้ให้บริการ`,
+            `ติดต่อผู้ให้บริการ`,
           )
           .setColor(0xff0000), // สีแดง
       ],
@@ -81,8 +81,8 @@ export async function validateServerAndRole(
           .setTitle('⚠️ พบความไม่ถูกต้อง')
           .setDescription(
             `ข้อมูลเซิร์ฟเวอร์ไม่ตรงกับข้อมูลในระบบ:\n` +
-              `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
-              `**เจ้าของ:** ${guild.ownerId}`,
+            `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
+            `**เจ้าของ:** ${guild.ownerId}`,
           )
           .setColor(0xffa500), // สีส้ม
       ],
@@ -96,6 +96,114 @@ export async function validateServerAndRole(
   );
   if (guild.ownerId === interaction.user.id) {
     console.log(`[validateServerAndRole] User is owner, validation passed`);
+    return null; // Validation ผ่าน
+  }
+
+  const member = guild.members.cache.get(interaction.user.id);
+  if (!member) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ไม่พบข้อมูลสมาชิก')
+          .setDescription('ไม่สามารถดึงข้อมูลสมาชิกจาก Discord ได้')
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // ตรวจสอบบทบาทสำหรับ adminRoleId หรือ userRoleId
+  if (roleCheck === 'admin' || roleCheck === 'user') {
+    const roleIdToCheck = roleCheck === 'admin' ? server.adminRoleId : server.userRoleId;
+
+    if (roleIdToCheck && member.roles.cache.has(roleIdToCheck)) {
+      return null; // ผ่านการตรวจสอบบทบาท
+    }
+  }
+
+  // หากไม่มีสิทธิ์
+  const errorMessage =
+    roleCheck === 'owner' || roleCheck === 'admin'
+      ? '🔒 คำสั่งนี้สามารถใช้งานได้เฉพาะเจ้าของเซิร์ฟเวอร์หรือแอดมินเท่านั้น'
+      : '🔒 คุณไม่มีสิทธิ์ในการใช้งานคำสั่งนี้ กรุณาติดต่อแอดมินหรือผู้ดูแลเซิร์ฟเวอร์';
+
+  return interaction.reply({
+    embeds: [
+      new EmbedBuilder()
+        .setTitle('⛔ ข้อผิดพลาดในการเข้าถึง')
+        .setDescription(errorMessage)
+        .setColor(0xff0000), // สีแดง
+    ],
+    ephemeral: true,
+  });
+}
+
+export async function validateServerForPackagePurchase(
+  interaction: any,
+  roleCheck: 'owner' | 'admin' | 'user',
+  serverRepository: ServerRepository,
+) {
+  console.log(`[validateServerForPackagePurchase] Starting validation for roleCheck: ${roleCheck}`);
+  const guild = interaction.guild as Guild;
+  console.log(`[validateServerForPackagePurchase] Guild: ${guild?.name} (${guild?.id})`);
+
+  // ตรวจสอบว่า interaction มาจาก guild หรือไม่
+  if (!guild) {
+    console.log(`[validateServerForPackagePurchase] No guild found`);
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ข้อผิดพลาดในการดึงข้อมูล')
+          .setDescription('ไม่สามารถดึงข้อมูลเซิร์ฟเวอร์จาก Discord ได้')
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // ดึงข้อมูลเซิร์ฟเวอร์จากฐานข้อมูล
+  console.log(`[validateServerForPackagePurchase] Fetching server data for guild: ${guild.id}`);
+  const server = await serverRepository.getServerById(guild.id);
+  console.log(`[validateServerForPackagePurchase] Server data:`, server);
+  if (!server) {
+    console.log(`[validateServerForPackagePurchase] Server not found in database`);
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('❌ ไม่พบการลงทะเบียนในระบบ')
+          .setDescription(`เซิร์ฟเวอร์ "${guild.name}" ยังไม่ได้ลงทะเบียนในระบบ`)
+          .setColor(0xff0000), // สีแดง
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // ⚠️ สำหรับการซื้อแพ็คเกจ เราไม่ตรวจสอบ openBot และ openUntilAt
+  // เพราะผู้ใช้ต้องสามารถซื้อแพ็คเกจได้แม้ว่าจะยังไม่เปิดใช้งานหรือหมดอายุ
+
+  // ตรวจสอบข้อมูลที่ลงทะเบียนว่าตรงหรือไม่
+  if (server.serverName !== guild.name || server.ownerId !== guild.ownerId) {
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('⚠️ พบความไม่ถูกต้อง')
+          .setDescription(
+            `ข้อมูลเซิร์ฟเวอร์ไม่ตรงกับข้อมูลในระบบ:\n` +
+            `**ชื่อเซิร์ฟเวอร์:** "${guild.name}"\n` +
+            `**เจ้าของ:** ${guild.ownerId}`,
+          )
+          .setColor(0xffa500), // สีส้ม
+      ],
+      ephemeral: true,
+    });
+  }
+
+  // เจ้าของเซิร์ฟเวอร์ (owner) สามารถใช้งานได้ทุกคำสั่ง
+  console.log(
+    `[validateServerForPackagePurchase] Checking ownership: guild.ownerId=${guild.ownerId}, user.id=${interaction.user.id}`,
+  );
+  if (guild.ownerId === interaction.user.id) {
+    console.log(`[validateServerForPackagePurchase] User is owner, validation passed`);
     return null; // Validation ผ่าน
   }
 

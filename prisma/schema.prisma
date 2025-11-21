@@ -565,7 +565,7 @@ model OrderDB {
   updatedBy      String?
   deleteBy       String?
   items          OrderItemDB[] // รายการสินค้าในออเดอร์
-  payment        PaymentDB? // ข้อมูลการชำระเงิน
+  payments       PaymentDB[] // ข้อมูลการชำระเงิน (สามารถมีหลาย payment ได้)
 }
 
 // รายการสินค้าในออเดอร์ - เก็บรายละเอียดสินค้าแต่ละชิ้นในออเดอร์
@@ -594,18 +594,33 @@ enum OrderStatus {
 
 // การชำระเงิน - เก็บข้อมูลการชำระเงิน
 model PaymentDB {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  paymentSlip   String // URL สลิปการชำระเงิน
-  paymentMethod String // วิธีการชำระเงิน (PayPal, TrueMoney, Crypto)
-  auditor       AdminDB?  @relation(fields: [auditorID], references: [id])
-  auditorID     String?   @db.ObjectId // ผู้ตรวจสอบ
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  paymentSlip   String? // URL สลิปการชำระเงิน (Optional for Stripe)
+  paymentMethod String // วิธีการชำระเงิน (PayPal, TrueMoney, Crypto, PromptPay)
+  auditor       AdminDB? @relation(fields: [auditorID], references: [id])
+  auditorID     String?  @db.ObjectId // ผู้ตรวจสอบ
   auditorName   String? // ชื่อผู้ตรวจสอบ
-  createdAt     DateTime  @default(now())
-  createdBy     String?
-  updatedAt     DateTime? @updatedAt
-  updatedBy     String?
-  orderDB       OrderDB?  @relation(fields: [orderId], references: [id])
-  orderId       String?   @unique @db.ObjectId // ID ออเดอร์ที่เชื่อมโยง
+
+  // Stripe Fields
+  stripePaymentIntentId String? @unique
+  stripeAmount          Int? // Amount in satang
+  currency              String?
+  status                String? // PENDING, SUCCEEDED, etc.
+  qrCodeUrl             String?
+  metadata              Json?
+
+  // Discord Message Tracking (for updating QR code message on success)
+  discordChannelId String? // Channel where QR message was sent
+  discordMessageId String? // Message ID of the QR code message
+  discordUserId    String? // User who initiated the payment
+  discordGuildId   String? // Guild where payment was initiated
+
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime? @updatedAt
+  updatedBy String?
+  orderDB   OrderDB?  @relation(fields: [orderId], references: [id])
+  orderId   String?   @db.ObjectId // ID ออเดอร์ที่เชื่อมโยง (optional for package subscriptions)
 }
 
 // ========================================
@@ -1020,4 +1035,65 @@ model UserWalletDB {
   updatedAt DateTime @updatedAt
   updatedBy String?
   deleteBy  String?
+}
+
+// ========================================
+// 🎵 Music Bot Management (จัดการบอทเพลง)
+// ========================================
+
+// บอทเพลง - เก็บข้อมูล Music Bot แต่ละตัว
+model MusicBotDB {
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  name           String // ชื่อ Music Bot
+  clientId       String             @unique // Discord Client ID
+  token          String // Discord Bot Token (encrypted recommended)
+  inviteUrl      String // OAuth2 Invite URL พร้อม permissions
+  status         MusicBotStatus     @default(AVAILABLE) // สถานะบอท
+  maxGuilds      Int                @default(100) // จำนวน guild สูงสุดที่รองรับ
+  currentGuilds  Int                @default(0) // จำนวน guild ปัจจุบัน
+  description    String? // คำอธิบายเพิ่มเติม
+  avatarUrl      String? // URL รูปโปรไฟล์บอท
+  isActive       Boolean            @default(true) // เปิดใช้งานหรือไม่
+  createdAt      DateTime           @default(now())
+  createdBy      String?
+  updatedAt      DateTime           @updatedAt
+  updatedBy      String?
+  deleteBy       String?
+  // ความสัมพันธ์
+  ServerMusicBot ServerMusicBotDB[] // เซิร์ฟเวอร์ที่ใช้บอทนี้
+}
+
+// สถานะบอทเพลง
+enum MusicBotStatus {
+  AVAILABLE // พร้อมใช้งาน
+  ASSIGNED // ถูก assign แล้วแต่ยังมีที่ว่าง
+  FULL // เต็มแล้ว
+  OFFLINE // ออฟไลน์/ปิดใช้งาน
+}
+
+// เซิร์ฟเวอร์-บอทเพลง - Junction table เชื่อม Server กับ Music Bot
+model ServerMusicBotDB {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  serverId    String // Discord Guild ID
+  musicBotId  String               @db.ObjectId // ID ของ Music Bot
+  musicBot    MusicBotDB           @relation(fields: [musicBotId], references: [id], onDelete: Cascade)
+  status      ServerMusicBotStatus @default(PENDING_INVITE) // สถานะการ invite
+  invitedBy   String? // Discord User ID ของผู้ที่ invite
+  assignedAt  DateTime             @default(now()) // เวลาที่ assign
+  activatedAt DateTime? // เวลาที่ bot เข้า guild สำเร็จ
+  removedAt   DateTime? // เวลาที่ถูกลบออก
+  createdAt   DateTime             @default(now())
+  createdBy   String?
+  updatedAt   DateTime             @updatedAt
+  updatedBy   String?
+
+  @@unique([serverId, musicBotId]) // ไม่ให้ bot ตัวเดียวกันซ้ำใน guild เดียวกัน
+}
+
+// สถานะการ invite บอทเพลงในเซิร์ฟเวอร์
+enum ServerMusicBotStatus {
+  PENDING_INVITE // รอการ invite (ส่ง link แล้ว)
+  ACTIVE // เข้า guild แล้ว กำลังใช้งาน
+  REMOVED // ถูกลบออกจาก guild
+  FAILED // invite ไม่สำเร็จ
 }

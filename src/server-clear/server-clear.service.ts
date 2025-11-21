@@ -138,7 +138,7 @@ export class ServerClearService {
               [
                 `🧹 **ล้างห้อง**: ลบไปแล้ว \`${ch.deletedCount}\` ห้อง`,
                 `• ยกเว้น: ${ch.excludeChannels.join(', ')}`,
-                ch.createdMeGuild ? '• สร้างห้อง 🕍︰me-guild-set-server ใหม่' : '',
+                ch.createdMeGuild ? '• สร้างห้อง 🕍︰me-guild-center ใหม่' : '',
                 '',
                 `🗑️ **ลบบทบาท**: ลบไปแล้ว \`${rl.deletedCount}\` บทบาท`,
                 `• ยกเว้น: ${rl.excludeRoles.join(', ')}`,
@@ -167,8 +167,8 @@ export class ServerClearService {
                 `ลบห้องทั้งหมดแล้ว: \`${result.deletedCount}\` ห้อง`,
                 `ยกเว้น: ${result.excludeChannels.join(', ')}`,
                 result.createdMeGuild
-                  ? 'ห้อง **🕍︰me-guild-set-server** ถูกสร้างใหม่'
-                  : 'ห้อง **🕍︰me-guild-set-server** ถูกคงไว้',
+                  ? 'ห้อง **🕍︰me-guild-center** ถูกสร้างใหม่'
+                  : 'ห้อง **🕍︰me-guild-center** ถูกคงไว้',
               ].join('\n'),
             )
             .setColor(0x2ecc71),
@@ -212,12 +212,12 @@ export class ServerClearService {
   // private async clearChannelCore(guild: Guild, userTag: string) {
 
   private async clearChannelCore(guild: Guild, user: any) {
-    const excludeChannels = ['🕍︰me-guild-set-server', 'rules', 'moderator-only'];
+    const excludeChannels = ['🕍︰me-guild-center', 'rules', 'moderator-only'];
     const channels = guild.channels.cache;
     let deletedCount = 0;
 
     let meguildChannel = channels.find(
-      (c) => c.name === '🕍︰me-guild-set-server' && c.isTextBased(),
+      (c) => c.name === '🕍︰me-guild-center' && c.isTextBased(),
     );
 
     for (const [id, channel] of channels) {

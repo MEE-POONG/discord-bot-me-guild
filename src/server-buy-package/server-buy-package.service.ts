@@ -17,10 +17,12 @@ import {
   StringSelectMenuInteraction,
   CacheType,
 } from 'discord.js';
-import { Button, ButtonContext, Context, Modal, ModalContext, StringSelect, StringSelectContext } from 'necord';
+import { Button, ButtonContext, Context, Modal, ModalContext, StringSelect, StringSelectContext, ComponentParam } from 'necord';
 import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
-import { validateServerAndRole } from 'src/utils/server-validation.util';
+import { validateServerForPackagePurchase } from 'src/utils/server-validation.util';
+
+import { PaymentService } from 'src/payment/payment.service';
 
 @Injectable()
 export class ServerBuyPackageService {
@@ -163,13 +165,102 @@ export class ServerBuyPackageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
+    private readonly paymentService: PaymentService,
   ) { }
   public onModuleInit() {
     this.logger.log('ServerBuyPackage initialized');
   }
 
+  @Button('server_buy_package/:type/:id')
+  async handleBuyPackage(@Context() [interaction]: ButtonContext, @ComponentParam() params: { type: string, id: string }) {
+    const { type, id } = params;
+
+    // Find package details
+    let name = '';
+    let price = 0;
+    let days = 30; // Default 30 days
+
+    if (type === 'main') {
+      const pkg = this.mainPackages.find(p => p.id.toString() === id);
+      if (pkg) {
+        name = pkg.name;
+        price = pkg.priceMonthly;
+      }
+    } else if (type === 'music') {
+      const pkg = this.musicAddons.find(p => p.id.toString() === id);
+      if (pkg) {
+        name = pkg.label;
+        price = pkg.price;
+      }
+    } else if (type === 'extra') {
+      const pkg = this.extraAddons.find(p => p.id === id);
+      if (pkg) {
+        name = pkg.label;
+        price = pkg.price;
+      }
+    }
+
+    if (!name || price === 0) {
+      return interaction.reply({ content: 'ไม่พบข้อมูลแพ็คเกจ', ephemeral: true });
+    }
+
+    await interaction.deferReply({ ephemeral: false });
+
+    try {
+      // Create Payment Intent first (without message info)
+      const payment = await this.paymentService.createPaymentIntent({
+        amount: price * 100, // Convert to satang
+        currency: 'thb',
+        description: `Buy ${name} for guild ${interaction.guildId}`,
+        metadata: {
+          type: 'package_subscription',
+          packageId: id,
+          packageType: type,
+          guildId: interaction.guildId,
+          userId: interaction.user.id,
+          days: days.toString(),
+        }
+      });
+
+      if (payment.qrCodeUrl) {
+        const embed = new EmbedBuilder()
+          .setTitle('💳 สแกน QR Code เพื่อชำระเงิน')
+          .setDescription(`**สินค้า:** ${name}\n**ราคา:** ${price} บาท\n\nกรุณาสแกน QR Code ด้านล่างเพื่อชำระเงินผ่าน PromptPay\nระบบจะตรวจสอบยอดเงินอัตโนมัติ`)
+          .setImage(payment.qrCodeUrl)
+          .setColor(0x00ff00)
+          .setFooter({ text: 'QR Code จะหมดอายุใน 15 นาที' });
+
+        const reply = await interaction.editReply({ embeds: [embed] });
+
+        // Update payment with message info
+        if (reply && payment.paymentIntentId) {
+          try {
+            // @ts-ignore
+            await this.paymentService['prisma'].paymentDB.update({
+              where: { stripePaymentIntentId: payment.paymentIntentId },
+              data: {
+                discordChannelId: interaction.channelId,
+                discordMessageId: (reply as any).id,
+                discordUserId: interaction.user.id,
+                discordGuildId: interaction.guildId,
+              }
+            });
+          } catch (err) {
+            this.logger.error('Failed to update payment with message info:', err);
+          }
+        }
+      } else {
+        await interaction.editReply({ content: 'ไม่สามารถสร้าง QR Code ได้ในขณะนี้ โปรดลองใหม่อีกครั้ง' });
+      }
+
+    } catch (error) {
+      this.logger.error(error);
+      await interaction.editReply({ content: 'เกิดข้อผิดพลาดในการสร้างรายการชำระเงิน' });
+    }
+  }
+
   async ServerBuyPackageSystem(interaction: any) {
-    const validationError = await validateServerAndRole(
+    const validationError = await validateServerForPackagePurchase(
       interaction,
       'owner',
       this.serverRepository,
@@ -320,7 +411,7 @@ export class ServerBuyPackageService {
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...this.mainPackages.map((p) =>
         new ButtonBuilder()
-          .setCustomId(`server_buy_package_main_${p.id}`)
+          .setCustomId(`server_buy_package/main/${p.id}`)
           .setLabel(`${p.name} (${p.priceMonthly}฿/เดือน)`)
           .setStyle(ButtonStyle.Primary),
       ),
@@ -377,7 +468,7 @@ export class ServerBuyPackageService {
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...this.musicAddons.map((a) =>
         new ButtonBuilder()
-          .setCustomId(`server_buy_package_music_${a.id}`)
+          .setCustomId(`server_buy_package/music/${a.id}`)
           .setLabel(`${a.label} (${a.price}฿/เดือน)`)
           .setStyle(ButtonStyle.Primary),
       ),
@@ -431,7 +522,7 @@ export class ServerBuyPackageService {
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...this.extraAddons.map((a) =>
         new ButtonBuilder()
-          .setCustomId(`server_buy_package_extra_${a.id}`)
+          .setCustomId(`server_buy_package/extra/${a.id}`)
           .setLabel(`${a.label} (${a.price}฿/เดือน)`)
           .setStyle(ButtonStyle.Primary),
       ),

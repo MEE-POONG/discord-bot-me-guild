@@ -53,9 +53,9 @@ export class PackageGuard implements CanActivate {
             (interaction as ModalSubmitInteraction).customId;
 
         if (
+            commandName === 'server-buy-package' ||
             commandName === 'server-code' ||
             commandName === 'PACKAGE_CODE_MODAL' ||
-            commandName === 'server-buy-pagekage' ||
             commandName?.startsWith('server_buy_package') ||
             commandName === 'SERVER_BUY_PACKAGE_MENU'
         ) {

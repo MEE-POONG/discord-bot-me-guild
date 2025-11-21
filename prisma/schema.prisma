@@ -565,7 +565,7 @@ model OrderDB {
   updatedBy      String?
   deleteBy       String?
   items          OrderItemDB[] // รายการสินค้าในออเดอร์
-  payment        PaymentDB? // ข้อมูลการชำระเงิน
+  payments       PaymentDB[] // ข้อมูลการชำระเงิน (สามารถมีหลาย payment ได้)
 }
 
 // รายการสินค้าในออเดอร์ - เก็บรายละเอียดสินค้าแต่ละชิ้นในออเดอร์
@@ -594,18 +594,33 @@ enum OrderStatus {
 
 // การชำระเงิน - เก็บข้อมูลการชำระเงิน
 model PaymentDB {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  paymentSlip   String // URL สลิปการชำระเงิน
-  paymentMethod String // วิธีการชำระเงิน (PayPal, TrueMoney, Crypto)
-  auditor       AdminDB?  @relation(fields: [auditorID], references: [id])
-  auditorID     String?   @db.ObjectId // ผู้ตรวจสอบ
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  paymentSlip   String? // URL สลิปการชำระเงิน (Optional for Stripe)
+  paymentMethod String // วิธีการชำระเงิน (PayPal, TrueMoney, Crypto, PromptPay)
+  auditor       AdminDB? @relation(fields: [auditorID], references: [id])
+  auditorID     String?  @db.ObjectId // ผู้ตรวจสอบ
   auditorName   String? // ชื่อผู้ตรวจสอบ
-  createdAt     DateTime  @default(now())
-  createdBy     String?
-  updatedAt     DateTime? @updatedAt
-  updatedBy     String?
-  orderDB       OrderDB?  @relation(fields: [orderId], references: [id])
-  orderId       String?   @unique @db.ObjectId // ID ออเดอร์ที่เชื่อมโยง
+
+  // Stripe Fields
+  stripePaymentIntentId String? @unique
+  stripeAmount          Int? // Amount in satang
+  currency              String?
+  status                String? // PENDING, SUCCEEDED, etc.
+  qrCodeUrl             String?
+  metadata              Json?
+
+  // Discord Message Tracking (for updating QR code message on success)
+  discordChannelId String? // Channel where QR message was sent
+  discordMessageId String? // Message ID of the QR code message
+  discordUserId    String? // User who initiated the payment
+  discordGuildId   String? // Guild where payment was initiated
+
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime? @updatedAt
+  updatedBy String?
+  orderDB   OrderDB?  @relation(fields: [orderId], references: [id])
+  orderId   String?   @db.ObjectId // ID ออเดอร์ที่เชื่อมโยง (optional for package subscriptions)
 }
 
 // ========================================

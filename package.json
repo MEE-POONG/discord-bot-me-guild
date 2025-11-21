@@ -56,6 +56,7 @@
     "opusscript": "^0.0.8",
     "pnpm": "^9.15.1",
     "reflect-metadata": "^0.2.2",
+    "stripe": "^20.0.0",
     "youtube-ext": "^1.1.6",
     "ytdl-core": "^4.11.5"
   },

@@ -614,21 +614,21 @@ model PaymentDB {
 
 // เหรียญ MeGuild - เก็บข้อมูลสกุลเงินในเกมของผู้ใช้
 model MeGuildCoinDB {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  coin_copper   Int // เหรียญทองแดง
-  coin_iron     Int // เหรียญเหล็ก
-  coin_silver   Int // เหรียญเงิน
-  coin_gold     Int // เหรียญทอง
-  coin_platinum Int // เหรียญแพลตินัม
-  coin_diamond  Int // เหรียญเพชร
-  coin_crystal  Int // เหรียญคริสตัล
-  coin_mythic   Int // เหรียญมิธิค
-  coin_arcane   Int // เหรียญอาร์เคน
-  coin_divine   Int // เหรียญดิไวน์
-  coin_cosmic   Int // เหรียญคอสมิก
-  createdAt     DateTime @db.Date
-  updatedAt     DateTime @db.Date
-  userId        String // ID ผู้ใช้
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  coin_copper Int      @default(0) // เหรียญทองแดง
+  // coin_iron     Int // เหรียญเหล็ก
+  // coin_silver   Int // เหรียญเงิน
+  // coin_gold     Int // เหรียญทอง
+  // coin_platinum Int // เหรียญแพลตินัม
+  // coin_diamond  Int // เหรียญเพชร
+  // coin_crystal  Int // เหรียญคริสตัล
+  // coin_mythic   Int // เหรียญมิธิค
+  // coin_arcane   Int // เหรียญอาร์เคน
+  // coin_divine   Int // เหรียญดิไวน์
+  // coin_cosmic   Int // เหรียญคอสมิก
+  createdAt   DateTime @db.Date
+  updatedAt   DateTime @db.Date
+  userId      String // ID ผู้ใช้
 }
 
 // ========================================

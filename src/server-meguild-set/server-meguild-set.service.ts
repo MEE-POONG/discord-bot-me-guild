@@ -66,12 +66,13 @@ export class ServerMeguildSetService {
 
       // สร้างห้อง 🕍︰me-guild-center ใหม่
       meguildChannel = await this.createSystemChannel(guild, interaction.user);
-
-      return this.replyWithSuccess(
-        interaction,
-        '✅ สร้างห้องสำเร็จ',
-        `🎉 ห้อง "🕍︰me-guild-center" ถูกสร้างเรียบร้อยแล้ว\n📍 <#${meguildChannel.id}>\n\n🔒 เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้นที่สามารถเห็นห้องนี้`,
-      );
+      if (meguildChannel) {
+        return this.replyWithSuccess(
+          interaction,
+          '✅ สร้างห้องสำเร็จ',
+          `🎉 ห้อง "🕍︰me-guild-center" ถูกสร้างเรียบร้อยแล้ว\n📍 <#${meguildChannel.id}>\n\n🔒 เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้นที่สามารถเห็นห้องนี้`,
+        );
+      }
     } catch (error) {
       this.logger.error('Error creating 🕍︰me-guild-center channel:', error);
       return this.replyWithError(
@@ -181,12 +182,7 @@ export class ServerMeguildSetService {
     const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId('server-clear')
-        .setLabel('ล้างห้อง')
-        .setEmoji('⭐')
-        .setStyle(ButtonStyle.Danger),
-      new ButtonBuilder()
-        .setCustomId('server-clear-role')
-        .setLabel('ล้าง Roles')
+        .setLabel('ล้างเซิฟเวอร์')
         .setEmoji('🗑️')
         .setStyle(ButtonStyle.Danger),
     );
@@ -217,26 +213,7 @@ export class ServerMeguildSetService {
     });
   }
 
-  @Button('server-clear-role')
-  public async handleServerClearRoleButton(@Context() [interaction]: ButtonContext) {
-    this.logger.debug('server-clear-role button clicked');
-    await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setTitle('🗑️ ล้าง Roles')
-          .setDescription(
-            '🔧 **กรุณาใช้คำสั่ง:** `/server-clear-role`\n\n' +
-            '⚠️ **คำเตือน:** คำสั่งนี้จะ:\n' +
-            '• ลบ roles ทั้งหมด (ยกเว้น roles พิเศษ)\n' +
-            '• ไม่สามารถย้อนกลับได้\n' +
-            '• อาจส่งผลต่อสิทธิ์ของสมาชิก',
-          )
-          .setColor(0xff0000)
-          .setTimestamp(),
-      ],
-      ephemeral: true,
-    });
-  }
+
 
   @Button('server-create-role')
   public async handleServerCreateRoleButton(@Context() [interaction]: ButtonContext) {

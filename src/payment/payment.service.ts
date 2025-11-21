@@ -317,10 +317,36 @@ export class PaymentService implements OnModuleInit {
                 // Main packages: 1=1 bot, 2=2 bots, 3=3 bots, 4=5 bots
                 const botCounts: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 5 };
                 musicBotCount = botCounts[packageId] || 0;
+
+                // อัพเดทขีดจำกัด Music Bot สำหรับแพ็คเกจหลัก
+                if (musicBotCount > 0) {
+                    const server = await this.serverRepository.getServerById(guildId);
+                    if (server) {
+                        await this.prisma.serverDB.update({
+                            where: { id: server.id },
+                            data: {
+                                maxMusicBots: musicBotCount, // ตั้งค่าขีดจำกัดตาม package
+                            } as any,
+                        });
+                        this.logger.log(
+                            `[assignMusicBotsForPackage] Set maxMusicBots to ${musicBotCount} for guild ${guildId}`,
+                        );
+                    }
+                }
             } else if (packageType === 'music') {
                 // Music add-ons: 1=3, 2=5, 3=9, 4=15, 5=25
                 const botCounts: Record<string, number> = { '1': 3, '2': 5, '3': 9, '4': 15, '5': 25 };
-                musicBotCount = botCounts[packageId] || 0;
+                const additionalBots = botCounts[packageId] || 0;
+
+                if (additionalBots > 0) {
+                    // เพิ่มขีดจำกัด Music Bot สำหรับ add-on
+                    await this.musicBotService.increaseMusicBotLimit(guildId, additionalBots);
+                    this.logger.log(
+                        `[assignMusicBotsForPackage] Increased maxMusicBots by ${additionalBots} for guild ${guildId}`,
+                    );
+                }
+
+                musicBotCount = additionalBots;
             }
 
             if (musicBotCount > 0) {
@@ -331,6 +357,8 @@ export class PaymentService implements OnModuleInit {
             }
         } catch (error) {
             this.logger.error('[assignMusicBotsForPackage] Failed to assign music bots:', error);
+            // ไม่ throw error เพื่อไม่ให้กระทบการชำระเงิน
+            // แต่ log ไว้เพื่อให้ admin ตรวจสอบได้
         }
     }
 

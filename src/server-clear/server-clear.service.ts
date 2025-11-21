@@ -12,6 +12,7 @@ import { ServerRepository } from 'src/repository/server';
 import { PrismaService } from 'src/prisma.service';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
 import { StringSelect, StringSelectContext, Context } from 'necord';
+import { ServerMeguildSetService } from '@/server-meguild-set/server-meguild-set.service';
 
 @Injectable()
 export class ServerClearService {
@@ -20,6 +21,7 @@ export class ServerClearService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
+    private readonly serverMeguildSetService: ServerMeguildSetService, // 👈 เพิ่มตรงนี้
   ) { }
 
   public onModuleInit() {
@@ -125,7 +127,7 @@ export class ServerClearService {
 
     // เลือกประเภทล้าง
     if (selected === 'all') {
-      const ch = await this.clearChannelCore(guild, interaction.user.tag);
+      const ch = await this.clearChannelCore(guild, interaction.user);
       const rl = await this.clearRoleCore(guild, interaction.user.tag);
 
       const reply = await interaction.update({
@@ -154,7 +156,7 @@ export class ServerClearService {
     }
 
     if (selected === 'channel') {
-      const result = await this.clearChannelCore(guild, interaction.user.tag);
+      const result = await this.clearChannelCore(guild, interaction.user);
 
       const reply = await interaction.update({
         embeds: [
@@ -206,7 +208,10 @@ export class ServerClearService {
   // -------------------------------------------------------------
   // Core: ล้างห้อง
   // -------------------------------------------------------------
-  private async clearChannelCore(guild: Guild, userTag: string) {
+  // เดิม
+  // private async clearChannelCore(guild: Guild, userTag: string) {
+
+  private async clearChannelCore(guild: Guild, user: any) {
     const excludeChannels = ['me-guild-set-server', 'rules', 'moderator-only'];
     const channels = guild.channels.cache;
     let deletedCount = 0;
@@ -219,6 +224,8 @@ export class ServerClearService {
       if (excludeChannels.includes(channel.name)) continue;
 
       try {
+        // ใช้ชื่อแท็กใน reason
+        const userTag = user?.tag ?? user?.username ?? 'UnknownUser';
         await channel.delete(`Deleted by ${userTag}`);
         deletedCount++;
       } catch (err) {
@@ -229,28 +236,14 @@ export class ServerClearService {
     let createdMeGuild = false;
 
     if (!meguildChannel) {
-      await guild.channels.create({
-        name: 'me-guild-set-server',
-        type: 0,
-        reason: `Created by ${userTag} after clearing channels`,
-        permissionOverwrites: [
-          { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
-          {
-            id: guild.ownerId,
-            allow: [
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ManageChannels,
-            ],
-          },
-        ],
-      });
-
+      // ✅ เรียกใช้ service กลางให้สร้างห้อง + ส่ง setup message
+      meguildChannel = await this.serverMeguildSetService.createSystemChannel(guild, user);
       createdMeGuild = true;
     }
 
     return { deletedCount, excludeChannels, createdMeGuild };
   }
+
 
   // -------------------------------------------------------------
   // Core: ลบบทบาท

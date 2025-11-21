@@ -20,8 +20,7 @@ export class ServerMeguildSetService {
   public onModuleInit() {
     this.logger.log('ServerMeguildSet initialized');
   }
-  @Button('server-meguil-set')
-  async ServerMeguildSetSystem(interaction: ButtonContext | any) {
+  async ServerMeguildSetSystem(interaction: any) {
     const guild = interaction.guild as Guild;
 
     if (!guild) {
@@ -80,17 +79,21 @@ export class ServerMeguildSetService {
 
   public async createSystemChannel(guild: Guild, user: any) {
     this.logger.debug(`[ServerMeguildSetSystem] Creating me-guild-set-server channel`);
+
+    const userTag = user?.tag ?? user?.username ?? 'UnknownUser';
+    const userId = user?.id ?? guild.ownerId; // fallback เป็น owner ถ้าไม่มี user
+
     const meguildChannel = await guild.channels.create({
       name: 'me-guild-set-server',
       type: 0, // Text channel
-      reason: `Created by ${user.tag} using /server-meguild-set command`,
+      reason: `Created by ${userTag} using /server-meguild-set command`,
       permissionOverwrites: [
         {
           id: guild.id, // @everyone role
           deny: [PermissionFlagsBits.ViewChannel],
         },
         {
-          id: user.id, // Channel creator (server owner)
+          id: userId, // Channel creator (server owner)
           allow: [
             PermissionFlagsBits.ViewChannel,
             PermissionFlagsBits.SendMessages,
@@ -104,9 +107,7 @@ export class ServerMeguildSetService {
       `[ServerMeguildSetSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
     );
 
-    // ส่งข้อความพร้อมปุ่มคำสั่งต่างๆ ลงในห้องที่สร้าง
     await this.createSetupMessage(meguildChannel as TextChannel);
-
     return meguildChannel;
   }
 

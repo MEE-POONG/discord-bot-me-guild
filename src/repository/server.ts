@@ -7,6 +7,8 @@ export type ServerRepositoryType = {
 
   getServerById(serverId: string): Promise<ServerDB | null>;
 
+  getServersExpiringInOneDay(): Promise<ServerDB[]>;
+
   updateServer(
     serverId: string,
     data: Partial<Omit<ServerDB, 'id' | 'createdAt' | 'registeredAt'>>,
@@ -17,7 +19,7 @@ export type ServerRepositoryType = {
 
 @Injectable()
 export class ServerRepository implements ServerRepositoryType {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
 
   async ServerRegister(serverId: string, serverName: string, ownerId: string): Promise<ServerDB> {
     const now = new Date();
@@ -37,6 +39,22 @@ export class ServerRepository implements ServerRepositoryType {
   async getServerById(serverId: string): Promise<ServerDB | null> {
     return this.prismaService.serverDB.findUnique({
       where: { serverId },
+    });
+  }
+
+  async getServersExpiringInOneDay(): Promise<ServerDB[]> {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 23 * 60 * 60 * 1000); // 23 hours from now
+    const dayAfter = new Date(now.getTime() + 25 * 60 * 60 * 1000); // 25 hours from now
+
+    return this.prismaService.serverDB.findMany({
+      where: {
+        openBot: true, // Only active servers
+        openUntilAt: {
+          gte: tomorrow, // Greater than or equal to 23 hours from now
+          lte: dayAfter, // Less than or equal to 25 hours from now
+        },
+      },
     });
   }
 

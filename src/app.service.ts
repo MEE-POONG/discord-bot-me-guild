@@ -3,6 +3,7 @@ import { Context, ContextOf, On, Once } from 'necord';
 import { SlashCommand, SlashCommandContext } from 'necord';
 import { EmbedBuilder } from 'discord.js';
 import { ServerRepository } from './repository/server';
+import { ExpirationNotificationService } from './expiration-notification/expiration-notification.service';
 
 @Injectable()
 export class AppService {
@@ -10,7 +11,8 @@ export class AppService {
 
   constructor(
     private readonly serverRepository: ServerRepository,
-  ) {}
+    private readonly expirationNotificationService: ExpirationNotificationService,
+  ) { }
 
   @Once('ready')
   public onReady(@Context() [client]: ContextOf<'ready'>) {
@@ -294,6 +296,30 @@ export class AppService {
   }
 
   @SlashCommand({
+    name: 'test-expiration-notification',
+    description: '[Admin] ทดสอบระบบแจ้งเตือนก่อนหมดอายุ',
+  })
+  async testExpirationNotification(@Context() [interaction]: SlashCommandContext) {
+    await interaction.deferReply({ ephemeral: true });
+
+    try {
+      this.logger.log(`[Test] Manual trigger by ${interaction.user.tag}`);
+
+      // Trigger the expiration check manually
+      await this.expirationNotificationService.manualCheckExpiringServers();
+
+      return interaction.editReply({
+        content: '✅ **ทดสอบระบบแจ้งเตือนเสร็จสิ้น**\n\nตรวจสอบ log และห้อง 🕍︰me-guild-center ของเซิร์ฟเวอร์ที่ใกล้หมดอายุ',
+      });
+    } catch (error) {
+      this.logger.error(`[Test] Error: ${error}`);
+      return interaction.editReply({
+        content: `❌ **เกิดข้อผิดพลาด**\n\n${error.message || error}`,
+      });
+    }
+  }
+
+  @SlashCommand({
     name: 'notify-admin',
     description: 'แจ้งเตือนแอดมินเกี่ยวกับปัญหาหรือข้อสอบถาม',
   })
@@ -319,13 +345,13 @@ export class AppService {
         .setTitle('📞 ติดต่อแอดมิน')
         .setDescription(
           '**ช่องทางการติดต่อแอดมิน:**\n\n' +
-            '🔗 **เว็บไซต์:** https://www.me-poong.com\n' +
-            '📧 **อีเมล:** admin@me-poong.com\n' +
-            '💬 **Discord:** สามารถแจ้งปัญหาใน DM ได้\n\n' +
-            '**ข้อมูลเซิร์ฟเวอร์สำหรับการแจ้งปัญหา:**\n' +
-            `📍 **ชื่อเซิร์ฟเวอร์:** ${guild.name}\n` +
-            `🆔 **Server ID:** ${guild.id}\n` +
-            `👤 **ผู้แจ้งปัญหา:** ${interaction.user.username} (${interaction.user.id})`,
+          '🔗 **เว็บไซต์:** https://www.me-poong.com\n' +
+          '📧 **อีเมล:** admin@me-poong.com\n' +
+          '💬 **Discord:** สามารถแจ้งปัญหาใน DM ได้\n\n' +
+          '**ข้อมูลเซิร์ฟเวอร์สำหรับการแจ้งปัญหา:**\n' +
+          `📍 **ชื่อเซิร์ฟเวอร์:** ${guild.name}\n` +
+          `🆔 **Server ID:** ${guild.id}\n` +
+          `👤 **ผู้แจ้งปัญหา:** ${interaction.user.username} (${interaction.user.id})`,
         )
         .setColor('#0099ff')
         .setTimestamp()
@@ -345,9 +371,9 @@ export class AppService {
             .setTitle('🚨 มีการแจ้งปัญหาจากสมาชิก')
             .setDescription(
               `**สมาชิก ${interaction.user.username} ได้ใช้คำสั่ง notify-admin**\n\n` +
-                `**เซิร์ฟเวอร์:** ${guild.name}\n` +
-                `**ผู้แจ้ง:** ${interaction.user.tag} (${interaction.user.id})\n` +
-                `**เวลา:** ${new Date().toLocaleString('th-TH')}`,
+              `**เซิร์ฟเวอร์:** ${guild.name}\n` +
+              `**ผู้แจ้ง:** ${interaction.user.tag} (${interaction.user.id})\n` +
+              `**เวลา:** ${new Date().toLocaleString('th-TH')}`,
             )
             .setColor('#ff9900')
             .setTimestamp();

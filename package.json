@@ -44,6 +44,7 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/schedule": "^6.0.1",
     "@prisma/client": "^6.2.0",
     "@stablelib/xchacha20poly1305": "^2.0.0",
     "axios": "^1.7.9",

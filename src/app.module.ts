@@ -44,6 +44,7 @@ import { VoiceTimeModule } from './voice-time/voice-time.module';
 import { WelcomeModule } from './welcome/welcome.module';
 import { MusicBotModule } from './music-bot/music-bot.module';
 import { GuildEventsModule } from './guild-events/guild-events.module';
+import { ExpirationNotificationModule } from './expiration-notification/expiration-notification.module';
 
 @Global()
 @Module({
@@ -121,6 +122,7 @@ import { GuildEventsModule } from './guild-events/guild-events.module';
     StageChannelModule,
     MusicBotModule,
     GuildEventsModule,
+    ExpirationNotificationModule,
   ],
   providers: [
     PrismaService,

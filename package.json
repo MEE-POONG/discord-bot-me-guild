@@ -29,7 +29,9 @@
     "db:reset": "prisma migrate reset --force",
     "check": "npm run lint:check && npm run format:check && npm run test",
     "docker:build": "docker build -t discord-bot-me-guild .",
-    "docker:run": "docker run -p 3000:3000 discord-bot-me-guild"
+    "docker:run": "docker run -p 3000:3000 discord-bot-me-guild",
+    "register:dev": "ts-node scripts/register-commands.ts guild",
+    "register:prod": "ts-node scripts/register-commands.ts global"
   },
   "dependencies": {
     "@discord-player/extractor": "^4.1.0",

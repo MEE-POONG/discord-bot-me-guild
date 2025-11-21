@@ -1036,3 +1036,64 @@ model UserWalletDB {
   updatedBy String?
   deleteBy  String?
 }
+
+// ========================================
+// 🎵 Music Bot Management (จัดการบอทเพลง)
+// ========================================
+
+// บอทเพลง - เก็บข้อมูล Music Bot แต่ละตัว
+model MusicBotDB {
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  name           String // ชื่อ Music Bot
+  clientId       String             @unique // Discord Client ID
+  token          String // Discord Bot Token (encrypted recommended)
+  inviteUrl      String // OAuth2 Invite URL พร้อม permissions
+  status         MusicBotStatus     @default(AVAILABLE) // สถานะบอท
+  maxGuilds      Int                @default(100) // จำนวน guild สูงสุดที่รองรับ
+  currentGuilds  Int                @default(0) // จำนวน guild ปัจจุบัน
+  description    String? // คำอธิบายเพิ่มเติม
+  avatarUrl      String? // URL รูปโปรไฟล์บอท
+  isActive       Boolean            @default(true) // เปิดใช้งานหรือไม่
+  createdAt      DateTime           @default(now())
+  createdBy      String?
+  updatedAt      DateTime           @updatedAt
+  updatedBy      String?
+  deleteBy       String?
+  // ความสัมพันธ์
+  ServerMusicBot ServerMusicBotDB[] // เซิร์ฟเวอร์ที่ใช้บอทนี้
+}
+
+// สถานะบอทเพลง
+enum MusicBotStatus {
+  AVAILABLE // พร้อมใช้งาน
+  ASSIGNED // ถูก assign แล้วแต่ยังมีที่ว่าง
+  FULL // เต็มแล้ว
+  OFFLINE // ออฟไลน์/ปิดใช้งาน
+}
+
+// เซิร์ฟเวอร์-บอทเพลง - Junction table เชื่อม Server กับ Music Bot
+model ServerMusicBotDB {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  serverId    String // Discord Guild ID
+  musicBotId  String               @db.ObjectId // ID ของ Music Bot
+  musicBot    MusicBotDB           @relation(fields: [musicBotId], references: [id], onDelete: Cascade)
+  status      ServerMusicBotStatus @default(PENDING_INVITE) // สถานะการ invite
+  invitedBy   String? // Discord User ID ของผู้ที่ invite
+  assignedAt  DateTime             @default(now()) // เวลาที่ assign
+  activatedAt DateTime? // เวลาที่ bot เข้า guild สำเร็จ
+  removedAt   DateTime? // เวลาที่ถูกลบออก
+  createdAt   DateTime             @default(now())
+  createdBy   String?
+  updatedAt   DateTime             @updatedAt
+  updatedBy   String?
+
+  @@unique([serverId, musicBotId]) // ไม่ให้ bot ตัวเดียวกันซ้ำใน guild เดียวกัน
+}
+
+// สถานะการ invite บอทเพลงในเซิร์ฟเวอร์
+enum ServerMusicBotStatus {
+  PENDING_INVITE // รอการ invite (ส่ง link แล้ว)
+  ACTIVE // เข้า guild แล้ว กำลังใช้งาน
+  REMOVED // ถูกลบออกจาก guild
+  FAILED // invite ไม่สำเร็จ
+}

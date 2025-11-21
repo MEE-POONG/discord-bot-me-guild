@@ -4,6 +4,7 @@ import { CreatePaymentIntentDto } from './dto/create-intent.dto';
 import { PrismaService } from '../prisma.service';
 import { ServerRepository } from '../repository/server';
 import { Client, EmbedBuilder, TextChannel } from 'discord.js';
+import { MusicBotService } from '../music-bot/music-bot.service';
 
 @Injectable()
 export class PaymentService implements OnModuleInit {
@@ -15,6 +16,7 @@ export class PaymentService implements OnModuleInit {
         private readonly prisma: PrismaService,
         private readonly serverRepository: ServerRepository,
         @Inject(Client) private readonly client: Client,
+        private readonly musicBotService: MusicBotService,
     ) {
         const secretKey = process.env.STRIPE_SECRET_KEY;
         if (secretKey) {
@@ -183,6 +185,8 @@ export class PaymentService implements OnModuleInit {
         const type = metadata.type;
         const guildId = metadata.guildId;
         const packageId = metadata.packageId;
+        const packageType = metadata.packageType;
+        const userId = metadata.userId;
         const days = parseInt(metadata.days || '30');
 
         if (type === 'package_subscription' && guildId) {
@@ -207,6 +211,9 @@ export class PaymentService implements OnModuleInit {
                 });
                 this.logger.log(`Extended package for guild ${guildId} by ${days} days. New expiry: ${newExpiry}`);
             }
+
+            // Assign Music Bots based on package
+            await this.assignMusicBotsForPackage(guildId, packageType, packageId, userId);
         }
 
         // Update Discord message
@@ -234,15 +241,28 @@ export class PaymentService implements OnModuleInit {
 
             const packageName = metadata.packageId ? `Package ${metadata.packageId}` : 'แพ็คเกจ';
             const days = metadata.days || '30';
+            const guildId = metadata.guildId;
+
+            // Get music bot invite URLs
+            const inviteUrls = guildId ? await this.musicBotService.generateInviteUrls(guildId) : [];
+
+            let description = `**สินค้า:** ${packageName}\n` +
+                `**ระยะเวลา:** ${days} วัน\n` +
+                `**สถานะ:** ชำระเงินเรียบร้อยแล้ว\n\n` +
+                `ขอบคุณที่ใช้บริการ! บอทได้เปิดใช้งานแล้ว 🎉`;
+
+            if (inviteUrls.length > 0) {
+                description += `\n\n**🎵 Music Bots (${inviteUrls.length} ตัว)**\n`;
+                description += `กรุณาคลิกลิงก์ด้านล่างเพื่อเชิญ Music Bot เข้าเซิร์ฟเวอร์:\n\n`;
+                inviteUrls.forEach((bot, index) => {
+                    description += `${index + 1}. [${bot.botName}](${bot.inviteUrl})\n`;
+                });
+                description += `\n💡 **หมายเหตุ:** คุณต้องมีสิทธิ์ Administrator เพื่อเชิญ bot เข้าเซิร์ฟเวอร์`;
+            }
 
             const successEmbed = new EmbedBuilder()
                 .setTitle('✅ ชำระเงินสำเร็จ!')
-                .setDescription(
-                    `**สินค้า:** ${packageName}\n` +
-                    `**ระยะเวลา:** ${days} วัน\n` +
-                    `**สถานะ:** ชำระเงินเรียบร้อยแล้ว\n\n` +
-                    `ขอบคุณที่ใช้บริการ! บอทได้เปิดใช้งานแล้ว 🎉`
-                )
+                .setDescription(description)
                 .setColor(0x00ff00)
                 .setTimestamp();
 
@@ -280,6 +300,37 @@ export class PaymentService implements OnModuleInit {
                     data: { status: 'FAILED' },
                 });
                 break;
+        }
+    }
+
+    private async assignMusicBotsForPackage(
+        guildId: string,
+        packageType: string,
+        packageId: string,
+        userId?: string,
+    ) {
+        try {
+            let musicBotCount = 0;
+
+            // Determine music bot count based on package type and ID
+            if (packageType === 'main') {
+                // Main packages: 1=1 bot, 2=2 bots, 3=3 bots, 4=5 bots
+                const botCounts: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 5 };
+                musicBotCount = botCounts[packageId] || 0;
+            } else if (packageType === 'music') {
+                // Music add-ons: 1=3, 2=5, 3=9, 4=15, 5=25
+                const botCounts: Record<string, number> = { '1': 3, '2': 5, '3': 9, '4': 15, '5': 25 };
+                musicBotCount = botCounts[packageId] || 0;
+            }
+
+            if (musicBotCount > 0) {
+                this.logger.log(
+                    `[assignMusicBotsForPackage] Assigning ${musicBotCount} music bots to guild ${guildId}`,
+                );
+                await this.musicBotService.assignBotsToGuild(guildId, musicBotCount, userId);
+            }
+        } catch (error) {
+            this.logger.error('[assignMusicBotsForPackage] Failed to assign music bots:', error);
         }
     }
 

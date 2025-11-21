@@ -42,6 +42,8 @@ import { TransferModule } from './transfer/transfer.module';
 import { UserDataModule } from './user-data/user-data.module';
 import { VoiceTimeModule } from './voice-time/voice-time.module';
 import { WelcomeModule } from './welcome/welcome.module';
+import { MusicBotModule } from './music-bot/music-bot.module';
+import { GuildEventsModule } from './guild-events/guild-events.module';
 
 @Global()
 @Module({
@@ -117,6 +119,8 @@ import { WelcomeModule } from './welcome/welcome.module';
     VoiceTimeModule,
     TransferModule,
     StageChannelModule,
+    MusicBotModule,
+    GuildEventsModule,
   ],
   providers: [
     PrismaService,

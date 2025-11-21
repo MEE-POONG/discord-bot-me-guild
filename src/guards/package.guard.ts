@@ -74,7 +74,9 @@ export class PackageGuard implements CanActivate {
             try {
                 await this.serverMeguildSetService.createSystemChannel(guild, guild.members.cache.get(guild.ownerId)?.user);
             } catch (error) {
-                this.logger.error(`[PackageGuard] Failed to create system channel: ${error}`);
+                this.logger.error(`[PackageGuard] Failed to create system channel: ${error.message || error}`);
+                // Don't block the user - just log the error
+                // The user can manually create the channel using /server-meguild-set
             }
         }
 

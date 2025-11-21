@@ -74,6 +74,23 @@ export class ServerMeguildSetService {
       );
     } catch (error) {
       this.logger.error('Error creating 🕍︰me-guild-center channel:', error);
+
+      // Check if it's a permission error
+      if (error.message && error.message.includes('missing required permissions')) {
+        return this.replyWithError(
+          interaction,
+          '⚠️ ขาดสิทธิ์ในการสร้างห้อง',
+          `🚨 Bot ไม่มีสิทธิ์ที่จำเป็นในการสร้างห้อง\n\n` +
+          `**วิธีแก้ไข:**\n` +
+          `1. ไปที่ Server Settings > Roles\n` +
+          `2. เลือก Role ของ Bot\n` +
+          `3. เปิดสิทธิ์ "Manage Channels", "View Channels", และ "Send Messages"\n` +
+          `4. บันทึกการเปลี่ยนแปลง\n` +
+          `5. ลองใช้คำสั่งอีกครั้ง\n\n` +
+          `📋 **รายละเอียด:** ${error.message}`,
+        );
+      }
+
       return this.replyWithError(
         interaction,
         '⚠️ ข้อผิดพลาดที่ไม่คาดคิด',
@@ -84,6 +101,31 @@ export class ServerMeguildSetService {
 
   public async createSystemChannel(guild: Guild, user: any) {
     this.logger.debug(`[ServerMeguildSetSystem] Creating 🕍︰me-guild-center channel`);
+
+    // Check if bot has required permissions
+    const botMember = await guild.members.fetchMe();
+    const requiredPermissions = [
+      PermissionFlagsBits.ManageChannels,
+      PermissionFlagsBits.ViewChannel,
+      PermissionFlagsBits.SendMessages,
+    ];
+
+    const missingPermissions = requiredPermissions.filter(
+      (perm) => !botMember.permissions.has(perm)
+    );
+
+    if (missingPermissions.length > 0) {
+      const permissionNames = missingPermissions.map(perm => {
+        if (perm === PermissionFlagsBits.ManageChannels) return 'Manage Channels';
+        if (perm === PermissionFlagsBits.ViewChannel) return 'View Channels';
+        if (perm === PermissionFlagsBits.SendMessages) return 'Send Messages';
+        return 'Unknown';
+      });
+
+      const errorMsg = `Bot is missing required permissions: ${permissionNames.join(', ')}. Please grant these permissions to the bot role in Server Settings > Roles.`;
+      this.logger.error(`[ServerMeguildSetSystem] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
 
     const userTag = user?.tag ?? user?.username ?? 'UnknownUser';
     const userId = user?.id ?? guild.ownerId; // fallback เป็น owner ถ้าไม่มี user

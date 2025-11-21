@@ -40,51 +40,51 @@ export class ServerMeguildSetService {
     }
 
     try {
-      this.logger.debug(`[ServerMeguildSetSystem] Checking for existing me-guild-set-server channel`);
+      this.logger.debug(`[ServerMeguildSetSystem] Checking for existing 🕍︰me-guild-set-server channel`);
       const channels = guild.channels.cache;
 
-      // ตรวจสอบว่ามีห้อง me-guild-set-server อยู่แล้วหรือไม่
+      // ตรวจสอบว่ามีห้อง 🕍︰me-guild-set-server อยู่แล้วหรือไม่
       let meguildChannel = channels.find(
-        (channel) => channel.name === 'me-guild-set-server' && channel.isTextBased(),
+        (channel) => channel.name === '🕍︰me-guild-set-server' && channel.isTextBased(),
       );
 
       if (meguildChannel) {
         this.logger.debug(
-          `[ServerMeguildSetSystem] me-guild-set-server channel already exists: ${meguildChannel.id}`,
+          `[ServerMeguildSetSystem] 🕍︰me-guild-set-server channel already exists: ${meguildChannel.id}`,
         );
         return this.replyWithWarning(
           interaction,
           'ℹ️ ห้องมีอยู่แล้ว',
-          `ห้อง "me-guild-set-server" มีอยู่แล้วในเซิร์ฟเวอร์\n📍 <#${meguildChannel.id}>`,
+          `ห้อง "🕍︰me-guild-set-server" มีอยู่แล้วในเซิร์ฟเวอร์\n📍 <#${meguildChannel.id}>`,
         );
       }
 
-      // สร้างห้อง me-guild-set-server ใหม่
+      // สร้างห้อง 🕍︰me-guild-set-server ใหม่
       meguildChannel = await this.createSystemChannel(guild, interaction.user);
 
       return this.replyWithSuccess(
         interaction,
         '✅ สร้างห้องสำเร็จ',
-        `🎉 ห้อง "me-guild-set-server" ถูกสร้างเรียบร้อยแล้ว\n📍 <#${meguildChannel.id}>\n\n🔒 เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้นที่สามารถเห็นห้องนี้`,
+        `🎉 ห้อง "🕍︰me-guild-set-server" ถูกสร้างเรียบร้อยแล้ว\n📍 <#${meguildChannel.id}>\n\n🔒 เฉพาะเจ้าของเซิร์ฟเวอร์เท่านั้นที่สามารถเห็นห้องนี้`,
       );
     } catch (error) {
-      this.logger.error('Error creating me-guild-set-server channel:', error);
+      this.logger.error('Error creating 🕍︰me-guild-set-server channel:', error);
       return this.replyWithError(
         interaction,
         '⚠️ ข้อผิดพลาดที่ไม่คาดคิด',
-        `🚨 เกิดข้อผิดพลาดในการสร้างห้อง "me-guild-set-server"`,
+        `🚨 เกิดข้อผิดพลาดในการสร้างห้อง "🕍︰me-guild-set-server"`,
       );
     }
   }
 
   public async createSystemChannel(guild: Guild, user: any) {
-    this.logger.debug(`[ServerMeguildSetSystem] Creating me-guild-set-server channel`);
+    this.logger.debug(`[ServerMeguildSetSystem] Creating 🕍︰me-guild-set-server channel`);
 
     const userTag = user?.tag ?? user?.username ?? 'UnknownUser';
     const userId = user?.id ?? guild.ownerId; // fallback เป็น owner ถ้าไม่มี user
 
     const meguildChannel = await guild.channels.create({
-      name: 'me-guild-set-server',
+      name: '🕍︰me-guild-set-server',
       type: 0, // Text channel
       reason: `Created by ${userTag} using /server-meguild-set command`,
       permissionOverwrites: [
@@ -202,7 +202,7 @@ export class ServerMeguildSetService {
             '🔧 **กรุณาใช้คำสั่ง:** `/server-clear`\n\n' +
             '⚠️ **คำเตือน:** คำสั่งนี้จะ:\n' +
             '• ลบห้องทั้งหมดในเซิร์ฟเวอร์ (ยกเว้นห้องพิเศษ)\n' +
-            '• สร้างห้อง me-guild-set-server ใหม่\n' +
+            '• สร้างห้อง 🕍︰me-guild-set-server ใหม่\n' +
             '• ไม่สามารถย้อนกลับได้',
           )
           .setColor(0xff0000)

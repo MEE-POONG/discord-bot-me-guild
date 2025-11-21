@@ -61,33 +61,7 @@ export class ServerMeguildSetService {
       }
 
       // สร้างห้อง me-guild-set-server ใหม่
-      this.logger.debug(`[ServerMeguildSetSystem] Creating me-guild-set-server channel`);
-      meguildChannel = await guild.channels.create({
-        name: 'me-guild-set-server',
-        type: 0, // Text channel
-        reason: `Created by ${interaction.user.tag} using /server-meguild-set command`,
-        permissionOverwrites: [
-          {
-            id: guild.id, // @everyone role
-            deny: [PermissionFlagsBits.ViewChannel],
-          },
-          {
-            id: interaction.user.id, // Channel creator (server owner)
-            allow: [
-              PermissionFlagsBits.ViewChannel,
-              PermissionFlagsBits.SendMessages,
-              PermissionFlagsBits.ManageChannels,
-            ],
-          },
-        ],
-      });
-
-      this.logger.log(
-        `[ServerMeguildSetSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
-      );
-
-      // ส่งข้อความพร้อมปุ่มคำสั่งต่างๆ ลงในห้องที่สร้าง
-      await this.createSetupMessage(meguildChannel as TextChannel);
+      meguildChannel = await this.createSystemChannel(guild, interaction.user);
 
       return this.replyWithSuccess(
         interaction,
@@ -102,6 +76,38 @@ export class ServerMeguildSetService {
         `🚨 เกิดข้อผิดพลาดในการสร้างห้อง "me-guild-set-server"`,
       );
     }
+  }
+
+  public async createSystemChannel(guild: Guild, user: any) {
+    this.logger.debug(`[ServerMeguildSetSystem] Creating me-guild-set-server channel`);
+    const meguildChannel = await guild.channels.create({
+      name: 'me-guild-set-server',
+      type: 0, // Text channel
+      reason: `Created by ${user.tag} using /server-meguild-set command`,
+      permissionOverwrites: [
+        {
+          id: guild.id, // @everyone role
+          deny: [PermissionFlagsBits.ViewChannel],
+        },
+        {
+          id: user.id, // Channel creator (server owner)
+          allow: [
+            PermissionFlagsBits.ViewChannel,
+            PermissionFlagsBits.SendMessages,
+            PermissionFlagsBits.ManageChannels,
+          ],
+        },
+      ],
+    });
+
+    this.logger.log(
+      `[ServerMeguildSetSystem] Created channel: ${meguildChannel.name} (${meguildChannel.id})`,
+    );
+
+    // ส่งข้อความพร้อมปุ่มคำสั่งต่างๆ ลงในห้องที่สร้าง
+    await this.createSetupMessage(meguildChannel as TextChannel);
+
+    return meguildChannel;
   }
 
   private replyWithError(interaction: any, title: string, description: string) {

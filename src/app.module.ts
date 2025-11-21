@@ -28,7 +28,6 @@ import { PrototypeModule } from './prototype/prototype.module';
 
 import { ServerBuyPackageModule } from './server-buy-package/server-buy-package.module';
 import { ServerClearModule } from './server-clear/server-clear.module';
-import { ServerClearRoleModule } from './server-clear-role/server-clear-role.module';
 import { ServerCreateRoleModule } from './server-create-role/server-create-role.module';
 import { ServerExchangCoinModule } from './server-exchange-coin/server-exchange-coin.module';
 import { ServerMeguildSetModule } from './server-meguild-set/server-meguild-set.module';
@@ -107,7 +106,6 @@ import { WelcomeModule } from './welcome/welcome.module';
     ServerBuyPackageModule,
     ServerClearModule,
     ServerCreateRoleModule,
-    ServerClearRoleModule,
     ServerExchangCoinModule,
     ServerUpdateRoleModule,
     ServerSetRoomModule,
@@ -121,4 +119,4 @@ import { WelcomeModule } from './welcome/welcome.module';
   providers: [PrismaService, ServerRepository, AppUpdate, AppService],
   exports: [PrismaService, ServerRepository, AppService],
 })
-export class AppModule {}
+export class AppModule { }

@@ -99,6 +99,18 @@ model CommentDB {
   deleteBy  String?
 }
 
+// โค้ดแพ็คเกจ - เก็บโค้ดสำหรับเติมวันใช้งาน
+model PackageCodeDB {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  code      String    @unique // รหัสโค้ด
+  days      Int // จำนวนวันที่ได้รับ
+  isUsed    Boolean   @default(false) // ถูกใช้ไปหรือยัง
+  usedBy    String? // ID เซิร์ฟเวอร์ที่ใช้ (Discord Guild ID)
+  usedAt    DateTime? // เวลาที่ใช้
+  createdAt DateTime  @default(now())
+  createdBy String?
+}
+
 // ========================================
 // 👥 Customer Management (ลูกค้า)
 // ========================================
@@ -602,21 +614,21 @@ model PaymentDB {
 
 // เหรียญ MeGuild - เก็บข้อมูลสกุลเงินในเกมของผู้ใช้
 model MeGuildCoinDB {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  coin_copper  Int // เหรียญทองแดง
-  coin_iron  Int // เหรียญเหล็ก
-  coin_silver  Int // เหรียญเงิน
-  coin_gold    Int // เหรียญทอง
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  coin_copper   Int // เหรียญทองแดง
+  coin_iron     Int // เหรียญเหล็ก
+  coin_silver   Int // เหรียญเงิน
+  coin_gold     Int // เหรียญทอง
   coin_platinum Int // เหรียญแพลตินัม
-  coin_diamond Int // เหรียญเพชร
-  coin_crystal Int // เหรียญคริสตัล
-  coin_mythic Int // เหรียญมิธิค
-  coin_arcane Int // เหรียญอาร์เคน
-  coin_divine Int // เหรียญดิไวน์
-  coin_cosmic Int // เหรียญคอสมิก
-  createdAt    DateTime @db.Date
-  updatedAt    DateTime @db.Date
-  userId       String // ID ผู้ใช้
+  coin_diamond  Int // เหรียญเพชร
+  coin_crystal  Int // เหรียญคริสตัล
+  coin_mythic   Int // เหรียญมิธิค
+  coin_arcane   Int // เหรียญอาร์เคน
+  coin_divine   Int // เหรียญดิไวน์
+  coin_cosmic   Int // เหรียญคอสมิก
+  createdAt     DateTime @db.Date
+  updatedAt     DateTime @db.Date
+  userId        String // ID ผู้ใช้
 }
 
 // ========================================
@@ -953,55 +965,55 @@ model EventUserClaim {
 
 // ประเภทเหรียญ - เก็บข้อมูลชนิดของเหรียญในระบบ
 model CoinTypeDB {
-  id           String             @id @default(auto()) @map("_id") @db.ObjectId
-  key          String             @unique // key ภายในระบบ เช่น COPPER, SILVER, GOLD
-  name         String             // ชื่อเหรียญที่แสดง เช่น เหรียญทองแดง
-  description  String?            // คำอธิบายเพิ่มเติม
-  iconUrl      String?            // URL รูปไอคอนเหรียญ
-  displayOrder Int                @default(0) // ลำดับการแสดงผล
-  isPremium    Boolean            @default(false) // เหรียญพรีเมียมไหม
-  isActive     Boolean            @default(true) // ปิด/เปิดการใช้งานเหรียญนี้
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  key          String  @unique // key ภายในระบบ เช่น COPPER, SILVER, GOLD
+  name         String // ชื่อเหรียญที่แสดง เช่น เหรียญทองแดง
+  description  String? // คำอธิบายเพิ่มเติม
+  iconUrl      String? // URL รูปไอคอนเหรียญ
+  displayOrder Int     @default(0) // ลำดับการแสดงผล
+  isPremium    Boolean @default(false) // เหรียญพรีเมียมไหม
+  isActive     Boolean @default(true) // ปิด/เปิดการใช้งานเหรียญนี้
 
-  createdAt    DateTime           @default(now())
-  createdBy    String?
-  updatedAt    DateTime           @updatedAt
-  updatedBy    String?
-  deleteBy     String?
+  createdAt DateTime @default(now())
+  createdBy String?
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  deleteBy  String?
 
   CoinTransactionDB CoinTransactionDB[] // ทรานแซคชันที่ใช้เหรียญชนิดนี้
 }
 
-
 // ประวัติการเคลื่อนไหวเหรียญ - บันทึกทุกครั้งที่มีการเพิ่ม/ลดเหรียญ
 model CoinTransactionDB {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  userId         String       // Discord ID หรือ userId ตามที่ใช้งานจริง
+  userId String // Discord ID หรือ userId ตามที่ใช้งานจริง
   // ถ้าผูกกับ UserDB:
   // user        UserDB?      @relation(fields: [userId], references: [id])
 
-  coinTypeId     String       @db.ObjectId // อ้างอิงชนิดเหรียญ
-  coinType       CoinTypeDB   @relation(fields: [coinTypeId], references: [id])
+  coinTypeId String     @db.ObjectId // อ้างอิงชนิดเหรียญ
+  coinType   CoinTypeDB @relation(fields: [coinTypeId], references: [id])
 
-  amount         Int       // จำนวนเหรียญ + เพิ่ม / - ลด
-  balanceBefore  Int?      // ยอดก่อนหน้า (optional แต่ช่วย debug ง่าย)
-  balanceAfter   Int?      // ยอดหลังอัปเดต
+  amount        Int // จำนวนเหรียญ + เพิ่ม / - ลด
+  balanceBefore Int? // ยอดก่อนหน้า (optional แต่ช่วย debug ง่าย)
+  balanceAfter  Int? // ยอดหลังอัปเดต
 
   // ที่มาของการเปลี่ยนแปลง
-  sourceType     String       // แหล่งที่มา เช่น "EVENT", "SHOP", "ADMIN_ADJUST", "COMMAND"
-  sourceId       String?      // ID อ้างอิง เช่น eventId, orderId, messageId
+  sourceType String // แหล่งที่มา เช่น "EVENT", "SHOP", "ADMIN_ADJUST", "COMMAND"
+  sourceId   String? // ID อ้างอิง เช่น eventId, orderId, messageId
 
-  note           String?      // หมายเหตุเพิ่มเติม
+  note String? // หมายเหตุเพิ่มเติม
 
-  createdAt      DateTime     @default(now())
-  createdBy      String?      // ใครเป็นคน trigger เช่น system, userId แอดมิน
+  createdAt DateTime @default(now())
+  createdBy String? // ใครเป็นคน trigger เช่น system, userId แอดมิน
 }
+
 // กระเป๋าเหรียญของผู้ใช้ (รองรับหลายกระเป๋า เช่น ต่อเซิร์ฟเวอร์)
 model UserWalletDB {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   // ID ผู้ใช้
-  guildId   String?  // ถ้าผูกตาม Discord Guild/Server
-  name      String?  // ชื่อกระเป๋า เช่น "Main", "Guild-A"
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String // ID ผู้ใช้
+  guildId String? // ถ้าผูกตาม Discord Guild/Server
+  name    String? // ชื่อกระเป๋า เช่น "Main", "Guild-A"
 
   createdAt DateTime @default(now())
   createdBy String?

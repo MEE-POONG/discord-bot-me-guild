@@ -8,14 +8,19 @@ import {
   PermissionFlagsBits,
   TextChannel,
 } from 'discord.js';
-import { Button, ButtonContext, Context } from 'necord';
+import { Button, ButtonContext, Context, Modal, ModalContext } from 'necord';
 import { ServerRepository } from 'src/repository/server';
+import { PrismaService } from 'src/prisma.service';
+import { ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 
 @Injectable()
 export class ServerMeguildSetService {
   private readonly logger = new Logger(ServerMeguildSetService.name);
 
-  constructor(private readonly serverRepository: ServerRepository) { }
+  constructor(
+    private readonly serverRepository: ServerRepository,
+    private readonly prisma: PrismaService,
+  ) { }
 
   public onModuleInit() {
     this.logger.log('ServerMeguildSet initialized');
@@ -272,6 +277,91 @@ export class ServerMeguildSetService {
           .setTimestamp(),
       ],
       ephemeral: true,
+    });
+  }
+  @Button('server-code')
+  public async handleServerCodeButton(@Context() [interaction]: ButtonContext) {
+    this.logger.debug('server-code button clicked');
+
+    const modal = new ModalBuilder()
+      .setCustomId('PACKAGE_CODE_MODAL')
+      .setTitle('กรอก Code แพ็คเกจ');
+
+    const codeInput = new TextInputBuilder()
+      .setCustomId('package_code_input')
+      .setLabel('รหัสโค้ด')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('กรอกโค้ดที่ได้รับมา')
+      .setRequired(true);
+
+    const row = new ActionRowBuilder<TextInputBuilder>().addComponents(codeInput);
+    modal.addComponents(row);
+
+    await interaction.showModal(modal);
+  }
+
+  @Modal('PACKAGE_CODE_MODAL')
+  public async handlePackageCodeModal(@Context() [interaction]: ModalContext) {
+    const code = interaction.fields.getTextInputValue('package_code_input');
+    this.logger.debug(`Checking package code: ${code}`);
+
+    const packageCode = await this.prisma.packageCodeDB.findUnique({
+      where: { code },
+    });
+
+    if (!packageCode) {
+      return interaction.reply({
+        content: '❌ โค้ดไม่ถูกต้อง',
+        ephemeral: true,
+      });
+    }
+
+    if (packageCode.isUsed) {
+      return interaction.reply({
+        content: '❌ โค้ดนี้ถูกใช้งานไปแล้ว',
+        ephemeral: true,
+      });
+    }
+
+    // Update server expiration
+    const server = await this.serverRepository.getServerById(interaction.guildId);
+    if (!server) {
+      return interaction.reply({
+        content: '❌ ไม่พบข้อมูลเซิร์ฟเวอร์',
+        ephemeral: true
+      });
+    }
+
+    const currentExpire = server.openUntilAt ? new Date(server.openUntilAt) : new Date();
+    const now = new Date();
+    const baseDate = currentExpire > now ? currentExpire : now;
+
+    const newExpire = new Date(baseDate);
+    newExpire.setDate(newExpire.getDate() + packageCode.days);
+
+    await this.prisma.$transaction([
+      this.prisma.serverDB.update({
+        where: { serverId: interaction.guildId },
+        data: { openUntilAt: newExpire }
+      }),
+      this.prisma.packageCodeDB.update({
+        where: { id: packageCode.id },
+        data: {
+          isUsed: true,
+          usedBy: interaction.guildId,
+          usedAt: new Date()
+        }
+      })
+    ]);
+
+    return interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle('✅ เติมแพ็คเกจสำเร็จ')
+          .setDescription(`คุณได้รับวันใช้งานเพิ่ม ${packageCode.days} วัน\n📅 หมดอายุวันที่: ${newExpire.toLocaleDateString('th-TH')}`)
+          .setColor(0x00ff00)
+      ],
+      ephemeral: true
     });
   }
 }

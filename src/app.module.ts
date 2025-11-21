@@ -7,6 +7,8 @@ import { AppService } from './app.service';
 import { AppUpdate } from './app.update';
 import { PrismaService } from './prisma.service';
 import { ServerRepository } from './repository/server';
+import { APP_GUARD } from '@nestjs/core';
+import { PackageGuard } from './guards/package.guard';
 
 // Feature modules
 import { BlogModule } from './blog/blog.module';
@@ -116,7 +118,16 @@ import { WelcomeModule } from './welcome/welcome.module';
     TransferModule,
     StageChannelModule,
   ],
-  providers: [PrismaService, ServerRepository, AppUpdate, AppService],
+  providers: [
+    PrismaService,
+    ServerRepository,
+    AppUpdate,
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: PackageGuard,
+    },
+  ],
   exports: [PrismaService, ServerRepository, AppService],
 })
 export class AppModule { }

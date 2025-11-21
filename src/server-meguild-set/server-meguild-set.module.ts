@@ -6,5 +6,6 @@ import { ServerRepository } from 'src/repository/server';
 
 @Module({
   providers: [PrismaClient, ServerRepository, ServerMeguildSetCommands, ServerMeguildSetService],
+  exports: [ServerMeguildSetService],
 })
-export class ServerMeguildSetModule {}
+export class ServerMeguildSetModule { }

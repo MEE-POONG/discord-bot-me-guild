@@ -20,7 +20,7 @@ export class ServerClearService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serverRepository: ServerRepository,
-  ) {}
+  ) { }
 
   public onModuleInit() {
     this.logger.log('ServerClear initialized');
@@ -82,7 +82,7 @@ export class ServerClearService {
           '• 🗑️ ลบบทบาททั้งหมด',
           '',
           '⚠️ **คำเตือน:** การล้างไม่สามารถย้อนกลับได้',
-          '⏰ ข้อความนี้จะหายไปอัตโนมัติใน 60 วินาที',
+          '⏰ ข้อความนี้จะหายไปอัตโนมัติใน 40 วินาที',
         ].join('\n'),
       )
       .setColor(0x3498db);
@@ -94,7 +94,7 @@ export class ServerClearService {
       fetchReply: true,
     });
 
-    setTimeout(() => reply.delete().catch(() => null), 60_000);
+    setTimeout(() => reply.delete().catch(() => null), 40_000);
   }
 
   // -------------------------------------------------------------
@@ -128,7 +128,7 @@ export class ServerClearService {
       const ch = await this.clearChannelCore(guild, interaction.user.tag);
       const rl = await this.clearRoleCore(guild, interaction.user.tag);
 
-      return interaction.update({
+      const reply = await interaction.update({
         embeds: [
           new EmbedBuilder()
             .setTitle('🧨 ล้างเซิร์ฟเวอร์เรียบร้อยแล้ว (ครบชุด)')
@@ -148,12 +148,15 @@ export class ServerClearService {
         ],
         components: [],
       });
+
+      setTimeout(() => reply.delete().catch(() => null), 30_000);
+      return reply;
     }
 
     if (selected === 'channel') {
       const result = await this.clearChannelCore(guild, interaction.user.tag);
 
-      return interaction.update({
+      const reply = await interaction.update({
         embeds: [
           new EmbedBuilder()
             .setTitle('🧹 เคลียร์ห้องสำเร็จ')
@@ -170,6 +173,11 @@ export class ServerClearService {
         ],
         components: [],
       });
+
+      // 🔥 ตั้งเวลาให้ข้อความลบตัวเองภายใน 30 วินาที
+      setTimeout(() => reply.delete().catch(() => null), 30_000);
+
+      return reply;
     }
 
     if (selected === 'role') {
@@ -271,15 +279,19 @@ export class ServerClearService {
   // -------------------------------------------------------------
   // replyError ให้เรียกใช้แบบเดียวทุกที่
   // -------------------------------------------------------------
-  private replyError(interaction: any, message: string) {
-    return interaction.reply({
+  private async replyError(interaction: any, message: string) {
+    const reply = await interaction.reply({
       embeds: [
         new EmbedBuilder()
           .setTitle('❌ เกิดข้อผิดพลาด')
           .setDescription(message)
           .setColor(0xff0000),
       ],
-      ephemeral: true,
+      ephemeral: false, // 👈 เปลี่ยนเป็น false เพื่อลบได้
     });
+
+    setTimeout(() => reply.delete().catch(() => null), 30_000);
+
+    return reply;
   }
 }

@@ -5,7 +5,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from 'discord.js';
-import { PrismaService } from 'src/prisma.service';
+// import { PrismaService } from 'src/prisma.service';
 import { ServerRepository } from 'src/repository/server';
 import { validateServerAndRole } from 'src/utils/server-validation.util';
 
@@ -43,16 +43,16 @@ export class ServerExchangCoinService {
       this.serverRepository,
     );
     if (validationError) return validationError;
-  
+
     const server = await this.serverRepository.getServerById(interaction.guildId);
     if (!server) {
       return this.replyError(interaction, '❌ ไม่พบข้อมูลเซิร์ฟเวอร์ โปรดตรวจสอบอีกครั้ง!');
     }
-  
+
     const basicPackages = this.packages.filter(p => p.tier === 'basic');
     const mediumPackages = this.packages.filter(p => p.tier === 'medium');
     const premiumPackages = this.packages.filter(p => p.tier === 'premium');
-  
+
     const packageToField = (p: any) => ({
       name: `__${p.emoji} > ${p.name} • ${p.price.toLocaleString('th-TH')}฿__`,
       value: [
@@ -61,25 +61,25 @@ export class ServerExchangCoinService {
       ].join('\n'),
       inline: true,
     });
-  
+
     const basicEmbed = new EmbedBuilder()
       .setTitle('💼 แพ็คเกจขั้นต้น')
       .setDescription('แพ็คเกจเริ่มต้นสำหรับการเติม Copper')
       .addFields(...basicPackages.map(packageToField))
       .setColor(0x00bcd4);
-  
+
     const mediumEmbed = new EmbedBuilder()
       .setTitle('🚀 แพ็คเกจขั้นกลาง')
       .setDescription('แพ็คเกจสำหรับผู้ใช้ทั่วไปที่ต้องการเติมเพิ่ม')
       .addFields(...mediumPackages.map(packageToField))
       .setColor(0x4caf50);
-  
+
     const premiumEmbed = new EmbedBuilder()
       .setTitle('👑 แพ็คเกจขั้นสุด')
       .setDescription('แพ็คเกจสำหรับสายเปย์ระดับสูง')
       .addFields(...premiumPackages.map(packageToField))
       .setColor(0xff9800);
-  
+
     // ปุ่มของแต่ละชุด (แสดงตามลำดับเดียวกับ embed)
     const rowBasic = new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...basicPackages.map(p =>
@@ -90,7 +90,7 @@ export class ServerExchangCoinService {
           .setStyle(ButtonStyle.Primary),
       ),
     );
-  
+
     const rowMedium = new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...mediumPackages.map(p =>
         new ButtonBuilder()
@@ -100,7 +100,7 @@ export class ServerExchangCoinService {
           .setStyle(ButtonStyle.Success),
       ),
     );
-  
+
     const rowPremium = new ActionRowBuilder<ButtonBuilder>().addComponents(
       ...premiumPackages.map(p =>
         new ButtonBuilder()
@@ -110,35 +110,35 @@ export class ServerExchangCoinService {
           .setStyle(ButtonStyle.Danger),
       ),
     );
-  
+
     const basicMessage = await interaction.reply({
       embeds: [basicEmbed],
       components: [rowBasic],
       ephemeral: true,
       fetchReply: true,
     });
-  
+
     const mediumMessage = await interaction.followUp({
       embeds: [mediumEmbed],
       components: [rowMedium],
       ephemeral: true,
       fetchReply: true,
     });
-  
+
     const premiumMessage = await interaction.followUp({
       embeds: [premiumEmbed],
       components: [rowPremium],
       ephemeral: true,
       fetchReply: true,
     });
-  
+
     setTimeout(async () => {
-      try { await basicMessage.delete().catch(() => null); } catch {}
-      try { await mediumMessage.delete().catch(() => null); } catch {}
-      try { await premiumMessage.delete().catch(() => null); } catch {}
+      try { await basicMessage.delete().catch(() => null); } catch { }
+      try { await mediumMessage.delete().catch(() => null); } catch { }
+      try { await premiumMessage.delete().catch(() => null); } catch { }
     }, 20_000);
   }
-  
+
 
   private replyError(interaction: any, message: string) {
     return interaction.reply({

@@ -5,7 +5,7 @@ import { ServerMeguildSetService } from './server-meguild-set.service';
 @Injectable()
 export class ServerMeguildSetCommands {
   private readonly logger = new Logger(ServerMeguildSetCommands.name);
-  constructor(private readonly meguildSetService: ServerMeguildSetService) {}
+  constructor(private readonly meguildSetService: ServerMeguildSetService) { }
 
   @SlashCommand({
     name: 'server-meguild-set',

@@ -417,6 +417,7 @@ model ServerDB {
   guildCoRoleId         String? // ID บทบาทรองหัวหน้ากิลด์
   eccentricRoleId       String? // ID บทบาทพิเศษ
   openUntilAt           DateTime  @db.Date // เปิดใช้งานจนถึงวันที่
+  maxMusicBots          Int       @default(1) // จำนวน Music Bot สูงสุดที่ใช้ได้ (ตาม package)
   // ตำแหน่งสร้างห้อง (Position Create)
   meguildPositionCreate String? // ตำแหน่งสร้างห้อง MeGuild
   talkPositionCreate    String? // ตำแหน่งสร้างห้องพูดคุย
